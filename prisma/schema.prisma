@@ -1,0 +1,171 @@
+// Vibravault — Prisma schema
+//
+// Design decisions live in the vault:
+//   KF OS/03 Projects/vibravault/02 Data Model/(C) v1 Schema Design.md
+//   KF OS/03 Projects/vibravault/02 Data Model/(C) Bank CSV Format - KBC.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum AccountType {
+  BANK
+  VOUCHER // maaltijdcheques / ecocheques
+  CASH
+  SAVINGS
+}
+
+enum CategoryKind {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionSource {
+  MANUAL
+  CSV
+  PSD2 // not in v1 — the enum value costs nothing now
+}
+
+// ---------------------------------------------------------------------------
+// Auth (ported from VibraFlow)
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  sessions     Session[]
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+  importBatches ImportBatch[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime // no default — computed at login (now + 30 days)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Core
+// ---------------------------------------------------------------------------
+
+// Exists in v1, INVISIBLE in v1: one seeded row, no management UI.
+// Deliberately NO balance column — balance is derived from transactions, so
+// there is only ever one source of truth.
+model Account {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  type      AccountType @default(BANK)
+  currency  String      @default("EUR")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
+// color = a token from the curated 12-tint set. Category colour is IDENTITY and
+// lives only in the icon tile; it must never collide with teal (income) or
+// coral (expense), which carry SEMANTICS.
+model Category {
+  id        String       @id @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  kind      CategoryKind
+  icon      String
+  color     String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  transactions Transaction[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Transaction {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // Nullable: imported rows arrive uncategorised, and that is a normal state.
+  // SetNull on delete — deleting a category must never delete financial history.
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  // SIGNED integer cents. Negative = expense. Matches KBC's `Bedrag` exactly,
+  // so imports need no sign transformation and can't invert one.
+  amountCents Int
+
+  bookedAt    DateTime // KBC `Datum` (booking date, never `Valuta`)
+  counterparty     String? // KBC `Naam tegenpartij`
+  counterpartyIban String? // KBC `Rekening tegenpartij` — best key for future auto-categorisation
+  description      String? // KBC `Omschrijving` + `vrije mededeling`
+
+  // KBC `Saldo` — balance after this transaction. Two jobs: disambiguates
+  // identical same-day rows in the fingerprint, and gives the importer a free
+  // integrity check against the bank's own running balance.
+  balanceAfterCents Int?
+
+  source      TransactionSource @default(MANUAL)
+
+  // Dedupe key. NO @@unique here on purpose: deleted rows must not block a
+  // re-import, so this needs a PARTIAL unique index (WHERE deleted_at IS NULL),
+  // which Prisma's DSL cannot express. Added by hand in the migration SQL.
+  fingerprint String
+
+  importBatchId String?
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+
+  deletedAt DateTime? // soft delete — filter centrally, never per call site
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId, bookedAt])
+  @@index([userId, fingerprint])
+  @@index([accountId])
+  @@index([categoryId])
+}
+
+// One row per CSV upload. Earns its place twice over: lets you undo a bad
+// import as a unit, and lets the UI say "42 rows, 9 new, 33 already there" —
+// which is what makes an importer feel trustworthy instead of scary.
+model ImportBatch {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename     String
+  importedAt   DateTime @default(now())
+  rowsParsed   Int      @default(0)
+  rowsInserted Int      @default(0)
+  rowsSkipped  Int      @default(0)
+
+  transactions Transaction[]
+
+  @@index([userId])
+}
