@@ -1,97 +1,214 @@
-/* Vibravault design tokens — neumorphism (soft UI).
-   See 03 Design/(C) Visual System in the vault.
+/* ==========================================================================
+   VIBRAVAULT DESIGN SYSTEM - Neumorphism (soft UI)
+   Derived from the reference specs in "VibraVault Design inspiration",
+   re-derived in Vibravault's own warm palette.
 
-   Neumorphism, not claymorphism: elements are EXTRUDED from a low-contrast
-   warm background using a dual-direction shadow (light top-left, dark
-   bottom-right). No borders. Inputs are pressed IN, buttons pop OUT.
+   THE THREE RULES OF REAL NEUMORPHISM
+   1. A raised or pressed element is the SAME COLOUR as its background.
+      It is extruded from the surface, never placed on top of it. The moment
+      you give a card its own fill it stops being neumorphic and becomes a
+      card with soft shadows.
+   2. Shadows are SOLID COLOURS derived from the background - not translucent
+      black/white. Dark shadow = surface darkened; light shadow = surface
+      lightened. That is what makes it read as moulded material.
+   3. Offsets are SYMMETRIC and OPPOSITE: +x +y for the dark shadow,
+      -x -y for the light one, same blur. Light source sits top-left.
 
-   Palette rule unchanged: one family colour (indigo), one app accent (teal),
-   one semantic exception (coral). */
+   Reference: bg #ECF0F3, dark #D1D9E6 (+18px, blur 30), light #FFF (-18px).
+   ========================================================================== */
+
 :root {
-  --vv-indigo: #3C3489;   /* Vibranic family anchor */
-  --vv-teal:   #0F6E56;   /* Vibravault accent — primary actions, income */
-  --vv-coral:  #D85A30;   /* the single warm exception — expenses, errors */
-  --vv-cream:  #F7F5F1;   /* page background: soft shadows need a warm ground */
-  --vv-surface:#FFFFFF;
-  --vv-text:   #2C2C2A;
-  --vv-muted:  #5F5E5A;
-  --vv-muted-2:#888780;
+  /* ---- Palette (unchanged: indigo = family, teal = app, coral = semantic) - */
+  --vv-indigo: #3C3489;
+  --vv-teal:   #0F6E56;
+  --vv-coral:  #D85A30;
 
+  /* ---- Surface: the background AND every raised/pressed element ---- */
+  --vv-surface: #F7F5F1;            /* warm cream */
+  --vv-shadow-dark:  #DBD6CD;       /* surface darkened ~11%, warmth kept */
+  --vv-shadow-light: #FFFFFF;       /* surface lightened to white */
+
+  /* ---- Text ---- */
+  --vv-text:    #2C2C2A;
+  --vv-muted:   #5F5E5A;
+  --vv-muted-2: #888780;
+
+  /* ---- Accents, mode-aware (overridden in dark) ---- */
+  --vv-accent:        var(--vv-teal);
+  --vv-accent-text:   #FFFFFF;
+  --vv-negative:      var(--vv-coral);
+  --vv-brand:         var(--vv-indigo);
+  --vv-accent-ring:   rgba(15,110,86,.45);
+  --vv-negative-ring: rgba(216,90,48,.5);
+  --vv-negative-bg:   rgba(216,90,48,.09);
+
+  /* ---- Radii ---- */
+  --vv-r-sm: 14px;
+  --vv-r-md: 20px;
   --vv-r-lg: 28px;
-  --vv-r-md: 22px;
-  --vv-r-sm: 18px;
+  --vv-r-pill: 999px;
 
-  /* The soft-UI shadow pair. Light source is top-left, so every raised element
-     gets a white highlight there and a warm shadow bottom-right. Reversing
-     both makes an element look pressed into the page instead of standing on
-     it — that single inversion is the whole language. */
-  --vv-neu:       -6px -6px 14px rgba(255,255,255,.9),  8px 10px 22px rgba(44,44,42,.10);
-  --vv-neu-sm:    -4px -4px 10px rgba(255,255,255,.85), 5px  6px 14px rgba(44,44,42,.09);
-  --vv-neu-inset: inset 3px 3px 8px rgba(44,44,42,.10), inset -3px -3px 8px rgba(255,255,255,.9);
+  /* ---- ELEVATION SCALE ------------------------------------------------
+     Offset and blur must SCALE WITH ELEMENT SIZE. One shadow size used
+     everywhere is the most common way neumorphism goes wrong: an 18px offset
+     on a 32px button produces a smudge, not a shape.
+     e1 small (chips, ticks) | e2 buttons/fields | e3 cards | e4 hero
+     e4 matches the reference spec exactly (18px offset, 30px blur).
+     -------------------------------------------------------------------- */
+  --vv-e1:  -3px  -3px  6px var(--vv-shadow-light),  3px  3px  6px var(--vv-shadow-dark);
+  --vv-e2:  -6px  -6px 12px var(--vv-shadow-light),  6px  6px 12px var(--vv-shadow-dark);
+  --vv-e3: -12px -12px 24px var(--vv-shadow-light), 12px 12px 24px var(--vv-shadow-dark);
+  --vv-e4: -18px -18px 30px var(--vv-shadow-light), 18px 18px 30px var(--vv-shadow-dark);
+
+  /* Pressed = the SAME shadows inverted inward. That single inversion is the
+     whole language: raised means "stands on the page", pressed means "is a
+     hole in the page". */
+  --vv-p1: inset -2px -2px  5px var(--vv-shadow-light), inset 2px 2px  5px var(--vv-shadow-dark);
+  --vv-p2: inset -5px -5px 10px var(--vv-shadow-light), inset 5px 5px 10px var(--vv-shadow-dark);
+  --vv-p3: inset -8px -8px 16px var(--vv-shadow-light), inset 8px 8px 16px var(--vv-shadow-dark);
+}
+
+/* ---- DARK MODE ---------------------------------------------------------
+   Same derivation, warm-dark base. The reference's dark shadow (#2A2D32 on a
+   #292D32 background) sits one value from the surface and reads as nothing,
+   so ours is derived properly: genuinely darker below-right, lighter
+   above-left. Accents are lifted, because #0F6E56 teal and #3C3489 indigo are
+   too dark to carry contrast on a dark surface.
+   ---------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --vv-surface: #2A2825;
+    --vv-shadow-dark:  #1D1C1A;
+    --vv-shadow-light: #37342F;
+
+    --vv-text:    #EDEAE4;
+    --vv-muted:   #A8A49C;
+    --vv-muted-2: #86827B;
+
+    --vv-accent:        #1FA37F;
+    --vv-accent-text:   #10221D;
+    --vv-negative:      #F0774B;
+    --vv-brand:         #7C72D6;
+    --vv-accent-ring:   rgba(31,163,127,.5);
+    --vv-negative-ring: rgba(240,119,75,.55);
+    --vv-negative-bg:   rgba(240,119,75,.14);
+  }
+}
+
+:root[data-theme="dark"] {
+  --vv-surface: #2A2825;
+  --vv-shadow-dark:  #1D1C1A;
+  --vv-shadow-light: #37342F;
+
+  --vv-text:    #EDEAE4;
+  --vv-muted:   #A8A49C;
+  --vv-muted-2: #86827B;
+
+  --vv-accent:        #1FA37F;
+  --vv-accent-text:   #10221D;
+  --vv-negative:      #F0774B;
+  --vv-brand:         #7C72D6;
+  --vv-accent-ring:   rgba(31,163,127,.5);
+  --vv-negative-ring: rgba(240,119,75,.55);
+  --vv-negative-bg:   rgba(240,119,75,.14);
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  background: var(--vv-cream);
+  background: var(--vv-surface);
   color: var(--vv-text);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background .2s ease, color .2s ease;
 }
 
-/* Raised surface — for things you LOOK AT (cards, stat tiles, chart panels).
-   Deliberately NOT used on transaction lists: 40 extruded rows read as
-   corrugated cardboard and destroy scannability. Data-dense areas stay flat
-   with hairline dividers. */
-.neu {
-  background: var(--vv-surface);
-  border-radius: var(--vv-r-lg);
-  box-shadow: var(--vv-neu);
-}
+/* ==========================================================================
+   SURFACES
+   .neu .neu-2 .neu-3 .neu-4        raised, by element size
+   .neu-pressed -2 -3               pressed in
+   .neu-flat                        no shadow - for DATA-DENSE areas
+   ========================================================================== */
+.neu,   .neu-2 { background: var(--vv-surface); border-radius: var(--vv-r-md); }
+.neu-3, .neu-4 { background: var(--vv-surface); border-radius: var(--vv-r-lg); }
+.neu   { box-shadow: var(--vv-e1); }
+.neu-2 { box-shadow: var(--vv-e2); }
+.neu-3 { box-shadow: var(--vv-e3); }
+.neu-4 { box-shadow: var(--vv-e4); }
 
+.neu-pressed   { background: var(--vv-surface); border-radius: var(--vv-r-md); box-shadow: var(--vv-p1); }
+.neu-pressed-2 { background: var(--vv-surface); border-radius: var(--vv-r-md); box-shadow: var(--vv-p2); }
+.neu-pressed-3 { background: var(--vv-surface); border-radius: var(--vv-r-lg); box-shadow: var(--vv-p3); }
+
+/* Data-dense areas (transaction lists) stay FLAT with hairline dividers.
+   Extruded rows read as corrugated cardboard and destroy scannability, and
+   low-contrast soft shadows mush together at small sizes. */
+.neu-flat { background: var(--vv-surface); box-shadow: none; }
+.neu-divider { border-bottom: 1px solid var(--vv-shadow-dark); }
+
+/* ==========================================================================
+   CONTROLS
+   ========================================================================== */
 .vv-field {
   width: 100%;
   padding: 14px 16px;
   font-size: 15px;
+  font-family: inherit;
   color: var(--vv-text);
-  background: var(--vv-cream);
+  background: var(--vv-surface);
   border: none;
   border-radius: var(--vv-r-sm);
-  box-shadow: var(--vv-neu-inset); /* pressed IN — the affordance for "type here" */
+  box-shadow: var(--vv-p2);
   outline: none;
+  transition: box-shadow .18s ease;
 }
-.vv-field:focus { box-shadow: var(--vv-neu-inset), 0 0 0 2px rgba(15,110,86,.35); }
-
-/* Coral ring for a failing field — semantic use of the expense colour:
-   coral means "negative / wrong", nothing else. */
-.vv-field--error { box-shadow: var(--vv-neu-inset), 0 0 0 2px rgba(216,90,48,.45); }
-.vv-field--error:focus { box-shadow: var(--vv-neu-inset), 0 0 0 2px rgba(216,90,48,.7); }
+.vv-field::placeholder { color: var(--vv-muted-2); }
+.vv-field:focus { box-shadow: var(--vv-p2), 0 0 0 2px var(--vv-accent-ring); }
+.vv-field--error { box-shadow: var(--vv-p2), 0 0 0 2px var(--vv-negative-ring); }
 
 .vv-btn {
   width: 100%;
   padding: 14px 18px;
   font-size: 15px;
   font-weight: 600;
-  color: #fff;
-  background: var(--vv-teal);
+  font-family: inherit;
+  color: var(--vv-accent-text);
+  background: var(--vv-accent);
   border: none;
   border-radius: var(--vv-r-sm);
-  box-shadow: var(--vv-neu-sm); /* popped OUT — the affordance for "press me" */
+  box-shadow: var(--vv-e2);
   cursor: pointer;
-  transition: transform .12s ease, box-shadow .12s ease;
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
 }
-.vv-btn:hover:not(:disabled) { transform: translateY(-1px); }
-/* Pressing inverts the shadow: the button physically sinks into the page. */
-.vv-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--vv-neu-inset); }
-.vv-btn:disabled { opacity: .6; cursor: not-allowed; }
+.vv-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
+.vv-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--vv-p2); }
+.vv-btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: var(--vv-e1); }
 
-.vv-label { display:block; font-size:13px; font-weight:600; color:var(--vv-muted); margin-bottom:7px; }
+/* Neutral button: surface-coloured, so it is pure neumorphism. */
+.vv-btn--ghost {
+  color: var(--vv-text);
+  background: var(--vv-surface);
+  box-shadow: var(--vv-e2);
+}
+
+.vv-label { display: block; font-size: 13px; font-weight: 600; color: var(--vv-muted); margin-bottom: 7px; }
 .vv-error {
-  padding: 11px 14px; margin-bottom: 16px;
-  font-size: 14px; color: var(--vv-coral);
-  background: rgba(216,90,48,.09);
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--vv-negative);
+  background: var(--vv-negative-bg);
   border-radius: var(--vv-r-sm);
 }
-.vv-link { color: var(--vv-teal); font-weight: 600; text-decoration: none; }
+.vv-link { color: var(--vv-accent); font-weight: 600; text-decoration: none; }
 .vv-link:hover { text-decoration: underline; }
+
+/* Financial semantics - the one place colour carries meaning. */
+.vv-amount-in  { color: var(--vv-accent);   font-variant-numeric: tabular-nums; }
+.vv-amount-out { color: var(--vv-text);     font-variant-numeric: tabular-nums; }
+.vv-amount-neg { color: var(--vv-negative); font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

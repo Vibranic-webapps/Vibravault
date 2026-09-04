@@ -20,7 +20,7 @@ const strong = computed(() => isPasswordValid(password.value))
 // 1-2 rules = coral (weak), 3 = indigo (fair-good), 4 = teal (strong).
 // Stays inside the palette instead of inventing a red/amber/green ramp.
 const barColor = computed(() =>
-  score.value >= 4 ? 'var(--vv-teal)' : score.value === 3 ? 'var(--vv-indigo)' : 'var(--vv-coral)',
+  score.value >= 4 ? 'var(--vv-accent)' : score.value === 3 ? 'var(--vv-brand)' : 'var(--vv-negative)',
 )
 
 async function submit() {
@@ -42,7 +42,7 @@ async function submit() {
 
 <template>
   <main class="page">
-    <form class="neu card" @submit.prevent="submit">
+    <form class="neu-3 card" @submit.prevent="submit">
       <p class="brand">Vibravault</p>
 
       <h1>Create your vault</h1>
@@ -111,9 +111,9 @@ async function submit() {
   text-transform: uppercase;
   white-space: nowrap;
   color: #fff;
-  background: var(--vv-indigo);
+  background: var(--vv-brand);
   border-radius: 14px;
-  box-shadow: var(--vv-neu-sm);
+  box-shadow: var(--vv-e2);
 }
 
 h1 { margin: 0 0 4px; font-size: 26px; text-align: center; }
@@ -126,8 +126,8 @@ h1 { margin: 0 0 4px; font-size: 26px; text-align: center; }
   flex: 1;
   height: 8px;
   border-radius: 999px;
-  background: var(--vv-cream);
-  box-shadow: var(--vv-neu-inset); /* the track is pressed in, like the inputs */
+  background: var(--vv-surface);
+  box-shadow: var(--vv-p2); /* the track is pressed in, like the inputs */
   overflow: hidden;
 }
 .meter-fill { height: 100%; border-radius: 999px; transition: width .25s ease, background .25s ease; }
@@ -139,7 +139,7 @@ h1 { margin: 0 0 4px; font-size: 26px; text-align: center; }
   font-size: 13px; color: var(--vv-muted-2);
   transition: color .2s ease;
 }
-.rules li.met { color: var(--vv-teal); font-weight: 600; }
+.rules li.met { color: var(--vv-accent); font-weight: 600; }
 .tick { width: 14px; text-align: center; font-size: 12px; }
 
 .foot { margin: 20px 0 0; text-align: center; font-size: 14px; color: var(--vv-muted); }
