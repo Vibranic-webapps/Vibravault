@@ -78,3 +78,8 @@ body {
 }
 .vv-link { color: var(--vv-teal); font-weight: 600; text-decoration: none; }
 .vv-link:hover { text-decoration: underline; }
+
+/* Coral ring for a field that's failing validation — semantic use of the
+   expense colour: coral means "something is wrong / negative", nothing else. */
+.vv-field--error { box-shadow: var(--vv-clay-inset), 0 0 0 2px rgba(216,90,48,.45); }
+.vv-field--error:focus { box-shadow: var(--vv-clay-inset), 0 0 0 2px rgba(216,90,48,.7); }
