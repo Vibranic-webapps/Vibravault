@@ -1,10 +1,17 @@
-/* Vibravault design tokens — see 03 Design/(C) Visual System in the vault.
-   One family colour (indigo), one app accent (teal), one semantic exception (coral). */
+/* Vibravault design tokens — neumorphism (soft UI).
+   See 03 Design/(C) Visual System in the vault.
+
+   Neumorphism, not claymorphism: elements are EXTRUDED from a low-contrast
+   warm background using a dual-direction shadow (light top-left, dark
+   bottom-right). No borders. Inputs are pressed IN, buttons pop OUT.
+
+   Palette rule unchanged: one family colour (indigo), one app accent (teal),
+   one semantic exception (coral). */
 :root {
   --vv-indigo: #3C3489;   /* Vibranic family anchor */
   --vv-teal:   #0F6E56;   /* Vibravault accent — primary actions, income */
-  --vv-coral:  #D85A30;   /* the single warm exception — expenses */
-  --vv-cream:  #F7F5F1;   /* page background: clay shadows need a warm ground */
+  --vv-coral:  #D85A30;   /* the single warm exception — expenses, errors */
+  --vv-cream:  #F7F5F1;   /* page background: soft shadows need a warm ground */
   --vv-surface:#FFFFFF;
   --vv-text:   #2C2C2A;
   --vv-muted:  #5F5E5A;
@@ -14,11 +21,13 @@
   --vv-r-md: 22px;
   --vv-r-sm: 18px;
 
-  /* Claymorphism: dual-direction shadow — light top-left, dark bottom-right.
-     No borders. This is why the page bg must stay cream, not white. */
-  --vv-clay:       -6px -6px 14px rgba(255,255,255,.9),  8px 10px 22px rgba(44,44,42,.10);
-  --vv-clay-sm:    -4px -4px 10px rgba(255,255,255,.85), 5px  6px 14px rgba(44,44,42,.09);
-  --vv-clay-inset: inset 3px 3px 8px rgba(44,44,42,.10), inset -3px -3px 8px rgba(255,255,255,.9);
+  /* The soft-UI shadow pair. Light source is top-left, so every raised element
+     gets a white highlight there and a warm shadow bottom-right. Reversing
+     both makes an element look pressed into the page instead of standing on
+     it — that single inversion is the whole language. */
+  --vv-neu:       -6px -6px 14px rgba(255,255,255,.9),  8px 10px 22px rgba(44,44,42,.10);
+  --vv-neu-sm:    -4px -4px 10px rgba(255,255,255,.85), 5px  6px 14px rgba(44,44,42,.09);
+  --vv-neu-inset: inset 3px 3px 8px rgba(44,44,42,.10), inset -3px -3px 8px rgba(255,255,255,.9);
 }
 
 * { box-sizing: border-box; }
@@ -31,12 +40,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Clay treatment — for surfaces you LOOK AT (cards, buttons, tiles).
-   Deliberately not used on transaction lists: 40 puffy rows read as bubble wrap. */
-.clay {
+/* Raised surface — for things you LOOK AT (cards, stat tiles, chart panels).
+   Deliberately NOT used on transaction lists: 40 extruded rows read as
+   corrugated cardboard and destroy scannability. Data-dense areas stay flat
+   with hairline dividers. */
+.neu {
   background: var(--vv-surface);
   border-radius: var(--vv-r-lg);
-  box-shadow: var(--vv-clay);
+  box-shadow: var(--vv-neu);
 }
 
 .vv-field {
@@ -47,10 +58,15 @@ body {
   background: var(--vv-cream);
   border: none;
   border-radius: var(--vv-r-sm);
-  box-shadow: var(--vv-clay-inset); /* inputs are pressed IN, buttons pop OUT */
+  box-shadow: var(--vv-neu-inset); /* pressed IN — the affordance for "type here" */
   outline: none;
 }
-.vv-field:focus { box-shadow: var(--vv-clay-inset), 0 0 0 2px rgba(15,110,86,.35); }
+.vv-field:focus { box-shadow: var(--vv-neu-inset), 0 0 0 2px rgba(15,110,86,.35); }
+
+/* Coral ring for a failing field — semantic use of the expense colour:
+   coral means "negative / wrong", nothing else. */
+.vv-field--error { box-shadow: var(--vv-neu-inset), 0 0 0 2px rgba(216,90,48,.45); }
+.vv-field--error:focus { box-shadow: var(--vv-neu-inset), 0 0 0 2px rgba(216,90,48,.7); }
 
 .vv-btn {
   width: 100%;
@@ -61,12 +77,13 @@ body {
   background: var(--vv-teal);
   border: none;
   border-radius: var(--vv-r-sm);
-  box-shadow: var(--vv-clay-sm);
+  box-shadow: var(--vv-neu-sm); /* popped OUT — the affordance for "press me" */
   cursor: pointer;
   transition: transform .12s ease, box-shadow .12s ease;
 }
 .vv-btn:hover:not(:disabled) { transform: translateY(-1px); }
-.vv-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--vv-clay-inset); }
+/* Pressing inverts the shadow: the button physically sinks into the page. */
+.vv-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--vv-neu-inset); }
 .vv-btn:disabled { opacity: .6; cursor: not-allowed; }
 
 .vv-label { display:block; font-size:13px; font-weight:600; color:var(--vv-muted); margin-bottom:7px; }
@@ -78,8 +95,3 @@ body {
 }
 .vv-link { color: var(--vv-teal); font-weight: 600; text-decoration: none; }
 .vv-link:hover { text-decoration: underline; }
-
-/* Coral ring for a field that's failing validation — semantic use of the
-   expense colour: coral means "something is wrong / negative", nothing else. */
-.vv-field--error { box-shadow: var(--vv-clay-inset), 0 0 0 2px rgba(216,90,48,.45); }
-.vv-field--error:focus { box-shadow: var(--vv-clay-inset), 0 0 0 2px rgba(216,90,48,.7); }

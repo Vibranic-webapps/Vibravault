@@ -25,7 +25,7 @@ async function submit() {
 
 <template>
   <main class="page">
-    <form class="clay card" @submit.prevent="submit">
+    <form class="neu card" @submit.prevent="submit">
       <!-- Brand tag: hangs off the top edge of the card, slightly rotated. -->
       <p class="brand">Vibravault</p>
 
@@ -75,7 +75,7 @@ async function submit() {
   color: #fff;
   background: var(--vv-indigo);
   border-radius: 14px;
-  box-shadow: var(--vv-clay-sm);
+  box-shadow: var(--vv-neu-sm);
 }
 
 h1 { margin: 0 0 4px; font-size: 26px; text-align: center; }

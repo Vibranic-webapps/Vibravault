@@ -10,7 +10,7 @@ async function logout() {
 
 <template>
   <main class="page">
-    <div class="clay card">
+    <div class="neu card">
       <p class="eyebrow">Vibravault</p>
       <h1>Signed in</h1>
       <p class="muted">{{ user?.email }}</p>
