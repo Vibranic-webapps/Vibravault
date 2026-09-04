@@ -1,0 +1,80 @@
+/* Vibravault design tokens — see 03 Design/(C) Visual System in the vault.
+   One family colour (indigo), one app accent (teal), one semantic exception (coral). */
+:root {
+  --vv-indigo: #3C3489;   /* Vibranic family anchor */
+  --vv-teal:   #0F6E56;   /* Vibravault accent — primary actions, income */
+  --vv-coral:  #D85A30;   /* the single warm exception — expenses */
+  --vv-cream:  #F7F5F1;   /* page background: clay shadows need a warm ground */
+  --vv-surface:#FFFFFF;
+  --vv-text:   #2C2C2A;
+  --vv-muted:  #5F5E5A;
+  --vv-muted-2:#888780;
+
+  --vv-r-lg: 28px;
+  --vv-r-md: 22px;
+  --vv-r-sm: 18px;
+
+  /* Claymorphism: dual-direction shadow — light top-left, dark bottom-right.
+     No borders. This is why the page bg must stay cream, not white. */
+  --vv-clay:       -6px -6px 14px rgba(255,255,255,.9),  8px 10px 22px rgba(44,44,42,.10);
+  --vv-clay-sm:    -4px -4px 10px rgba(255,255,255,.85), 5px  6px 14px rgba(44,44,42,.09);
+  --vv-clay-inset: inset 3px 3px 8px rgba(44,44,42,.10), inset -3px -3px 8px rgba(255,255,255,.9);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--vv-cream);
+  color: var(--vv-text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Clay treatment — for surfaces you LOOK AT (cards, buttons, tiles).
+   Deliberately not used on transaction lists: 40 puffy rows read as bubble wrap. */
+.clay {
+  background: var(--vv-surface);
+  border-radius: var(--vv-r-lg);
+  box-shadow: var(--vv-clay);
+}
+
+.vv-field {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 15px;
+  color: var(--vv-text);
+  background: var(--vv-cream);
+  border: none;
+  border-radius: var(--vv-r-sm);
+  box-shadow: var(--vv-clay-inset); /* inputs are pressed IN, buttons pop OUT */
+  outline: none;
+}
+.vv-field:focus { box-shadow: var(--vv-clay-inset), 0 0 0 2px rgba(15,110,86,.35); }
+
+.vv-btn {
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--vv-teal);
+  border: none;
+  border-radius: var(--vv-r-sm);
+  box-shadow: var(--vv-clay-sm);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.vv-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.vv-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--vv-clay-inset); }
+.vv-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+.vv-label { display:block; font-size:13px; font-weight:600; color:var(--vv-muted); margin-bottom:7px; }
+.vv-error {
+  padding: 11px 14px; margin-bottom: 16px;
+  font-size: 14px; color: var(--vv-coral);
+  background: rgba(216,90,48,.09);
+  border-radius: var(--vv-r-sm);
+}
+.vv-link { color: var(--vv-teal); font-weight: 600; text-decoration: none; }
+.vv-link:hover { text-decoration: underline; }

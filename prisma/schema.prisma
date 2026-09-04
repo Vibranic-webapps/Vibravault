@@ -54,7 +54,14 @@ model User {
 }
 
 model Session {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
+
+  // The cookie carries 32 random bytes; the DB only ever stores their SHA-256
+  // hash. A leaked database therefore yields no usable session cookies.
+  // Plain SHA-256 is enough: the token is already high-entropy random, so it
+  // does not need the slow salted hashing that human passwords require.
+  hashedToken String @unique
+
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime // no default — computed at login (now + 30 days)
