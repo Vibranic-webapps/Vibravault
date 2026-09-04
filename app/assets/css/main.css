@@ -69,21 +69,27 @@
 }
 
 /* ---- DARK MODE ---------------------------------------------------------
-   Same derivation, warm-dark base. The reference's dark shadow (#2A2D32 on a
-   #292D32 background) sits one value from the surface and reads as nothing,
-   so ours is derived properly: genuinely darker below-right, lighter
-   above-left. Accents are lifted, because #0F6E56 teal and #3C3489 indigo are
-   too dark to carry contrast on a dark surface.
+   NEUTRAL dark grey, not a dark version of the warm cream. Deriving the dark
+   surface from the light one produced a brown-looking page: warmth that reads
+   as "soft cream" at 96% lightness reads as "brown" at 17%. Light and dark
+   modes get INDEPENDENT surfaces; only the accents carry across.
+
+   The reference's dark shadow (#2A2D32 on a #292D32 background) sits one value
+   from the surface and reads as nothing, so ours is derived properly:
+   genuinely darker below-right, lighter above-left.
+
+   Accents are lifted, because #0F6E56 teal and #3C3489 indigo are too dark to
+   carry contrast on a dark surface.
    ---------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --vv-surface: #2A2825;
-    --vv-shadow-dark:  #1D1C1A;
-    --vv-shadow-light: #37342F;
+    --vv-surface: #2C2C2C;
+    --vv-shadow-dark:  #1F1F1F;
+    --vv-shadow-light: #3A3A3A;
 
-    --vv-text:    #EDEAE4;
-    --vv-muted:   #A8A49C;
-    --vv-muted-2: #86827B;
+    --vv-text:    #ECECEC;
+    --vv-muted:   #A6A6A6;
+    --vv-muted-2: #848484;
 
     --vv-accent:        #1FA37F;
     --vv-accent-text:   #10221D;
@@ -96,13 +102,13 @@
 }
 
 :root[data-theme="dark"] {
-  --vv-surface: #2A2825;
-  --vv-shadow-dark:  #1D1C1A;
-  --vv-shadow-light: #37342F;
+  --vv-surface: #2C2C2C;
+  --vv-shadow-dark:  #1F1F1F;
+  --vv-shadow-light: #3A3A3A;
 
-  --vv-text:    #EDEAE4;
-  --vv-muted:   #A8A49C;
-  --vv-muted-2: #86827B;
+  --vv-text:    #ECECEC;
+  --vv-muted:   #A6A6A6;
+  --vv-muted-2: #848484;
 
   --vv-accent:        #1FA37F;
   --vv-accent-text:   #10221D;
