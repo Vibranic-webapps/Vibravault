@@ -1,7 +1,24 @@
 /* ==========================================================================
    VIBRAVAULT DESIGN SYSTEM - Neumorphism (soft UI)
+   *** LOCKED 2026-09-04 ***  Changing a token here changes every screen.
+
+   WORKING RULES (do not break these without a deliberate decision)
+   - Never write a raw box-shadow. Use --vv-e1..e4 (raised) or --vv-p1..p3
+     (pressed). If none fits, the element is probably the wrong size.
+   - Never give a surface its own fill. Always var(--vv-surface).
+   - Never derive the dark palette from the light one, or vice versa. They are
+     independent; only accents carry across.
+   - Data-dense areas (transaction lists) are FLAT. No shadows, ever.
+   - Colour carries meaning: teal = income/action, coral = expense/error,
+     indigo = Vibranic brand. Category colours live ONLY in icon tiles.
+   - Any new colour must be added as a mode-aware token in BOTH blocks.
+   - Changing surface darkness? Move both shadows with it, keeping the gap.
+
+   Living reference: /design
+   Full rationale: KF OS/03 Projects/vibravault/03 Design/(C) Visual System
+
    Derived from the reference specs in "VibraVault Design inspiration",
-   re-derived in Vibravault's own warm palette.
+   re-derived in Vibravault's own palette.
 
    THE THREE RULES OF REAL NEUMORPHISM
    1. A raised or pressed element is the SAME COLOUR as its background.
