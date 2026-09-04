@@ -83,9 +83,9 @@
    ---------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --vv-surface: #2C2C2C;
-    --vv-shadow-dark:  #1F1F1F;
-    --vv-shadow-light: #3A3A3A;
+    --vv-surface: #1E1E1E;
+    --vv-shadow-dark:  #121212;
+    --vv-shadow-light: #2A2A2A;
 
     --vv-text:    #ECECEC;
     --vv-muted:   #A6A6A6;
@@ -102,9 +102,9 @@
 }
 
 :root[data-theme="dark"] {
-  --vv-surface: #2C2C2C;
-  --vv-shadow-dark:  #1F1F1F;
-  --vv-shadow-light: #3A3A3A;
+  --vv-surface: #1E1E1E;
+  --vv-shadow-dark:  #121212;
+  --vv-shadow-light: #2A2A2A;
 
   --vv-text:    #ECECEC;
   --vv-muted:   #A6A6A6;
