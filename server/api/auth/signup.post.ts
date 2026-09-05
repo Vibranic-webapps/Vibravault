@@ -1,5 +1,6 @@
 import { prisma } from '~~/server/utils/prisma'
 import { hashPassword, createSession } from '~~/server/utils/auth'
+import { ensureUserSeeded } from '~~/server/utils/seed'
 import { isPasswordValid, passwordProblems } from '~~/shared/utils/password'
 
 export default defineEventHandler(async (event) => {
@@ -30,6 +31,9 @@ export default defineEventHandler(async (event) => {
 
   const passwordHash = await hashPassword(password)
   const user = await prisma.user.create({ data: { email: normalizedEmail, passwordHash } })
+
+  // Give them a usable app immediately: the invisible v1 account + categories.
+  await ensureUserSeeded(user.id)
 
   await createSession(event, user.id)
 

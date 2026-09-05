@@ -83,6 +83,22 @@
   --vv-p1: inset -2px -2px  5px var(--vv-shadow-light), inset 2px 2px  5px var(--vv-shadow-dark);
   --vv-p2: inset -5px -5px 10px var(--vv-shadow-light), inset 5px 5px 10px var(--vv-shadow-dark);
   --vv-p3: inset -8px -8px 16px var(--vv-shadow-light), inset 8px 8px 16px var(--vv-shadow-dark);
+  /* ---- Category tints: ICON TILES ONLY. Never on an amount, a button or a
+     chart series. Category colour is IDENTITY; teal/coral carry MEANING.
+     Hues avoid the reserved ones: coral ~18deg, teal ~165deg, indigo ~248deg. */
+  --vv-cat-1: #EAE0CC;  --vv-cat-1-fg: #775B22;  /* amber */
+  --vv-cat-2: #EAEACC;  --vv-cat-2-fg: #777722;  /* gold */
+  --vv-cat-3: #DEEACC;  --vv-cat-3-fg: #547722;  /* olive */
+  --vv-cat-4: #D1EACC;  --vv-cat-4-fg: #307722;  /* moss */
+  --vv-cat-5: #CCEAD4;  --vv-cat-5-fg: #227737;  /* fern */
+  --vv-cat-6: #CCE4EA;  --vv-cat-6-fg: #226677;  /* cyan */
+  --vv-cat-7: #CCDBEA;  --vv-cat-7-fg: #224C77;  /* steel */
+  --vv-cat-8: #CCD2EA;  --vv-cat-8-fg: #223377;  /* denim */
+  --vv-cat-9: #DCCCEA;  --vv-cat-9-fg: #4F2277;  /* violet */
+  --vv-cat-10: #E8CCEA;  --vv-cat-10-fg: #712277;  /* plum */
+  --vv-cat-11: #EACCE0;  --vv-cat-11-fg: #77225B;  /* magenta */
+  --vv-cat-12: #EACCD4;  --vv-cat-12-fg: #772237;  /* rose */
+
 }
 
 /* ---- DARK MODE ---------------------------------------------------------
@@ -115,6 +131,21 @@
     --vv-accent-ring:   rgba(31,163,127,.5);
     --vv-negative-ring: rgba(240,119,75,.55);
     --vv-negative-bg:   rgba(240,119,75,.14);
+    /* ---- Category tints: ICON TILES ONLY. Never on an amount, a button or a
+       chart series. Category colour is IDENTITY; teal/coral carry MEANING.
+       Hues avoid the reserved ones: coral ~18deg, teal ~165deg, indigo ~248deg. */
+    --vv-cat-1: #675532;  --vv-cat-1-fg: #E3CDA0;  /* amber */
+    --vv-cat-2: #676732;  --vv-cat-2-fg: #E3E3A0;  /* gold */
+    --vv-cat-3: #516732;  --vv-cat-3-fg: #C7E3A0;  /* olive */
+    --vv-cat-4: #3B6732;  --vv-cat-4-fg: #ABE3A0;  /* moss */
+    --vv-cat-5: #32673F;  --vv-cat-5-fg: #A0E3B1;  /* fern */
+    --vv-cat-6: #325C67;  --vv-cat-6-fg: #A0D6E3;  /* cyan */
+    --vv-cat-7: #324C67;  --vv-cat-7-fg: #A0C2E3;  /* steel */
+    --vv-cat-8: #323D67;  --vv-cat-8-fg: #A0AEE3;  /* denim */
+    --vv-cat-9: #4E3267;  --vv-cat-9-fg: #C4A0E3;  /* violet */
+    --vv-cat-10: #633267;  --vv-cat-10-fg: #DFA0E3;  /* plum */
+    --vv-cat-11: #673255;  --vv-cat-11-fg: #E3A0CD;  /* magenta */
+    --vv-cat-12: #67323F;  --vv-cat-12-fg: #E3A0B1;  /* rose */
   }
 }
 
@@ -134,6 +165,22 @@
   --vv-accent-ring:   rgba(31,163,127,.5);
   --vv-negative-ring: rgba(240,119,75,.55);
   --vv-negative-bg:   rgba(240,119,75,.14);
+  /* ---- Category tints: ICON TILES ONLY. Never on an amount, a button or a
+     chart series. Category colour is IDENTITY; teal/coral carry MEANING.
+     Hues avoid the reserved ones: coral ~18deg, teal ~165deg, indigo ~248deg. */
+  --vv-cat-1: #675532;  --vv-cat-1-fg: #E3CDA0;  /* amber */
+  --vv-cat-2: #676732;  --vv-cat-2-fg: #E3E3A0;  /* gold */
+  --vv-cat-3: #516732;  --vv-cat-3-fg: #C7E3A0;  /* olive */
+  --vv-cat-4: #3B6732;  --vv-cat-4-fg: #ABE3A0;  /* moss */
+  --vv-cat-5: #32673F;  --vv-cat-5-fg: #A0E3B1;  /* fern */
+  --vv-cat-6: #325C67;  --vv-cat-6-fg: #A0D6E3;  /* cyan */
+  --vv-cat-7: #324C67;  --vv-cat-7-fg: #A0C2E3;  /* steel */
+  --vv-cat-8: #323D67;  --vv-cat-8-fg: #A0AEE3;  /* denim */
+  --vv-cat-9: #4E3267;  --vv-cat-9-fg: #C4A0E3;  /* violet */
+  --vv-cat-10: #633267;  --vv-cat-10-fg: #DFA0E3;  /* plum */
+  --vv-cat-11: #673255;  --vv-cat-11-fg: #E3A0CD;  /* magenta */
+  --vv-cat-12: #67323F;  --vv-cat-12-fg: #E3A0B1;  /* rose */
+
 }
 
 * { box-sizing: border-box; }

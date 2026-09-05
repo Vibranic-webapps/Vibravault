@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Living style guide. Sits behind the global auth middleware like every other
 // non-public page, so it is not exposed publicly.
-const theme = useTheme()
+const themes = useTheme()
 
 const elevations = [
   { cls: 'neu',   name: 'e1', use: 'chips, ticks, small tiles', spec: '3px / blur 6' },
@@ -42,12 +42,12 @@ const rows = [
       </div>
       <div class="themes">
         <button
-          v-for="t in (['system', 'light', 'dark'] as const)"
-          :key="t"
+          v-for="theme in (['system', 'light', 'dark'] as const)"
+          :key="theme"
           class="chip"
-          :class="{ active: theme === t }"
-          @click="theme = t"
-        >{{ t }}</button>
+          :class="{ active: themes === theme }"
+          @click="themes = theme"
+        >{{ theme }}</button>
       </div>
     </header>
 
