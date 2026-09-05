@@ -8,8 +8,11 @@ import { prisma } from './prisma'
 
 export const SESSION_COOKIE = 'vibravault_session'
 
-// 30 days = "stay logged in across visits".
-const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30
+// "Remember me" ticked: stay logged in across browser restarts.
+const SESSION_TTL_REMEMBER_MS = 1000 * 60 * 60 * 24 * 30
+// Not ticked: a shorter DB lifetime AND a session cookie (no expiry attribute),
+// so the browser discards it when it closes.
+const SESSION_TTL_SESSION_MS = 1000 * 60 * 60 * 12
 
 // bcrypt cost factor. Higher = slower to compute = harder to brute-force.
 const SALT_ROUNDS = 12
@@ -31,13 +34,26 @@ function hashToken(rawToken: string): string {
   return createHash('sha256').update(rawToken).digest('hex')
 }
 
-/** Create a session: random token to the cookie, only its hash to the DB. */
-export async function createSession(event: H3Event, userId: string): Promise<void> {
+/** Create a session: random token to the cookie, only its hash to the DB.
+ *
+ *  `remember` controls BOTH halves, and both matter:
+ *   - the DB row's expiresAt (server-side truth)
+ *   - whether the cookie gets an `expires` attribute at all. Without one it is
+ *     a "session cookie" and the browser drops it on close, which is what
+ *     "don't remember me" actually has to mean. Setting only the DB lifetime
+ *     would leave the user logged in after closing the browser.
+ */
+export async function createSession(
+  event: H3Event,
+  userId: string,
+  remember = true,
+): Promise<void> {
   const rawToken = randomBytes(32).toString('hex')
 
   // The schema deliberately has no default on expiresAt — Prisma's DSL can't
   // express "now + 30 days", so the rule lives here, in exactly one place.
-  const expiresAt = new Date(Date.now() + SESSION_TTL_MS)
+  const ttl = remember ? SESSION_TTL_REMEMBER_MS : SESSION_TTL_SESSION_MS
+  const expiresAt = new Date(Date.now() + ttl)
 
   await prisma.session.create({
     data: { hashedToken: hashToken(rawToken), userId, expiresAt },
@@ -48,7 +64,8 @@ export async function createSession(event: H3Event, userId: string): Promise<voi
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    expires: expiresAt,
+    // Omitted entirely when not remembering -> session cookie.
+    ...(remember ? { expires: expiresAt } : {}),
   })
 }
 

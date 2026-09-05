@@ -1,5 +1,5 @@
 // Nuxt's equivalent of VibraFlow's proxy.ts: decides who may see which page.
-const PUBLIC_PAGES = ['/login', '/signup']
+const PUBLIC_PAGES = ['/login', '/signup', '/forgot-password', '/reset-password']
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const user = useAuthUser()

@@ -46,7 +46,8 @@ model User {
   passwordHash String
   createdAt    DateTime @default(now())
 
-  sessions     Session[]
+  sessions            Session[]
+  passwordResetTokens PasswordResetToken[]
   accounts     Account[]
   categories   Category[]
   transactions Transaction[]
@@ -66,6 +67,20 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime // no default — computed at login (now + 30 days)
   createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Same design as Session: the emailed link carries 32 random bytes, the DB only
+// ever holds their SHA-256 hash. A leaked database yields no usable reset links.
+model PasswordResetToken {
+  id          String    @id @default(cuid())
+  hashedToken String    @unique
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime  // short-lived: 1 hour
+  usedAt      DateTime? // single use - a link works exactly once
+  createdAt   DateTime  @default(now())
 
   @@index([userId])
 }

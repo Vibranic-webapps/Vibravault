@@ -5,6 +5,7 @@ const user = useAuthUser()
 
 const email = ref('')
 const password = ref('')
+const remember = ref(true)
 const error = ref<string | null>(null)
 const pending = ref(false)
 
@@ -14,7 +15,7 @@ async function submit() {
   try {
     user.value = await $fetch('/api/auth/login', {
       method: 'POST',
-      body: { email: email.value, password: password.value },
+      body: { email: email.value, password: password.value, remember: remember.value },
     })
     await navigateTo('/')
   } catch (e: any) {
@@ -41,6 +42,21 @@ async function submit() {
 
       <label class="vv-label spaced" for="password">Password</label>
       <input id="password" v-model="password" class="vv-field" type="password" autocomplete="current-password" required />
+
+      <div class="row-between spaced">
+        <button
+          type="button"
+          class="switch"
+          role="switch"
+          :aria-checked="remember"
+          @click="remember = !remember"
+        >
+          <span class="track" :class="{ on: remember }"><span class="knob" /></span>
+          <span class="switch-label">Remember me</span>
+        </button>
+
+        <NuxtLink class="vv-link small" to="/forgot-password">Forgot password?</NuxtLink>
+      </div>
 
       <button class="vv-btn spaced-lg" type="submit" :disabled="pending">
         {{ pending ? 'Signing in…' : 'Sign in' }}
@@ -85,4 +101,28 @@ h1 { margin: 0 0 4px; font-size: 26px; text-align: center; }
 .spaced { margin-top: 18px; }
 .spaced-lg { margin-top: 26px; }
 .foot { margin: 20px 0 0; text-align: center; font-size: 14px; color: var(--vv-muted); }
+
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.small { font-size: 13px; }
+
+/* Toggle in the system's own language: the track is a HOLE (pressed), the knob
+   is RAISED and slides across it. */
+.switch {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0; background: none; border: none; cursor: pointer; font: inherit;
+}
+.track {
+  position: relative; width: 42px; height: 24px; flex: none;
+  border-radius: var(--vv-r-badge);
+  background: var(--vv-surface); box-shadow: var(--vv-p1);
+  transition: background .18s ease;
+}
+.track.on { background: var(--vv-accent); }
+.knob {
+  position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+  border-radius: 9px; background: var(--vv-surface); box-shadow: var(--vv-e1);
+  transition: transform .18s ease;
+}
+.track.on .knob { transform: translateX(18px); }
+.switch-label { font-size: 13px; font-weight: 600; color: var(--vv-muted); }
 </style>

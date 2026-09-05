@@ -2,7 +2,9 @@ import { prisma } from '~~/server/utils/prisma'
 import { verifyPassword, createSession } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
-  const { email, password } = await readBody<{ email?: unknown; password?: unknown }>(event)
+  const { email, password, remember } = await readBody<{
+    email?: unknown; password?: unknown; remember?: unknown
+  }>(event)
 
   if (typeof email !== 'string' || typeof password !== 'string') {
     throw createError({ statusCode: 400, statusMessage: 'Email and password are required' })
@@ -18,7 +20,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Invalid email or password' })
   }
 
-  await createSession(event, user.id)
+  await createSession(event, user.id, remember !== false)
 
   return { id: user.id, email: user.email }
 })
