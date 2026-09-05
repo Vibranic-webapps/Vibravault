@@ -44,16 +44,10 @@ async function submit() {
       <input id="password" v-model="password" class="vv-field" type="password" autocomplete="current-password" required />
 
       <div class="row-between spaced">
-        <button
-          type="button"
-          class="switch"
-          role="switch"
-          :aria-checked="remember"
-          @click="remember = !remember"
-        >
-          <span class="track" :class="{ on: remember }"><span class="knob" /></span>
-          <span class="switch-label">Remember me</span>
-        </button>
+        <label class="check">
+          <input v-model="remember" type="checkbox" class="box" />
+          <span class="check-label">Remember me</span>
+        </label>
 
         <NuxtLink class="vv-link small" to="/forgot-password">Forgot password?</NuxtLink>
       </div>
@@ -105,24 +99,27 @@ h1 { margin: 0 0 4px; font-size: 26px; text-align: center; }
 .row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .small { font-size: 13px; }
 
-/* Toggle in the system's own language: the track is a HOLE (pressed), the knob
-   is RAISED and slides across it. */
-.switch {
-  display: flex; align-items: center; gap: 10px;
-  padding: 0; background: none; border: none; cursor: pointer; font: inherit;
-}
-.track {
-  position: relative; width: 42px; height: 24px; flex: none;
-  border-radius: var(--vv-r-badge);
+/* Checkbox in the system's own language: unchecked is a HOLE (pressed in),
+   checked pops OUT and fills with the accent. A real <input type="checkbox">
+   with appearance:none, so keyboard, label click and screen readers all work
+   natively instead of being re-implemented on a <button>. */
+.check { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.box {
+  appearance: none; -webkit-appearance: none;
+  position: relative; width: 22px; height: 22px; flex: none; margin: 0;
+  border: none; border-radius: 8px;
   background: var(--vv-surface); box-shadow: var(--vv-p1);
-  transition: background .18s ease;
+  cursor: pointer;
+  transition: background .16s ease, box-shadow .16s ease;
 }
-.track.on { background: var(--vv-accent); }
-.knob {
-  position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
-  border-radius: 9px; background: var(--vv-surface); box-shadow: var(--vv-e1);
-  transition: transform .18s ease;
+.box:checked { background: var(--vv-accent); box-shadow: var(--vv-e1); }
+.box:checked::after {
+  content: ''; position: absolute; left: 7px; top: 3px;
+  width: 5px; height: 10px;
+  border: solid var(--vv-accent-text); border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
-.track.on .knob { transform: translateX(18px); }
-.switch-label { font-size: 13px; font-weight: 600; color: var(--vv-muted); }
+.box:focus-visible { box-shadow: var(--vv-p1), 0 0 0 2px var(--vv-accent-ring); }
+.box:checked:focus-visible { box-shadow: var(--vv-e1), 0 0 0 2px var(--vv-accent-ring); }
+.check-label { font-size: 13px; font-weight: 600; color: var(--vv-muted); }
 </style>
