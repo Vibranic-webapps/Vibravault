@@ -155,7 +155,7 @@ h2 { margin: 0 0 10px; font-size: 15px; color: var(--vv-muted); }
 .add-btn {
   padding: 11px 18px; font: inherit; font-size: 14px; font-weight: 600;
   color: var(--vv-accent-text); background: var(--vv-accent);
-  border: none; border-radius: var(--vv-r-pill); box-shadow: var(--vv-e1); cursor: pointer;
+  border: none; border-radius: var(--vv-r-badge); box-shadow: var(--vv-e1); cursor: pointer;
   white-space: nowrap;
 }
 .add-btn:active { box-shadow: var(--vv-p1); }

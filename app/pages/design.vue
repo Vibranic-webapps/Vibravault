@@ -140,7 +140,7 @@ section { margin-bottom: 46px; }
 .chip {
   padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 600;
   color: var(--vv-muted); background: var(--vv-surface);
-  border: none; border-radius: var(--vv-r-pill);
+  border: none; border-radius: var(--vv-r-badge);
   box-shadow: var(--vv-e1); cursor: pointer;
 }
 .chip.active { color: var(--vv-accent); box-shadow: var(--vv-p1); }

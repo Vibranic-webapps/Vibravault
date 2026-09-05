@@ -63,7 +63,7 @@
   --vv-r-sm: 14px;
   --vv-r-md: 20px;
   --vv-r-lg: 28px;
-  --vv-r-pill: 999px;
+  --vv-r-badge: 12px;   /* badges, not pills - decided 2026-09-05 */
 
   /* ---- ELEVATION SCALE ------------------------------------------------
      Offset and blur must SCALE WITH ELEMENT SIZE. One shadow size used

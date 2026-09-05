@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// App shell for authenticated pages: header + floating soft-UI nav pill.
+// App shell for authenticated pages: header + floating soft-UI nav bar.
 const user = useAuthUser()
 const theme = useTheme()
 
@@ -38,8 +38,8 @@ async function logout() {
       <slot />
     </main>
 
-    <!-- Floating nav pill. Bottom + thumb-reachable on mobile, and the only nav
-         treatment that looks like the design language rather than a default. -->
+    <!-- Floating nav bar. Bottom + thumb-reachable on mobile. Items are BADGES
+         (rounded rectangles), not pills - decided 2026-09-05. -->
     <nav class="navbar" aria-label="Main">
       <NuxtLink
         v-for="item in navItems"
@@ -74,7 +74,7 @@ async function logout() {
   width: 38px; height: 38px; display: grid; place-items: center;
   font: inherit; font-size: 15px; line-height: 1;
   color: var(--vv-muted); background: var(--vv-surface);
-  border: none; border-radius: var(--vv-r-pill);
+  border: none; border-radius: var(--vv-r-badge);
   box-shadow: var(--vv-e1); cursor: pointer;
   transition: box-shadow .12s ease, color .12s ease;
 }
@@ -87,12 +87,12 @@ async function logout() {
   position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
   z-index: 20;
   display: flex; align-items: center; gap: 6px;
-  padding: 8px; border-radius: var(--vv-r-pill);
+  padding: 8px; border-radius: var(--vv-r-md);
   background: var(--vv-surface); box-shadow: var(--vv-e2);
 }
 .nav-item {
   display: flex; align-items: center; gap: 8px;
-  padding: 10px 16px; border-radius: var(--vv-r-pill);
+  padding: 10px 16px; border-radius: var(--vv-r-badge);
   font-size: 13px; font-weight: 600; text-decoration: none;
   color: var(--vv-muted); white-space: nowrap;
   transition: color .12s ease, box-shadow .12s ease;
@@ -107,7 +107,7 @@ async function logout() {
   display: grid; place-items: center;
   font-size: 22px; line-height: 1; font-weight: 500; text-decoration: none;
   color: var(--vv-accent-text); background: var(--vv-accent);
-  border-radius: var(--vv-r-pill); box-shadow: var(--vv-e1);
+  border-radius: var(--vv-r-badge); box-shadow: var(--vv-e1);
   transition: transform .12s ease, box-shadow .12s ease;
 }
 .nav-add:hover { transform: translateY(-1px); }
