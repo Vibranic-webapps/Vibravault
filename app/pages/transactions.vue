@@ -7,7 +7,7 @@ const route = useRoute()
 const store = useTransactionsStore()
 const categories = useCategoriesStore()
 
-await Promise.all([store.fetchMonth(), categories.fetchAll()])
+await Promise.all([store.fetchMonth(), categories.fetchAll(true)])
 
 const showForm = ref(false)
 const editing = ref<Transaction | null>(null)
@@ -22,8 +22,9 @@ const form = reactive({
   description: '',
 })
 
-// The nav's + button links here with ?new=1.
-onMounted(() => { if (route.query.new === '1') openCreate() })
+// The nav's + button links here with ?new=1. Done during setup, not onMounted,
+// so the form is server-rendered rather than popping in after hydration.
+if (route.query.new === '1') openCreate()
 
 const monthLabel = computed(() => {
   const [y, m] = store.month.split('-').map(Number)
@@ -185,6 +186,17 @@ watch(() => form.direction, () => { form.categoryId = '' })
           <option value="">Uncategorised</option>
           <option v-for="c in formCategories" :key="c.id" :value="c.id">{{ c.icon }} {{ c.name }}</option>
         </select>
+        <!-- An empty list must say WHY, not just look empty. -->
+        <p v-if="!formCategories.length" class="hint">
+          <template v-if="categories.error">Couldn't load categories: {{ categories.error }}</template>
+          <template v-else-if="!categories.items.length">
+            No categories loaded. <NuxtLink class="vv-link" to="/categories">Open categories</NuxtLink>
+          </template>
+          <template v-else>
+            No {{ form.direction === 'in' ? 'income' : 'expense' }} categories
+            ({{ categories.items.length }} loaded, none of this type).
+          </template>
+        </p>
 
         <label class="vv-label spaced" for="cp">Counterparty</label>
         <input id="cp" v-model="form.counterparty" class="vv-field" placeholder="Colruyt" />
@@ -269,4 +281,5 @@ h2 { margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: .06em;
 }
 .kind.on { color: var(--vv-accent); box-shadow: var(--vv-p1); }
 .actions { display: flex; gap: 10px; margin-top: 24px; }
+.hint { margin: 8px 0 0; font-size: 12px; color: var(--vv-negative); }
 </style>
