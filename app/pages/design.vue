@@ -1,4 +1,6 @@
 <script setup lang="ts">
+definePageMeta({ layout: false })
+
 // Living style guide. Sits behind the global auth middleware like every other
 // non-public page, so it is not exposed publicly.
 const themes = useTheme()

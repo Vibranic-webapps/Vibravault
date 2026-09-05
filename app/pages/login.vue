@@ -1,4 +1,6 @@
 <script setup lang="ts">
+definePageMeta({ layout: false })
+
 const user = useAuthUser()
 
 const email = ref('')
