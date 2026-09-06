@@ -7,6 +7,7 @@ const navItems = [
   { to: '/',             label: 'Dashboard',    icon: '◧' },
   { to: '/transactions', label: 'Transactions', icon: '≡' },
   { to: '/categories',   label: 'Categories',   icon: '◎' },
+  { to: '/import',       label: 'Import',       icon: '⇪' },
 ] as const
 
 const nextTheme = computed(() => (theme.value === 'dark' ? 'light' : 'dark'))
