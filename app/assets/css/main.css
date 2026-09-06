@@ -99,6 +99,17 @@
   --vv-cat-11: #EACCE0;  --vv-cat-11-fg: #77225B;  /* magenta */
   --vv-cat-12: #EACCD4;  --vv-cat-12-fg: #772237;  /* rose */
 
+
+  /* ---- Chart marks -----------------------------------------------------
+     Chart-grade steps of the SAME semantic hues. The UI teal #0F6E56 has
+     chroma 0.091 and reads as GREY at mark size - fine on a button, wrong on
+     data. Validated with the dataviz palette checker: all six checks pass,
+     CVD deutan dE 10.4 (>= 8 required).
+     -------------------------------------------------------------------- */
+  --vv-chart-in:  #12A583;   /* income  */
+  --vv-chart-out: #D85A30;   /* expense */
+  --vv-chart-grid: rgba(44,44,42,.10);
+
 }
 
 /* ---- DARK MODE ---------------------------------------------------------
@@ -146,6 +157,11 @@
     --vv-cat-10: #633267;  --vv-cat-10-fg: #DFA0E3;  /* plum */
     --vv-cat-11: #673255;  --vv-cat-11-fg: #E3A0CD;  /* magenta */
     --vv-cat-12: #67323F;  --vv-cat-12-fg: #E3A0B1;  /* rose */
+
+    /* ---- Chart marks (dark). Validated on #1E1E1E: all pass, CVD dE 10.5 */
+    --vv-chart-in:  #1FA37F;
+    --vv-chart-out: #E2673C;
+    --vv-chart-grid: rgba(236,236,236,.12);
   }
 }
 
@@ -180,6 +196,12 @@
   --vv-cat-10: #633267;  --vv-cat-10-fg: #DFA0E3;  /* plum */
   --vv-cat-11: #673255;  --vv-cat-11-fg: #E3A0CD;  /* magenta */
   --vv-cat-12: #67323F;  --vv-cat-12-fg: #E3A0B1;  /* rose */
+
+
+  /* ---- Chart marks (dark). Validated on #1E1E1E: all pass, CVD dE 10.5 */
+  --vv-chart-in:  #1FA37F;
+  --vv-chart-out: #E2673C;
+  --vv-chart-grid: rgba(236,236,236,.12);
 
 }
 
