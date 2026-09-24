@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { formatCents, centsToInput } from '~~/shared/utils/money'
+import { transactionLabel } from '~~/shared/utils/merchant'
 import { useTransactionsStore, type Transaction } from '~/stores/transactions'
 import { useCategoriesStore } from '~/stores/categories'
 
@@ -145,7 +146,7 @@ watch(() => form.direction, () => { form.categoryId = '' })
           >{{ categoryOf(t.categoryId)?.icon ?? '·' }}</span>
 
           <button class="row-main" type="button" @click="openEdit(t)">
-            <strong>{{ t.counterparty || t.description || 'Transaction' }}</strong>
+            <strong>{{ transactionLabel(t.counterparty, t.description) }}</strong>
             <small>{{ categoryOf(t.categoryId)?.name ?? 'Uncategorised' }}</small>
           </button>
 
