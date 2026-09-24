@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { formatCents } from '~~/shared/utils/money'
+import { transactionLabel } from '~~/shared/utils/merchant'
 
 interface PreviewRow {
   bookedAt: string
@@ -125,7 +126,7 @@ async function doCommit() {
         >
           <span class="badge" :class="r.duplicate ? 'dup' : 'new'">{{ r.duplicate ? 'dup' : 'new' }}</span>
           <span class="r-main">
-            <strong>{{ r.description || '—' }}</strong>
+            <strong>{{ transactionLabel(null, r.description) }}</strong>
             <small>{{ r.bookedAt }}</small>
           </span>
           <span :class="r.amountCents < 0 ? 'vv-amount-out' : 'vv-amount-in'">
