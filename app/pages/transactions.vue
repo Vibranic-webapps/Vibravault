@@ -10,6 +10,7 @@ const categories = useCategoriesStore()
 
 await Promise.all([store.fetchMonth(), categories.fetchAll(true)])
 
+const viewing = ref<Transaction | null>(null)
 const showForm = ref(false)
 const editing = ref<Transaction | null>(null)
 const saving = ref(false)
@@ -145,7 +146,7 @@ watch(() => form.direction, () => { form.categoryId = '' })
             aria-hidden="true"
           >{{ categoryOf(t.categoryId)?.icon ?? '·' }}</span>
 
-          <button class="row-main" type="button" @click="openEdit(t)">
+          <button class="row-main" type="button" @click="viewing = t">
             <strong>{{ transactionLabel(t.counterparty, t.description) }}</strong>
             <small>{{ categoryOf(t.categoryId)?.name ?? 'Uncategorised' }}</small>
           </button>
@@ -154,10 +155,17 @@ watch(() => form.direction, () => { form.categoryId = '' })
             {{ formatCents(t.amountCents, { signed: t.amountCents > 0 }) }}
           </span>
 
-          <button class="del" type="button" aria-label="Delete" @click="remove(t)">×</button>
         </div>
       </div>
     </section>
+
+    <TransactionDrawer
+      :transaction="viewing"
+      :category="categoryOf(viewing?.categoryId ?? null)"
+      @close="viewing = null"
+      @edit="(t) => { viewing = null; openEdit(t) }"
+      @remove="(t) => { viewing = null; remove(t) }"
+    />
 
     <!-- Form -->
     <div v-if="showForm" class="overlay" @click.self="showForm = false">
