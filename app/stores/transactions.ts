@@ -7,6 +7,9 @@ export interface Transaction {
   bookedAt: string
   categoryId: string | null
   counterparty: string | null
+  counterpartyIban: string | null
+  /** The bank's running balance after this row. Null for hand-entered rows. */
+  balanceAfterCents: number | null
   description: string | null
   source: 'MANUAL' | 'CSV' | 'PSD2'
 }
