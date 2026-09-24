@@ -6,6 +6,8 @@
  * locally, and a missing key in production can never turn "forgot password"
  * into a 500 - the user still gets the same neutral response either way.
  */
+import { reportEvent } from './vibradex'
+
 interface SendArgs {
   to: string
   subject: string
@@ -30,10 +32,17 @@ export async function sendMail({ to, subject, html, text }: SendArgs): Promise<v
       body: { from, to, subject, html, text },
     })
   } catch (e) {
-    // Never surface a mail failure to the caller: /api/auth/forgot-password
+    // Never surface a mail failure to the CALLER: /api/auth/forgot-password
     // must answer identically whether or not the address exists, and whether
-    // or not the provider is having a bad day.
+    // or not the provider is having a bad day. But it must not vanish either -
+    // a rejected Resend key or an unverified domain would otherwise be
+    // completely invisible.
     console.error('[mail] send failed', e)
+    await reportEvent('Email send failed', {
+      type: 'error',
+      severity: 'medium',
+      details: { subject, reason: e instanceof Error ? e.message : String(e) },
+    })
   }
 }
 
