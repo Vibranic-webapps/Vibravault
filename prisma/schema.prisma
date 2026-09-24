@@ -48,6 +48,7 @@ model User {
 
   sessions            Session[]
   passwordResetTokens PasswordResetToken[]
+  importTokens        ImportToken[]
   accounts     Account[]
   categories   Category[]
   transactions Transaction[]
@@ -80,6 +81,26 @@ model PasswordResetToken {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt   DateTime  // short-lived: 1 hour
   usedAt      DateTime? // single use - a link works exactly once
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// A long-lived credential for the iOS Shortcut that shares a CSV into the app.
+// Same hashing discipline as Session and PasswordResetToken: the Shortcut holds
+// the raw token, the DB only ever holds its SHA-256 hash, so a database leak
+// yields nothing that can import into an account.
+//
+// Deliberately SEPARATE from the password: it can be revoked on its own if a
+// phone is lost, without forcing a password change or logging out everywhere.
+model ImportToken {
+  id          String    @id @default(cuid())
+  hashedToken String    @unique
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String    // e.g. "iPhone Shortcut" - so multiple devices stay tellable apart
+  lastUsedAt  DateTime? // shows at a glance whether it is still in use
+  revokedAt   DateTime? // revoked, not deleted: the audit trail survives
   createdAt   DateTime  @default(now())
 
   @@index([userId])

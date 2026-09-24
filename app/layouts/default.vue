@@ -31,6 +31,7 @@ async function logout() {
           :aria-label="`Switch to ${nextTheme} mode`"
           @click="theme = nextTheme"
         >{{ theme === 'dark' ? '☀' : '☾' }}</button>
+        <NuxtLink class="icon-btn" to="/settings" aria-label="Settings">⚙</NuxtLink>
         <button class="icon-btn" type="button" aria-label="Log out" @click="logout">⏻</button>
       </div>
     </header>
@@ -72,6 +73,7 @@ async function logout() {
 }
 .head-actions { display: flex; gap: 10px; }
 .icon-btn {
+  text-decoration: none;
   width: 38px; height: 38px; display: grid; place-items: center;
   font: inherit; font-size: 15px; line-height: 1;
   color: var(--vv-muted); background: var(--vv-surface);
