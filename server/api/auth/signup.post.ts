@@ -1,6 +1,7 @@
 import { prisma } from '~~/server/utils/prisma'
 import { hashPassword, createSession } from '~~/server/utils/auth'
 import { ensureUserSeeded } from '~~/server/utils/seed'
+import { reportEvent } from '~~/server/utils/vibradex'
 import { isPasswordValid, passwordProblems } from '~~/shared/utils/password'
 
 export default defineEventHandler(async (event) => {
@@ -36,6 +37,8 @@ export default defineEventHandler(async (event) => {
   await ensureUserSeeded(user.id)
 
   await createSession(event, user.id)
+
+  event.waitUntil?.(reportEvent('New user signed up', { details: { userId: user.id } }))
 
   setResponseStatus(event, 201)
   return { id: user.id, email: user.email }
