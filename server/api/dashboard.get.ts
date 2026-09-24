@@ -33,6 +33,8 @@ export default defineEventHandler(async (event) => {
     prismaLive.transaction.aggregate({ where: { userId }, _sum: { amountCents: true } }),
   ])
 
+  const totalEver = await prismaLive.transaction.count({ where: { userId } })
+
   const income = monthRows.filter((t) => t.amountCents > 0).reduce((n, t) => n + t.amountCents, 0)
   const expense = monthRows.filter((t) => t.amountCents < 0).reduce((n, t) => n + t.amountCents, 0)
 
@@ -98,5 +100,6 @@ export default defineEventHandler(async (event) => {
     weeks,
     topCategories,
     uncategorised: monthRows.filter((t) => !t.categoryId).length,
+    hasAnyTransactions: totalEver > 0,
   }
 })

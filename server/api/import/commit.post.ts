@@ -4,6 +4,7 @@ import { requireUserId } from '~~/server/utils/auth'
 import { getDefaultAccountId } from '~~/server/utils/seed'
 import { parseKbcCsv } from '~~/shared/utils/kbcCsv'
 import { fingerprintRow } from '~~/server/utils/import'
+import { reportEvent } from '~~/server/utils/vibradex'
 
 export default defineEventHandler(async (event) => {
   const userId = await requireUserId(event)
@@ -63,6 +64,26 @@ export default defineEventHandler(async (event) => {
     }
     return b
   })
+
+  // A failed balance check is the one import signal worth a WARNING: it means
+  // the parse disagrees with the bank's own running total.
+  event.waitUntil?.(reportEvent(
+    parsed.meta.balanceCheck.ok ? 'CSV import completed' : 'CSV import completed with a balance mismatch',
+    {
+      type: parsed.meta.balanceCheck.ok ? 'info' : 'warning',
+      severity: parsed.meta.balanceCheck.ok ? 'low' : 'medium',
+      details: {
+        userId,
+        parsed: parsed.rows.length,
+        inserted: toInsert.length,
+        skipped: parsed.rows.length - toInsert.length,
+        unreadableRows: parsed.errors.length,
+        balanceOk: parsed.meta.balanceCheck.ok,
+        encoding: parsed.meta.encoding,
+        delimiter: parsed.meta.delimiter,
+      },
+    },
+  ))
 
   return {
     batchId: batch.id,

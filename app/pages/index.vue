@@ -10,6 +10,7 @@ interface Dashboard {
   weeks: Week[]
   topCategories: TopCategory[]
   uncategorised: number
+  hasAnyTransactions: boolean
 }
 
 const month = ref(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`)
@@ -56,6 +57,21 @@ const showTable = ref(false)
       </div>
     </header>
 
+    <!-- First run: a hero of EUR 0,00 over an empty chart reads as broken, not
+         as new. Replace the whole dashboard until there is something to show. -->
+    <div v-if="!data.hasAnyTransactions" class="neu-4 welcome">
+      <p class="w-eyebrow">Welcome</p>
+      <h2 class="w-title">Nothing in the vault yet</h2>
+      <p class="w-body">
+        Import a CSV export from your bank to fill it in one go, or add a transaction by hand.
+      </p>
+      <div class="w-actions">
+        <NuxtLink class="vv-btn w-btn" to="/import">Import a bank CSV</NuxtLink>
+        <NuxtLink class="vv-btn vv-btn--ghost w-btn" to="/transactions?new=1">Add one manually</NuxtLink>
+      </div>
+    </div>
+
+    <template v-else>
     <!-- Hero number: a headline value is NOT a chart. -->
     <div class="neu-4 hero">
       <p class="hero-label">Balance</p>
@@ -94,7 +110,10 @@ const showTable = ref(false)
         </div>
       </div>
 
-      <p v-if="!hasData" class="empty">No transactions in {{ monthLabel }}.</p>
+      <p v-if="!hasData" class="empty">
+        No transactions in {{ monthLabel }}.
+        <button class="linky" type="button" @click="shiftMonth(-1)">Try the previous month</button>
+      </p>
 
       <div v-else class="chart">
         <div v-for="w in data.weeks" :key="w.weekStart" class="week">
@@ -154,6 +173,7 @@ const showTable = ref(false)
       {{ data.uncategorised }} uncategorised this month —
       <NuxtLink class="vv-link" to="/transactions">sort them out</NuxtLink>
     </p>
+    </template>
   </div>
 </template>
 
@@ -228,5 +248,13 @@ h2 { margin: 0 0 14px; font-size: 15px; font-weight: 700; }
 .row span:last-child { font-size: 14px; font-weight: 700; }
 
 .empty { margin: 8px 0; color: var(--vv-muted-2); font-size: 14px; }
+.linky { padding: 0 0 0 4px; font: inherit; font-size: 14px; font-weight: 600; color: var(--vv-accent); background: none; border: none; cursor: pointer; text-decoration: underline; }
+
+.welcome { padding: 40px 28px; text-align: center; }
+.w-eyebrow { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--vv-brand); }
+.w-title { margin: 0 0 8px; font-size: 22px; }
+.w-body { margin: 0 auto 24px; max-width: 42ch; font-size: 14px; color: var(--vv-muted); }
+.w-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.w-btn { width: auto; min-width: 190px; text-decoration: none; display: inline-block; text-align: center; }
 .nudge { margin: 0 0 10px; font-size: 13px; color: var(--vv-muted); text-align: center; }
 </style>
