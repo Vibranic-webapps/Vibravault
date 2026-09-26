@@ -1,6 +1,13 @@
 export default defineNuxtConfig({
   modules: ['@pinia/nuxt'],
   devtools: { enabled: true },
+
+  // Own dev port. Vibradex, VibraFlow and the portfolio all default to 3000,
+  // and a browser keys service workers, localStorage and cache per ORIGIN -
+  // scheme + host + PORT. Sharing localhost:3000 meant Vibradex's Web Push
+  // service worker stayed registered "on Vibravault", producing
+  // the Vue Router warning for /sw.js, and made tests hit the wrong app.
+  devServer: { port: 3002 },
   typescript: { strict: true },
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
