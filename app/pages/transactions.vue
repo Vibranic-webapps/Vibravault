@@ -208,7 +208,7 @@ watch(() => form.direction, () => { form.categoryId = '' })
       :transaction="viewing"
       :category="categoryOf(viewing?.categoryId ?? null)"
       @close="viewing = null"
-      @edit="(t) => { viewing = null; openEdit(t) }"
+      @updated="(t) => { viewing = t }"
       @remove="(t) => { viewing = null; remove(t) }"
       @teach="(t) => { viewing = null; teaching = t }"
     />

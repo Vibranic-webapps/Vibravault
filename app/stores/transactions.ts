@@ -116,6 +116,24 @@ export const useTransactionsStore = defineStore('transactions', () => {
     }
   }
 
+  /**
+   * Change ONLY the given fields. Safe because PATCH is a true partial update:
+   * sending { categoryId } leaves the amount, date and bank text untouched.
+   * Returns the updated row (so the drawer can keep showing it even if a new
+   * date moved it out of the month currently listed), or null on failure.
+   */
+  async function patch(id: string, fields: Record<string, unknown>): Promise<Transaction | null> {
+    error.value = null
+    try {
+      const updated = await $fetch<Transaction>(`/api/transactions/${id}`, { method: 'PATCH', body: fields })
+      await fetchMonth()
+      return updated
+    } catch (e: unknown) {
+      error.value = message(e)
+      return null
+    }
+  }
+
   async function remove(id: string) {
     error.value = null
     try {
@@ -131,6 +149,6 @@ export const useTransactionsStore = defineStore('transactions', () => {
   return {
     items, totals, month, loading, error,
     byDay, uncategorisedCount,
-    fetchMonth, shiftMonth, create, update, remove,
+    fetchMonth, shiftMonth, create, update, patch, remove,
   }
 })
