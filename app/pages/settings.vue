@@ -11,7 +11,6 @@ import { useRulesStore } from '~/stores/rules'
 import { useCategoriesStore } from '~/stores/categories'
 
 const user = useAuthUser()
-const theme = useTheme()
 const rules = useRulesStore()
 const categories = useCategoriesStore()
 await Promise.all([rules.fetchAll(), categories.fetchAll()])
@@ -63,23 +62,8 @@ const active = computed(() => (tokens.value ?? []).filter((t) => !t.revokedAt))
     <h1>Settings</h1>
     <p class="muted">{{ user?.email }}</p>
 
-    <!-- Appearance -->
-    <section class="neu-3 card">
-      <h2>Appearance</h2>
-      <div class="themes">
-        <button
-          v-for="t in (['system', 'light', 'dark'] as const)"
-          :key="t"
-          class="chip"
-          :class="{ on: theme === t }"
-          type="button"
-          @click="theme = t"
-        >{{ t }}</button>
-      </div>
-    </section>
-
     <!-- Taught rules -->
-    <section class="neu-3 card">
+    <section id="rules" class="neu-3 card">
       <h2>Rules you've taught</h2>
       <p class="body">
         Created from a transaction's <strong>⋯ → Rename &amp; categorise all like this</strong>.
@@ -110,7 +94,7 @@ const active = computed(() => (tokens.value ?? []).filter((t) => !t.revokedAt))
     </section>
 
     <!-- Import tokens -->
-    <section class="neu-3 card">
+    <section id="phone" class="neu-3 card">
       <h2>Share a CSV from your phone</h2>
       <p class="body">
         iOS doesn't let a web app join the share sheet, but an
@@ -177,13 +161,6 @@ h2 { margin: 0 0 12px; font-size: 15px; font-weight: 700; }
 .body { margin: 0 0 16px; font-size: 14px; color: var(--vv-muted); max-width: 60ch; }
 .card { padding: 22px; margin-bottom: 20px; }
 
-.themes { display: flex; gap: 8px; }
-.chip {
-  padding: 9px 16px; font: inherit; font-size: 13px; font-weight: 600;
-  color: var(--vv-muted); background: var(--vv-surface);
-  border: none; border-radius: var(--vv-r-badge); box-shadow: var(--vv-e1); cursor: pointer;
-}
-.chip.on { color: var(--vv-accent); box-shadow: var(--vv-p1); }
 
 .reveal { padding: 16px; margin-bottom: 16px; }
 .reveal-label { margin: 0 0 8px; font-size: 12px; font-weight: 700; color: var(--vv-negative); }

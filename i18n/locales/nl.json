@@ -66,5 +66,35 @@
     "toastMsg": "Bewaard — zo gedaan",
     "month": "Maandkiezer",
     "money": "Bedragen"
+  },
+  "nav": {
+    "home": "Start",
+    "transactions": "Transacties",
+    "categories": "Categorieën",
+    "you": "Jij",
+    "add": "Toevoegen",
+    "main": "Hoofdmenu"
+  },
+  "add": {
+    "title": "Iets toevoegen",
+    "manual": "Zelf invullen",
+    "manualHint": "Een betaling of inkomen dat je wil noteren",
+    "import": "Importeren van je bank",
+    "importHint": "Laad het bestand op dat je bankapp exporteert",
+    "receipt": "Kasticket scannen",
+    "receiptHint": "Zie wat je per product betaalde",
+    "soon": "Binnenkort"
+  },
+  "you": {
+    "title": "Jij",
+    "settings": "Voorkeuren",
+    "tools": "Hulpmiddelen",
+    "account": "Account",
+    "rules": "Jouw regels",
+    "phone": "Delen vanaf je telefoon",
+    "signOut": "Afmelden"
+  },
+  "brand": {
+    "home": "Vibravault — start"
   }
 }

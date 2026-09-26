@@ -363,3 +363,17 @@ select.vv-field {
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* ── Tab transitions (Wave 2) ─────────────────────────────────────────────
+   Set per navigation by middleware/tab-transition.global.ts. Short and
+   small on purpose: a hint of direction, not a show. */
+.tab-next-enter-active, .tab-next-leave-active,
+.tab-prev-enter-active, .tab-prev-leave-active { transition: opacity .15s ease, transform .15s ease; }
+.tab-next-enter-from { opacity: 0; transform: translateX(28px); }
+.tab-next-leave-to   { opacity: 0; transform: translateX(-28px); }
+.tab-prev-enter-from { opacity: 0; transform: translateX(-28px); }
+.tab-prev-leave-to   { opacity: 0; transform: translateX(28px); }
+@media (prefers-reduced-motion: reduce) {
+  .tab-next-enter-from, .tab-next-leave-to,
+  .tab-prev-enter-from, .tab-prev-leave-to { transform: none; }
+}
