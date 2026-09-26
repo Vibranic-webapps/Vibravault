@@ -18,6 +18,18 @@ const cases: { raw: string; expected: string | null }[] = [
     raw: 'STORTING AUTOMAAT BC TESTSTRAAT 1   TESTGEMEENTE MET KBC-DEBETKAART 0000 00XX XXXX 0000 KAARTHOUDER TEST USER REFERTE 000000000000000000000000',
     expected: 'Cash deposit',
   },
+  {
+    raw: 'INSTANTOVERSCHRIJVING VAN BE00 0000 0000 0000 BANKIER OPDRACHTGEVER: REVOBEB2XXX TEST USER REFERENTIE: NOTPROVIDED OM 13.08 UUR',
+    expected: 'INSTANTOVERSCHRIJVING ',
+  },
+  {
+    raw: '',
+    expected: ''
+  },
+  {
+    raw: '',
+    expected: ''
+  },
   // An unrecognised shape MUST return null, not a guess.
   { raw: 'SOMETHING COMPLETELY NEW THAT YOU HAVE NOT SEEN YET', expected: null },
 ]

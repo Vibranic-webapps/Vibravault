@@ -50,9 +50,16 @@
  * you will be adding rules for months as new statement types appear.
  */
 export function extractMerchant(description: string): string | null {
-  // TODO(Kilian): implement. Return null until then - the UI already falls
-  // back to truncated raw text, so the app keeps working while you build it.
-  void description
+  
+  if (description.startsWith('STORTING AUTOMAAT')) return 'Cash deposit'
+
+  if (description.startsWith('BETALING VIA BANCONTACT')) {
+    return description.match(/BETALING VIA BANCONTACT.*?UUR (.*?) MET KBC-DEBETKAART/)?.[1] ?? null
+  }
+
+  if (description.startsWith('EUROPESE DOMICILIERING SCHULDEISER')) {
+    return description.match(/SCHULDEISER\s*:\s*(.*?)\s+REF\./)?.[1] ?? null
+  }
   return null
 }
 

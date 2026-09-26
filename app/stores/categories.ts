@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-export type CategoryKind = 'INCOME' | 'EXPENSE'
+export type CategoryKind = 'INCOME' | 'EXPENSE' | 'TRANSFER'
 
 export interface Category {
   id: string
@@ -28,6 +28,7 @@ export const useCategoriesStore = defineStore('categories', () => {
   // Getters
   const income = computed(() => items.value.filter((c) => c.kind === 'INCOME'))
   const expense = computed(() => items.value.filter((c) => c.kind === 'EXPENSE'))
+  const transfer = computed(() => items.value.filter((c) => c.kind === 'TRANSFER'))
   const byId = computed(() => new Map(items.value.map((c) => [c.id, c])))
 
   // Actions
@@ -92,5 +93,5 @@ export const useCategoriesStore = defineStore('categories', () => {
     }
   }
 
-  return { items, loading, error, loaded, income, expense, byId, fetchAll, create, update, remove }
+  return { items, loading, error, loaded, income, expense, transfer, byId, fetchAll, create, update, remove }
 })

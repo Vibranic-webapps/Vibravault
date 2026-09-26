@@ -1,5 +1,6 @@
 import { prismaLive } from '~~/server/utils/transactionQuery'
 import { requireUserId } from '~~/server/utils/auth'
+import { transferCategoryIds, countsAsFlow } from '~~/server/utils/transfers'
 
 export default defineEventHandler(async (event) => {
   const userId = await requireUserId(event)
@@ -23,8 +24,18 @@ export default defineEventHandler(async (event) => {
   // Totals for the same window. Income and expense are derived from the SIGN,
   // not from the category - uncategorised rows still count, which is the whole
   // point of the signed convention.
-  const income = items.filter((t) => t.amountCents > 0).reduce((n, t) => n + t.amountCents, 0)
-  const expense = items.filter((t) => t.amountCents < 0).reduce((n, t) => n + t.amountCents, 0)
+  const transfers = await transferCategoryIds(userId)
+  const flow = items.filter((t) => countsAsFlow(t.categoryId, transfers))
 
-  return { items, totals: { income, expense, net: income + expense, count: items.length } }
+  const income = flow.filter((t) => t.amountCents > 0).reduce((n, t) => n + t.amountCents, 0)
+  const expense = flow.filter((t) => t.amountCents < 0).reduce((n, t) => n + t.amountCents, 0)
+  // Reported separately so the UI can say how much merely moved, rather than
+  // the number silently vanishing from the totals.
+  const moved = items.filter((t) => !countsAsFlow(t.categoryId, transfers))
+    .reduce((n, t) => n + Math.abs(t.amountCents), 0)
+
+  return {
+    items,
+    totals: { income, expense, net: income + expense, count: items.length, transferred: moved },
+  }
 })

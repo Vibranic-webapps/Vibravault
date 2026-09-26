@@ -1,6 +1,7 @@
 import { prismaLive } from '~~/server/utils/transactionQuery'
 import { requireUserId } from '~~/server/utils/auth'
 import { prisma } from '~~/server/utils/prisma'
+import { transferCategoryIds, countsAsFlow } from '~~/server/utils/transfers'
 
 /** Monday-start week index for a date, used to bucket a month into weeks. */
 function mondayOf(d: Date): Date {
@@ -35,8 +36,13 @@ export default defineEventHandler(async (event) => {
 
   const totalEver = await prismaLive.transaction.count({ where: { userId } })
 
-  const income = monthRows.filter((t) => t.amountCents > 0).reduce((n, t) => n + t.amountCents, 0)
-  const expense = monthRows.filter((t) => t.amountCents < 0).reduce((n, t) => n + t.amountCents, 0)
+  // Balance above keeps EVERY row. Everything below that means "income" or
+  // "spending" drops transfers between the user's own accounts.
+  const transfers = await transferCategoryIds(userId)
+  const flowRows = monthRows.filter((t) => countsAsFlow(t.categoryId, transfers))
+
+  const income = flowRows.filter((t) => t.amountCents > 0).reduce((n, t) => n + t.amountCents, 0)
+  const expense = flowRows.filter((t) => t.amountCents < 0).reduce((n, t) => n + t.amountCents, 0)
 
   // ---- Weekly buckets, clipped to the month ------------------------------
   // Kilian is paid WEEKLY but bills are monthly, so the month stays the frame
@@ -47,7 +53,7 @@ export default defineEventHandler(async (event) => {
     const key = mondayOf(d).toISOString().slice(0, 10)
     if (!weekMap.has(key)) weekMap.set(key, { income: 0, expense: 0 })
   }
-  for (const t of monthRows) {
+  for (const t of flowRows) {
     const key = mondayOf(t.bookedAt).toISOString().slice(0, 10)
     const b = weekMap.get(key)
     if (!b) continue
@@ -74,7 +80,7 @@ export default defineEventHandler(async (event) => {
   // ---- Top spending categories this month --------------------------------
   const cats = await prisma.category.findMany({ where: { userId } })
   const byCat = new Map<string, number>()
-  for (const t of monthRows) {
+  for (const t of flowRows) {
     if (t.amountCents >= 0) continue
     const key = t.categoryId ?? ''
     byCat.set(key, (byCat.get(key) ?? 0) + t.amountCents)

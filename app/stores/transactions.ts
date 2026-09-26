@@ -19,6 +19,8 @@ export interface Totals {
   expense: number
   net: number
   count: number
+  /** Absolute value of money moved between the user's own accounts. */
+  transferred?: number
 }
 
 export interface TransactionInput {

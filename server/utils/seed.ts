@@ -35,6 +35,9 @@ const DEFAULT_CATEGORIES = [
   { name: 'Shopping',          kind: 'EXPENSE', icon: '🛍️', color: 'cat-10' },
   { name: 'Health',            kind: 'EXPENSE', icon: '💊', color: 'cat-11' },
   { name: 'Other expense',     kind: 'EXPENSE', icon: '📦', color: 'cat-2' },
+
+  // Money between the user's own accounts - neither income nor spending.
+  { name: 'Own accounts',      kind: 'TRANSFER', icon: '🔁', color: 'cat-7' },
 ] as const
 
 /**

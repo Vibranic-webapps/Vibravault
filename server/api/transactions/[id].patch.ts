@@ -1,11 +1,12 @@
 import { prisma } from '~~/server/utils/prisma'
 import { requireUserId } from '~~/server/utils/auth'
-import { validateTransactionInput } from '~~/server/utils/transaction'
+import { validateTransactionPatch } from '~~/server/utils/transaction'
 
 export default defineEventHandler(async (event) => {
   const userId = await requireUserId(event)
   const id = getRouterParam(event, 'id')!
-  const data = validateTransactionInput(await readBody(event))
+  // Only the fields actually sent are changed - see validateTransactionPatch.
+  const data = validateTransactionPatch(await readBody(event))
 
   if (data.categoryId) {
     const owned = await prisma.category.findFirst({ where: { id: data.categoryId, userId } })
