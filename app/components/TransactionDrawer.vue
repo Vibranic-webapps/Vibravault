@@ -330,7 +330,7 @@ const categoryOptions = computed(() => [
 .sheet {
   position: relative; width: 100%; max-width: 460px;
   max-height: 88vh; overflow-y: auto;
-  padding: 14px 24px 24px;
+  padding: 14px 24px calc(24px + env(safe-area-inset-bottom));
   border-radius: var(--vv-r-lg) var(--vv-r-lg) 0 0;
 }
 @media (min-width: 600px) {
