@@ -66,5 +66,35 @@
     "toastMsg": "Saved — that was easy",
     "month": "Month switcher",
     "money": "Money"
+  },
+  "nav": {
+    "home": "Home",
+    "transactions": "Transactions",
+    "categories": "Categories",
+    "you": "You",
+    "add": "Add",
+    "main": "Main"
+  },
+  "add": {
+    "title": "Add something",
+    "manual": "Type it in",
+    "manualHint": "A payment or income you want to note down",
+    "import": "Import from your bank",
+    "importHint": "Upload the file your bank app exports",
+    "receipt": "Scan a receipt",
+    "receiptHint": "See what you paid for each item",
+    "soon": "Soon"
+  },
+  "you": {
+    "title": "You",
+    "settings": "Preferences",
+    "tools": "Tools",
+    "account": "Account",
+    "rules": "Your rules",
+    "phone": "Share from your phone",
+    "signOut": "Sign out"
+  },
+  "brand": {
+    "home": "Vibravault — home"
   }
 }
