@@ -4,7 +4,8 @@ import { requireUserId } from '~~/server/utils/auth'
 import { getDefaultAccountId } from '~~/server/utils/seed'
 import { parseKbcCsv } from '~~/shared/utils/kbcCsv'
 import { fingerprintRow } from '~~/server/utils/import'
-import { loadRules, pickRule } from '~~/server/utils/merchantRules'
+import { loadRules } from '~~/server/utils/merchantRules'
+import { pickRule } from '~~/shared/utils/rulePick'
 import { reportEvent } from '~~/server/utils/vibradex'
 
 export default defineEventHandler(async (event) => {
