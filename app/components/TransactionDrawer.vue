@@ -3,6 +3,7 @@ import { formatCents } from '~~/shared/utils/money'
 import { transactionLabel } from '~~/shared/utils/merchant'
 import type { Transaction } from '~/stores/transactions'
 import type { Category } from '~/stores/categories'
+import { useRulesStore } from '~/stores/rules'
 
 /**
  * Read-first detail view. Tapping a row used to open the edit form directly,
@@ -19,7 +20,10 @@ const emit = defineEmits<{
   close: []
   edit: [t: Transaction]
   remove: [t: Transaction]
+  teach: [t: Transaction]
 }>()
+
+const rules = useRulesStore()
 
 const menuOpen = ref(false)
 
@@ -76,7 +80,7 @@ const details = computed(() => {
           class="neu-4 sheet"
           role="dialog"
           aria-modal="true"
-          :aria-label="transactionLabel(t.counterparty, t.description)"
+          :aria-label="transactionLabel(t.counterparty, t.description, rules.items)"
         >
           <div class="grab" aria-hidden="true" />
 
@@ -111,6 +115,13 @@ const details = computed(() => {
                   </svg>
                   Edit
                 </button>
+                <button class="menu-item" type="button" role="menuitem" @click="emit('teach', t!)">
+                  <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M2.5 4.5h7M2.5 8h11M2.5 11.5h7M12 2.5l1.5 2 -1.5 2"
+                          fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  Rename &amp; categorise all like this
+                </button>
                 <button class="menu-item danger" type="button" role="menuitem" @click="emit('remove', t!)">
                   <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
                     <path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.2a1 1 0 0 0 1 .8h3.8a1 1 0 0 0 1-.8l.6-8.2"
@@ -126,7 +137,7 @@ const details = computed(() => {
             {{ formatCents(t.amountCents, { signed: isIncome }) }}
           </p>
           <p v-if="isTransfer" class="transfer-note">Between your own accounts — not income or spending</p>
-          <p class="title">{{ transactionLabel(t.counterparty, t.description) }}</p>
+          <p class="title">{{ transactionLabel(t.counterparty, t.description, rules.items) }}</p>
 
           <dl class="details">
             <div v-for="d in details" :key="d.label" class="detail neu-divider">
@@ -192,7 +203,7 @@ const details = computed(() => {
 
 .menu {
   position: absolute; top: 46px; right: 0; z-index: 2;
-  min-width: 164px; padding: 6px;
+  min-width: 250px; padding: 6px;
   display: flex; flex-direction: column; gap: 2px;
 }
 .menu-item {

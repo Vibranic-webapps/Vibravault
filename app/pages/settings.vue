@@ -7,8 +7,19 @@ interface ImportToken {
   createdAt: string
 }
 
+import { useRulesStore } from '~/stores/rules'
+import { useCategoriesStore } from '~/stores/categories'
+
 const user = useAuthUser()
 const theme = useTheme()
+const rules = useRulesStore()
+const categories = useCategoriesStore()
+await Promise.all([rules.fetchAll(), categories.fetchAll()])
+
+async function removeRule(id: string, match: string) {
+  if (!confirm(`Delete the rule for "${match}"? Its name disappears from every row. Categories it already set stay.`)) return
+  await rules.remove(id)
+}
 
 const { data: tokens, refresh } = await useAsyncData<ImportToken[]>(
   'import-tokens',
@@ -64,6 +75,37 @@ const active = computed(() => (tokens.value ?? []).filter((t) => !t.revokedAt))
           type="button"
           @click="theme = t"
         >{{ t }}</button>
+      </div>
+    </section>
+
+    <!-- Taught rules -->
+    <section class="neu-3 card">
+      <h2>Rules you've taught</h2>
+      <p class="body">
+        Created from a transaction's <strong>⋯ → Rename &amp; categorise all like this</strong>.
+        The most specific rule wins when several match.
+      </p>
+
+      <p v-if="!rules.items.length" class="empty">No rules yet.</p>
+
+      <div v-else class="rows">
+        <div
+          v-for="(r, i) in rules.items"
+          :key="r.id"
+          class="row"
+          :class="{ 'neu-divider': i < rules.items.length - 1 }"
+        >
+          <span class="r-main">
+            <strong>{{ r.label ?? 'No new name' }}</strong>
+            <small>
+              contains “{{ r.match }}”
+              <template v-if="r.categoryId && categories.byId.get(r.categoryId)">
+                → {{ categories.byId.get(r.categoryId)!.icon }} {{ categories.byId.get(r.categoryId)!.name }}
+              </template>
+            </small>
+          </span>
+          <button class="link-btn danger" type="button" @click="removeRule(r.id, r.match)">Delete</button>
+        </div>
       </div>
     </section>
 
@@ -149,6 +191,7 @@ h2 { margin: 0 0 12px; font-size: 15px; font-weight: 700; }
 .small { width: auto; padding: 8px 14px; font-size: 13px; }
 
 .rows { margin-bottom: 16px; }
+.empty { margin: 0; font-size: 13px; color: var(--vv-muted-2); }
 .row { display: flex; align-items: center; gap: 12px; padding: 11px 0; }
 .r-main { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .r-main strong { font-size: 14px; }

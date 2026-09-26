@@ -4,6 +4,7 @@ import { requireImportToken } from '~~/server/utils/importToken'
 import { getDefaultAccountId } from '~~/server/utils/seed'
 import { parseKbcCsv } from '~~/shared/utils/kbcCsv'
 import { fingerprintRow } from '~~/server/utils/import'
+import { loadRules, pickRule } from '~~/server/utils/merchantRules'
 import { reportEvent } from '~~/server/utils/vibradex'
 
 /**
@@ -50,6 +51,12 @@ export default defineEventHandler(async (event) => {
   const known = new Set(existing.map((e) => e.fingerprint))
 
   const accountId = await getDefaultAccountId(userId)
+
+  // Taught rules that carry a category are applied as rows arrive, so a rule
+  // taught once files every FUTURE import too. Only rules WITH a category are
+  // considered here: a more specific rule that only renames must not stop a
+  // broader rule from filing the row.
+  const categorisingRules = (await loadRules(userId)).filter((r) => r.categoryId)
   const toInsert = parsed.rows
     .map((r, i) => ({ r, fingerprint: fingerprints[i]! }))
     .filter(({ fingerprint }) => !known.has(fingerprint))
@@ -78,7 +85,7 @@ export default defineEventHandler(async (event) => {
           description: r.description,
           source: 'CSV',
           fingerprint,
-          categoryId: null,
+          categoryId: pickRule(categorisingRules, r.description)?.categoryId ?? null,
         })),
         skipDuplicates: true,
       })

@@ -54,6 +54,7 @@ model User {
   sessions            Session[]
   passwordResetTokens PasswordResetToken[]
   importTokens        ImportToken[]
+  merchantRules       MerchantRule[]
   accounts     Account[]
   categories   Category[]
   transactions Transaction[]
@@ -111,6 +112,30 @@ model ImportToken {
   @@index([userId])
 }
 
+// A rule the user taught the app: "anything whose description contains X is
+// called Y and filed under Z". Layer 1 of labelling - an explicit user decision
+// beats every automatic guess, the bank's name field included.
+//
+// `match` is plain text, matched by ruleMatches() as a case- and spacing-
+// insensitive "contains". Never a regex: a typed regex is a ReDoS hole.
+//
+// The label is applied at RENDER time (never stored on transactions), so
+// editing or deleting a rule instantly changes every affected row. The category
+// is WRITTEN, because categories drive totals - but only onto rows that are
+// still uncategorised, so a choice made by hand is never overwritten.
+model MerchantRule {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match      String
+  label      String?
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
 // ---------------------------------------------------------------------------
 // Core
 // ---------------------------------------------------------------------------
@@ -147,7 +172,8 @@ model Category {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  transactions Transaction[]
+  transactions  Transaction[]
+  merchantRules MerchantRule[]
 
   @@unique([userId, name])
   @@index([userId])

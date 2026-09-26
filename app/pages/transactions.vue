@@ -3,12 +3,34 @@ import { formatCents, centsToInput } from '~~/shared/utils/money'
 import { transactionLabel } from '~~/shared/utils/merchant'
 import { useTransactionsStore, type Transaction } from '~/stores/transactions'
 import { useCategoriesStore } from '~/stores/categories'
+import { useRulesStore } from '~/stores/rules'
 
 const route = useRoute()
 const store = useTransactionsStore()
 const categories = useCategoriesStore()
+const rules = useRulesStore()
 
-await Promise.all([store.fetchMonth(), categories.fetchAll(true)])
+await Promise.all([store.fetchMonth(), categories.fetchAll(true), rules.fetchAll()])
+
+const teaching = ref<Transaction | null>(null)
+const flash = ref<string | null>(null)
+const onlyUncategorised = ref(false)
+
+// The list the page actually renders, grouped by day, honouring the filter.
+const visibleDays = computed(() =>
+  store.byDay
+    .map(([day, rows]) => [day, onlyUncategorised.value ? rows.filter((t) => !t.categoryId) : rows] as const)
+    .filter(([, rows]) => rows.length),
+)
+
+async function onRuleSaved(n: number) {
+  teaching.value = null
+  await store.fetchMonth()
+  flash.value = n
+    ? `Rule saved — ${n} past transaction${n === 1 ? '' : 's'} filed`
+    : 'Rule saved — it applies to matching transactions from now on'
+  setTimeout(() => (flash.value = null), 3500)
+}
 
 const viewing = ref<Transaction | null>(null)
 const showForm = ref(false)
@@ -143,7 +165,16 @@ watch(() => form.direction, () => { form.categoryId = '' })
     </div>
 
     <!-- Data-dense: FLAT rows, hairline dividers, no shadows. -->
-    <section v-for="[day, rows] in store.byDay" :key="day" class="day">
+    <div v-if="store.uncategorisedCount" class="filter">
+      <label class="check">
+        <input v-model="onlyUncategorised" type="checkbox" class="box" />
+        <span>Only uncategorised ({{ store.uncategorisedCount }})</span>
+      </label>
+    </div>
+
+    <p v-if="flash" class="flash" role="status">{{ flash }}</p>
+
+    <section v-for="[day, rows] in visibleDays" :key="day" class="day">
       <h2>{{ dayLabel(day) }}</h2>
       <div class="neu-3 panel">
         <div
@@ -161,7 +192,7 @@ watch(() => form.direction, () => { form.categoryId = '' })
           >{{ categoryOf(t.categoryId)?.icon ?? '·' }}</span>
 
           <button class="row-main" type="button" @click="viewing = t">
-            <strong>{{ transactionLabel(t.counterparty, t.description) }}</strong>
+            <strong>{{ transactionLabel(t.counterparty, t.description, rules.items) }}</strong>
             <small>{{ categoryOf(t.categoryId)?.name ?? 'Uncategorised' }}</small>
           </button>
 
@@ -179,6 +210,13 @@ watch(() => form.direction, () => { form.categoryId = '' })
       @close="viewing = null"
       @edit="(t) => { viewing = null; openEdit(t) }"
       @remove="(t) => { viewing = null; remove(t) }"
+      @teach="(t) => { viewing = null; teaching = t }"
+    />
+
+    <TeachRuleDialog
+      :transaction="teaching"
+      @close="teaching = null"
+      @saved="onRuleSaved"
     />
 
     <!-- Form -->
@@ -262,6 +300,22 @@ h2 { margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: .06em;
 .mlabel { font-size: 14px; font-weight: 700; min-width: 150px; text-align: center; }
 .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
 .totals div { display: flex; flex-direction: column; gap: 2px; }
+.filter { margin: 0 0 16px; }
+.flash {
+  margin: 0 0 16px; padding: 11px 14px; font-size: 13px; font-weight: 600;
+  color: var(--vv-accent); border-radius: var(--vv-r-sm); box-shadow: var(--vv-p1);
+}
+.check { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--vv-muted); }
+.box {
+  appearance: none; -webkit-appearance: none;
+  position: relative; width: 22px; height: 22px; flex: none; margin: 0;
+  border: none; border-radius: 8px; background: var(--vv-surface); box-shadow: var(--vv-p1); cursor: pointer;
+}
+.box:checked { background: var(--vv-accent); box-shadow: var(--vv-e1); }
+.box:checked::after {
+  content: ''; position: absolute; left: 7px; top: 3px; width: 5px; height: 10px;
+  border: solid var(--vv-accent-text); border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
 .moved { margin: 12px 0 0; text-align: center; font-size: 12px; color: var(--vv-muted-2); }
 .tl { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--vv-muted-2); }
 .totals span:last-child { font-size: 15px; font-weight: 700; }
