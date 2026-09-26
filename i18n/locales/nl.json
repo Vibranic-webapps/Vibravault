@@ -1,0 +1,70 @@
+{
+  "common": {
+    "save": "Bewaren",
+    "cancel": "Annuleren",
+    "close": "Sluiten",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "back": "Terug",
+    "done": "Klaar",
+    "loading": "Laden…",
+    "retry": "Opnieuw proberen",
+    "optional": "Optioneel"
+  },
+  "month": {
+    "previous": "Vorige maand",
+    "next": "Volgende maand"
+  },
+  "field": {
+    "choose": "Kies…"
+  },
+  "theme": {
+    "label": "Weergave",
+    "system": "Zoals mijn telefoon",
+    "light": "Licht",
+    "dark": "Donker"
+  },
+  "language": {
+    "label": "Taal"
+  },
+  "toast": {
+    "saved": "Bewaard"
+  },
+  "design": {
+    "title": "Bouwstenen",
+    "intro": "Alle onderdelen van de app op één plek. Bekijk ze in licht en donker.",
+    "type": "Lettertype",
+    "typeSample": "Wat je uitgaf",
+    "typeSampleLight": "deze maand",
+    "icons": "Iconen",
+    "fields": "Velden",
+    "fieldName": "Naam",
+    "fieldNamePh": "Bij wie?",
+    "fieldAmount": "Bedrag",
+    "fieldDate": "Datum",
+    "fieldCategory": "Categorie",
+    "fieldError": "Met een foutmelding",
+    "fieldErrorMsg": "Dat lijkt geen bedrag",
+    "buttons": "Knoppen",
+    "primary": "Uitgave bewaren",
+    "ghost": "Annuleren",
+    "danger": "Verwijderen",
+    "choices": "Keuzes",
+    "moneyIn": "Geld in",
+    "moneyOut": "Geld uit",
+    "filterAll": "Alles",
+    "filterUncategorised": "Te sorteren",
+    "rows": "Lijstrijen",
+    "rowLanguage": "Taal",
+    "rowRules": "Jouw regels",
+    "rowSignOut": "Afmelden",
+    "sheet": "Onderblad",
+    "openSheet": "Open een blad",
+    "sheetTitle": "Iets toevoegen",
+    "sheetBody": "Bladen schuiven van onderen omhoog, zoals op je telefoon.",
+    "toast": "Toon een melding",
+    "toastMsg": "Bewaard — zo gedaan",
+    "month": "Maandkiezer",
+    "money": "Bedragen"
+  }
+}
