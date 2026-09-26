@@ -60,11 +60,11 @@ async function logout() {
 </template>
 
 <style scoped>
-.shell { min-height: 100vh; padding-bottom: 108px; }
+.shell { min-height: 100vh; min-height: 100dvh; padding-bottom: calc(108px + env(safe-area-inset-bottom)); }
 
 .shell-head {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; padding: 22px 24px 8px;
+  gap: 16px; padding: calc(22px + env(safe-area-inset-top)) 24px 8px;
   max-width: 900px; margin: 0 auto;
 }
 .brand {
@@ -87,7 +87,7 @@ async function logout() {
 .shell-main { max-width: 900px; margin: 0 auto; padding: 8px 24px 24px; }
 
 .navbar {
-  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+  position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom)); transform: translateX(-50%);
   z-index: 20;
   display: flex; align-items: center; gap: 6px;
   padding: 8px; border-radius: var(--vv-r-md);
@@ -120,7 +120,7 @@ async function logout() {
 @media (max-width: 560px) {
   .nav-label { display: none; }
   .nav-item { padding: 11px 15px; }
-  .shell-head { padding: 18px 18px 6px; }
+  .shell-head { padding: calc(18px + env(safe-area-inset-top)) 18px 6px; }
   .shell-main { padding: 8px 18px 24px; }
 }
 </style>
