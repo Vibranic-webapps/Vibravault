@@ -28,6 +28,11 @@ enum AccountType {
 enum CategoryKind {
   INCOME
   EXPENSE
+  // Money moving between the user's OWN accounts (e.g. KBC <-> Revolut).
+  // Still moves the balance of the account it touches, but is neither income
+  // nor spending, so it is excluded from In / Out / Net and the charts.
+  // Project rule #4, and found inflating real totals on 2026-09-26.
+  TRANSFER
 }
 
 enum TransactionSource {

@@ -88,9 +88,20 @@ async function remove(t: Transaction) {
   await store.remove(t.id)
 }
 
-const formCategories = computed(() =>
-  form.direction === 'in' ? categories.income : categories.expense,
-)
+// Transfers can go either way (money in FROM Revolut, out TO Revolut), so
+// transfer categories are offered for both directions.
+const formCategories = computed(() => [
+  ...(form.direction === 'in' ? categories.income : categories.expense),
+  ...categories.transfer,
+])
+
+function isTransfer(t: Transaction) {
+  return categoryOf(t.categoryId)?.kind === 'TRANSFER'
+}
+function amountClass(t: Transaction) {
+  if (isTransfer(t)) return 'vv-amount-transfer'
+  return t.amountCents < 0 ? 'vv-amount-out' : 'vv-amount-in'
+}
 watch(() => form.direction, () => { form.categoryId = '' })
 </script>
 
@@ -119,6 +130,9 @@ watch(() => form.direction, () => { form.categoryId = '' })
         <div><span class="tl">Out</span><span class="vv-amount-neg">{{ formatCents(store.totals.expense) }}</span></div>
         <div><span class="tl">Net</span><span :class="store.totals.net < 0 ? 'vv-amount-neg' : 'vv-amount-in'">{{ formatCents(store.totals.net, { signed: true }) }}</span></div>
       </div>
+      <p v-if="store.totals.transferred" class="moved">
+        + {{ formatCents(store.totals.transferred) }} moved between your own accounts — not counted above
+      </p>
     </div>
 
     <p v-if="store.error && !showForm" class="vv-error">{{ store.error }}</p>
@@ -151,7 +165,7 @@ watch(() => form.direction, () => { form.categoryId = '' })
             <small>{{ categoryOf(t.categoryId)?.name ?? 'Uncategorised' }}</small>
           </button>
 
-          <span :class="t.amountCents < 0 ? 'vv-amount-out' : 'vv-amount-in'">
+          <span :class="amountClass(t)">
             {{ formatCents(t.amountCents, { signed: t.amountCents > 0 }) }}
           </span>
 
@@ -248,6 +262,7 @@ h2 { margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: .06em;
 .mlabel { font-size: 14px; font-weight: 700; min-width: 150px; text-align: center; }
 .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
 .totals div { display: flex; flex-direction: column; gap: 2px; }
+.moved { margin: 12px 0 0; text-align: center; font-size: 12px; color: var(--vv-muted-2); }
 .tl { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--vv-muted-2); }
 .totals span:last-child { font-size: 15px; font-weight: 700; }
 

@@ -18,6 +18,18 @@ const cases: { raw: string; expected: string | null }[] = [
     raw: 'STORTING AUTOMAAT BC KOOLMIJNLAAN, 15   BERINGEN MET KBC-DEBETKAART 5127 88XX XXXX 7736 KAARTHOUDER FREDERIX KILIAN REFERTE 000401207007442609021202',
     expected: 'Cash deposit',
   },
+  {
+    raw: 'INSTANTOVERSCHRIJVING VAN BE63 6504 5981 6908 BANKIER OPDRACHTGEVER: REVOBEB2XXX KILIAN FREDERIX REFERENTIE: NOTPROVIDED OM 13.08 UUR',
+    expected: 'INSTANTOVERSCHRIJVING ',
+  },
+  {
+    raw: '',
+    expected: ''
+  },
+  {
+    raw: '',
+    expected: ''
+  },
   // An unrecognised shape MUST return null, not a guess.
   { raw: 'SOMETHING COMPLETELY NEW THAT YOU HAVE NOT SEEN YET', expected: null },
 ]

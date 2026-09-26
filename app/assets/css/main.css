@@ -300,6 +300,10 @@ body {
 .vv-amount-in  { color: var(--vv-accent);   font-variant-numeric: tabular-nums; }
 .vv-amount-out { color: var(--vv-text);     font-variant-numeric: tabular-nums; }
 .vv-amount-neg { color: var(--vv-negative); font-variant-numeric: tabular-nums; }
+/* A transfer between the user's own accounts is neither income nor spending,
+   so it wears NEITHER semantic colour. Colour carries meaning; giving it teal
+   or coral would assert something false. */
+.vv-amount-transfer { color: var(--vv-muted); font-variant-numeric: tabular-nums; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }

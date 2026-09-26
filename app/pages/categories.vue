@@ -4,6 +4,13 @@ import { useCategoriesStore, type Category, type CategoryKind } from '~/stores/c
 const store = useCategoriesStore()
 await store.fetchAll()
 
+const GROUP_LABEL: Record<CategoryKind, string> = {
+  INCOME: 'Income', EXPENSE: 'Expenses', TRANSFER: 'Transfers',
+}
+const KIND_LABEL: Record<CategoryKind, string> = {
+  INCOME: 'Income', EXPENSE: 'Expense', TRANSFER: 'Transfer',
+}
+
 const TINTS = Array.from({ length: 12 }, (_, i) => `cat-${i + 1}`)
 const ICONS = ['💼','💰','🎁','🌴','🛒','🏠','💡','🚲','📺','🍽️','🛍️','💊','📦','☕','🎬','✈️','📱','🎓','🐾','🎵']
 
@@ -59,12 +66,15 @@ async function remove(c: Category) {
 
     <p v-if="store.error && !showForm" class="vv-error">{{ store.error }}</p>
 
-    <section v-for="group in (['INCOME', 'EXPENSE'] as const)" :key="group" class="group">
-      <h2>{{ group === 'INCOME' ? 'Income' : 'Expenses' }}</h2>
+    <section v-for="group in (['INCOME', 'EXPENSE', 'TRANSFER'] as const)" :key="group" class="group">
+      <h2>{{ GROUP_LABEL[group] }}</h2>
+      <p v-if="group === 'TRANSFER'" class="group-note">
+        Money between your own accounts (e.g. Revolut). Moves your balance, but never counts as income or spending.
+      </p>
 
       <div class="neu-3 panel">
         <p v-if="!store.items.filter(c => c.kind === group).length" class="empty">
-          No {{ group === 'INCOME' ? 'income' : 'expense' }} categories yet.
+          No {{ GROUP_LABEL[group].toLowerCase() }} categories yet.
         </p>
 
         <div
@@ -100,13 +110,13 @@ async function remove(c: Category) {
         <span class="vv-label spaced">Type</span>
         <div class="kinds">
           <button
-            v-for="k in (['EXPENSE', 'INCOME'] as const)"
+            v-for="k in (['EXPENSE', 'INCOME', 'TRANSFER'] as const)"
             :key="k"
             type="button"
             class="kind"
             :class="{ on: form.kind === k }"
             @click="form.kind = k"
-          >{{ k === 'INCOME' ? 'Income' : 'Expense' }}</button>
+          >{{ KIND_LABEL[k] }}</button>
         </div>
 
         <span class="vv-label spaced">Icon</span>
@@ -162,6 +172,7 @@ h2 { margin: 0 0 10px; font-size: 15px; color: var(--vv-muted); }
 
 .group { margin-bottom: 30px; }
 .panel { padding: 8px 20px; }
+.group-note { margin: -4px 0 10px; font-size: 12px; color: var(--vv-muted-2); max-width: 60ch; }
 .empty { color: var(--vv-muted-2); font-size: 14px; padding: 14px 0; margin: 0; }
 
 /* Data-dense: flat rows, hairline dividers. No shadows. */

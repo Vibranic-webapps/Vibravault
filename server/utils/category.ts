@@ -7,8 +7,8 @@ export function validateCategoryInput(body: any) {
 
   if (!name) throw createError({ statusCode: 400, statusMessage: 'Name is required' })
   if (name.length > 40) throw createError({ statusCode: 400, statusMessage: 'Name is too long' })
-  if (kind !== 'INCOME' && kind !== 'EXPENSE') {
-    throw createError({ statusCode: 400, statusMessage: 'Kind must be INCOME or EXPENSE' })
+  if (kind !== 'INCOME' && kind !== 'EXPENSE' && kind !== 'TRANSFER') {
+    throw createError({ statusCode: 400, statusMessage: 'Kind must be INCOME, EXPENSE or TRANSFER' })
   }
   // Only the 12 curated tints are allowed - the palette rule enforced server-side,
   // not just by which swatches the UI happens to render.

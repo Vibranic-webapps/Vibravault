@@ -35,6 +35,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 const t = computed(() => props.transaction)
 const isIncome = computed(() => (t.value?.amountCents ?? 0) > 0)
+const isTransfer = computed(() => props.category?.kind === 'TRANSFER')
 
 const fullDate = computed(() =>
   t.value
@@ -121,9 +122,10 @@ const details = computed(() => {
             </div>
           </header>
 
-          <p class="amount" :class="isIncome ? 'in' : 'out'">
+          <p class="amount" :class="isTransfer ? 'moved' : isIncome ? 'in' : 'out'">
             {{ formatCents(t.amountCents, { signed: isIncome }) }}
           </p>
+          <p v-if="isTransfer" class="transfer-note">Between your own accounts — not income or spending</p>
           <p class="title">{{ transactionLabel(t.counterparty, t.description) }}</p>
 
           <dl class="details">
@@ -209,6 +211,8 @@ const details = computed(() => {
 }
 .amount.in { color: var(--vv-accent); }
 .amount.out { color: var(--vv-text); }
+.amount.moved { color: var(--vv-muted); }
+.transfer-note { margin: -2px 0 8px; font-size: 12px; font-weight: 600; color: var(--vv-muted-2); }
 .title { margin: 0 0 20px; font-size: 15px; font-weight: 600; color: var(--vv-muted); }
 
 .details { margin: 0; }
