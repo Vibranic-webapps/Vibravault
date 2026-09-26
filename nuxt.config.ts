@@ -1,4 +1,10 @@
 export default defineNuxtConfig({
+  // Pins how the server runtime (Nitro) behaves. Set to the fallback the app
+  // has ALWAYS run on, so this silences the warning with zero behaviour change.
+  // Moving it forward opts into every runtime change since that date - do it
+  // deliberately, with testing, not as a side effect of fixing a warning.
+  compatibilityDate: '2025-07-15',
+
   modules: ['@pinia/nuxt', '@nuxtjs/i18n'],
   devtools: { enabled: true },
 
