@@ -45,11 +45,25 @@ export function parseAmountToCents(input: string): number | null {
   return negative ? -cents : cents
 }
 
-const EUR = new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' })
+// One formatter per locale, built once. Intl.NumberFormat is expensive to
+// construct and this runs for every amount on every render.
+const formatters = new Map<string, Intl.NumberFormat>()
+function eur(locale: string): Intl.NumberFormat {
+  let f = formatters.get(locale)
+  if (!f) {
+    f = new Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR' })
+    formatters.set(locale, f)
+  }
+  return f
+}
 
-/** Format cents for display. `signed` forces an explicit + on income. */
-export function formatCents(cents: number, opts: { signed?: boolean } = {}): string {
-  const body = EUR.format(Math.abs(cents) / 100)
+/**
+ * Format cents for display. `signed` forces an explicit + on income.
+ * `locale` follows the app language: nl-BE writes "€ 1.234,56", en-GB writes
+ * "€1,234.56". Defaults to nl-BE, the bank's own convention.
+ */
+export function formatCents(cents: number, opts: { signed?: boolean; locale?: string } = {}): string {
+  const body = eur(opts.locale ?? 'nl-BE').format(Math.abs(cents) / 100)
   if (cents < 0) return `−${body}`          // U+2212 minus, not a hyphen
   return opts.signed ? `+${body}` : body
 }

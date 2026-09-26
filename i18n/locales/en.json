@@ -1,0 +1,70 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "done": "Done",
+    "loading": "Loading…",
+    "retry": "Try again",
+    "optional": "Optional"
+  },
+  "month": {
+    "previous": "Previous month",
+    "next": "Next month"
+  },
+  "field": {
+    "choose": "Choose…"
+  },
+  "theme": {
+    "label": "Appearance",
+    "system": "Match my phone",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "toast": {
+    "saved": "Saved"
+  },
+  "design": {
+    "title": "Building blocks",
+    "intro": "Every piece the app is made of, in one place. Check it in light and dark.",
+    "type": "Typeface",
+    "typeSample": "Your spending",
+    "typeSampleLight": "this month",
+    "icons": "Icons",
+    "fields": "Fields",
+    "fieldName": "Name",
+    "fieldNamePh": "Who was it?",
+    "fieldAmount": "Amount",
+    "fieldDate": "Date",
+    "fieldCategory": "Category",
+    "fieldError": "With an error",
+    "fieldErrorMsg": "That doesn't look like an amount",
+    "buttons": "Buttons",
+    "primary": "Save transaction",
+    "ghost": "Cancel",
+    "danger": "Delete",
+    "choices": "Choices",
+    "moneyIn": "Money in",
+    "moneyOut": "Money out",
+    "filterAll": "All",
+    "filterUncategorised": "To sort",
+    "rows": "List rows",
+    "rowLanguage": "Language",
+    "rowRules": "Your rules",
+    "rowSignOut": "Sign out",
+    "sheet": "Bottom sheet",
+    "openSheet": "Open a sheet",
+    "sheetTitle": "Add something",
+    "sheetBody": "Sheets slide up from the bottom, like on your phone.",
+    "toast": "Show a toast",
+    "toastMsg": "Saved — that was easy",
+    "month": "Month switcher",
+    "money": "Money"
+  }
+}
