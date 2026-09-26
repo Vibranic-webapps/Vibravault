@@ -41,6 +41,19 @@ const peak = computed(() => {
 function barHeight(v: number) { return `${Math.max(v === 0 ? 0 : 2, (Math.abs(v) / peak.value) * 100)}%` }
 
 const hasData = computed(() => (data.value?.totals.count ?? 0) > 0)
+
+// The three tiles are ~110px wide on a phone. "+€ 12.345,67" doesn't fit at a
+// fixed 15px, so each value gets its character count as --len and the CSS
+// sizes the font to the tile's width (container units) - always one line.
+const tiles = computed(() => {
+  const t = data.value?.totals
+  if (!t) return []
+  return [
+    { key: 'in', label: 'In', text: formatCents(t.income, { signed: true }), cls: 'in' },
+    { key: 'out', label: 'Out', text: formatCents(t.expense), cls: 'out' },
+    { key: 'net', label: 'Net', text: formatCents(t.net, { signed: true }), cls: t.net < 0 ? 'out' : 'in' },
+  ]
+})
 const showTable = ref(false)
 </script>
 
@@ -83,19 +96,9 @@ const showTable = ref(false)
 
     <!-- Stat tiles -->
     <div class="tiles">
-      <div class="neu-3 tile">
-        <p class="t-label">In</p>
-        <p class="t-value in">{{ formatCents(data.totals.income, { signed: true }) }}</p>
-      </div>
-      <div class="neu-3 tile">
-        <p class="t-label">Out</p>
-        <p class="t-value out">{{ formatCents(data.totals.expense) }}</p>
-      </div>
-      <div class="neu-3 tile">
-        <p class="t-label">Net</p>
-        <p class="t-value" :class="data.totals.net < 0 ? 'out' : 'in'">
-          {{ formatCents(data.totals.net, { signed: true }) }}
-        </p>
+      <div v-for="tile in tiles" :key="tile.key" class="neu-3 tile">
+        <p class="t-label">{{ tile.label }}</p>
+        <p class="t-value" :class="tile.cls" :style="{ '--len': tile.text.length }">{{ tile.text }}</p>
       </div>
     </div>
 
@@ -197,9 +200,14 @@ h2 { margin: 0 0 14px; font-size: 15px; font-weight: 700; }
 .hero-note { margin: 0; color: var(--vv-muted-2); font-size: 12px; }
 
 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-.tile { padding: 16px 14px; text-align: center; }
+.tile { padding: 16px 8px; text-align: center; container-type: inline-size; min-width: 0; }
 .t-label { margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--vv-muted-2); }
-.t-value { margin: 0; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* One line, always. Font = tile width / (characters x ~0.64em per bold
+   tabular glyph), capped at 15px so short amounts don't balloon. */
+.t-value {
+  margin: 0; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums;
+  font-size: clamp(10px, calc(100cqi / (var(--len, 10) * 0.64)), 15px);
+}
 /* Text wears the SEMANTIC UI tokens; only marks (bars, legend swatches) wear
    the chart tokens. Keeping those two apart is why the chart steps could be
    lifted for legibility without repainting every number in the app. */
