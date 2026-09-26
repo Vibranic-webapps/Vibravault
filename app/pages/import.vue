@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { formatCents } from '~~/shared/utils/money'
 import { transactionLabel } from '~~/shared/utils/merchant'
+import { useRulesStore } from '~/stores/rules'
+
+const rules = useRulesStore()
+await rules.fetchAll()
 
 interface PreviewRow {
   bookedAt: string
@@ -128,7 +132,7 @@ async function doCommit() {
         >
           <span class="badge" :class="r.duplicate ? 'dup' : 'new'">{{ r.duplicate ? 'dup' : 'new' }}</span>
           <span class="r-main">
-            <strong>{{ transactionLabel(r.counterparty, r.description) }}</strong>
+            <strong>{{ transactionLabel(r.counterparty, r.description, rules.items) }}</strong>
             <small>{{ r.bookedAt }}</small>
           </span>
           <span :class="r.amountCents < 0 ? 'vv-amount-out' : 'vv-amount-in'">

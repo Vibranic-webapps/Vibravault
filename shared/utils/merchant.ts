@@ -1,3 +1,5 @@
+import { pickRule, type RuleLike } from './rulePick'
+
 
 export function extractMerchant(description: string): string | null {
   const text = (description ?? '').replace(/\s+/g, ' ').trim().slice(0, 300)
@@ -19,7 +21,13 @@ export function extractMerchant(description: string): string | null {
 export function transactionLabel(
   counterparty: string | null,
   description: string | null,
+  rules: RuleLike[] = [],
 ): string {
+  // Layer 1 - a rule the user taught beats every automatic guess, including
+  // the bank's own name field. Only rules that carry a name take part here.
+  const taught = pickRule(rules.filter((r) => r.label), description)
+  if (taught?.label) return taught.label
+
   if (counterparty?.trim()) return counterparty.trim()
 
   const raw = (description ?? '').replace(/\s+/g, ' ').trim()
