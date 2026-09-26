@@ -7,6 +7,8 @@ interface PreviewRow {
   amountCents: number
   balanceAfterCents: number | null
   description: string
+  /** The bank's own name field - filled for transfers, blank for card payments. */
+  counterparty: string | null
   counterpartyIban: string | null
   duplicate: boolean
   lineNumber: number
@@ -126,7 +128,7 @@ async function doCommit() {
         >
           <span class="badge" :class="r.duplicate ? 'dup' : 'new'">{{ r.duplicate ? 'dup' : 'new' }}</span>
           <span class="r-main">
-            <strong>{{ transactionLabel(null, r.description) }}</strong>
+            <strong>{{ transactionLabel(r.counterparty, r.description) }}</strong>
             <small>{{ r.bookedAt }}</small>
           </span>
           <span :class="r.amountCents < 0 ? 'vv-amount-out' : 'vv-amount-in'">
