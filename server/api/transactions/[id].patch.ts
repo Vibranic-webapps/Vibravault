@@ -8,6 +8,24 @@ export default defineEventHandler(async (event) => {
   // Only the fields actually sent are changed - see validateTransactionPatch.
   const data = validateTransactionPatch(await readBody(event))
 
+  // Imported rows are the BANK'S record. They can be filed (category) and
+  // renamed (taught rules), but their amount, date and bank text stay as the
+  // bank recorded them - otherwise the data disagrees with the bank's own
+  // running balance. Enforced here, not just by the drawer hiding the inputs:
+  // a rule that only exists in the UI isn't a rule.
+  const existing = await prisma.transaction.findFirst({
+    where: { id, userId, deletedAt: null },
+    select: { source: true },
+  })
+  if (!existing) throw createError({ statusCode: 404, statusMessage: 'Transaction not found' })
+  const bankFields = ['amountCents', 'bookedAt', 'description'] as const
+  if (existing.source !== 'MANUAL' && bankFields.some((f) => f in data)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Imported transactions keep the amount, date and description your bank recorded',
+    })
+  }
+
   if (data.categoryId) {
     const owned = await prisma.category.findFirst({ where: { id: data.categoryId, userId } })
     if (!owned) throw createError({ statusCode: 400, statusMessage: 'Unknown category' })
