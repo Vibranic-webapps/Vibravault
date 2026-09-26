@@ -46,9 +46,22 @@ const form = reactive({
   description: '',
 })
 
-// The nav's + button links here with ?new=1. Done during setup, not onMounted,
-// so the form is server-rendered rather than popping in after hydration.
-if (route.query.new === '1') openCreate()
+// The nav's + button links here with ?new=1.
+//
+// This used to run ONCE, during setup - so it only worked when you arrived
+// from another page. Already on /transactions, tapping + just changed the
+// query: the page is reused, setup doesn't re-run, the form never opened.
+// Now we WATCH the query, and clear it after opening so the next tap on +
+// changes the URL again (otherwise ?new=1 -> ?new=1 is no navigation at all).
+const router = useRouter()
+watch(() => route.query.new, (flag) => {
+  if (flag !== '1') return
+  openCreate()
+  if (import.meta.client) {
+    const { new: _dropped, ...rest } = route.query
+    router.replace({ query: rest })
+  }
+}, { immediate: true })
 
 const monthLabel = computed(() => {
   const [y, m] = store.month.split('-').map(Number)

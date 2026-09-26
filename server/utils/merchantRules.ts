@@ -1,8 +1,6 @@
 import { prisma } from './prisma'
 import { ruleMatches } from '~~/shared/utils/rules'
 
-export { pickRule } from '~~/shared/utils/rulePick'
-
 export function loadRules(userId: string) {
   return prisma.merchantRule.findMany({
     where: { userId },
