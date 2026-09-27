@@ -48,18 +48,20 @@ enum TransactionSource {
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
-  name         String?  // what the app calls you ("Hey Kilian"); optional
+  name         String? // what the app calls you ("Hey Kilian"); optional
   passwordHash String
   createdAt    DateTime @default(now())
 
-  sessions            Session[]
-  passwordResetTokens PasswordResetToken[]
-  importTokens        ImportToken[]
-  merchantRules       MerchantRule[]
-  accounts     Account[]
-  categories   Category[]
-  transactions Transaction[]
-  importBatches ImportBatch[]
+  sessions              Session[]
+  passwordResetTokens   PasswordResetToken[]
+  importTokens          ImportToken[]
+  merchantRules         MerchantRule[]
+  accounts              Account[]
+  categories            Category[]
+  transactions          Transaction[]
+  importBatches         ImportBatch[]
+  pendingTransactions   PendingTransaction[]
+  discardedFingerprints DiscardedFingerprint[]
 }
 
 model Session {
@@ -86,7 +88,7 @@ model PasswordResetToken {
   hashedToken String    @unique
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt   DateTime  // short-lived: 1 hour
+  expiresAt   DateTime // short-lived: 1 hour
   usedAt      DateTime? // single use - a link works exactly once
   createdAt   DateTime  @default(now())
 
@@ -105,7 +107,7 @@ model ImportToken {
   hashedToken String    @unique
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String    // e.g. "iPhone Shortcut" - so multiple devices stay tellable apart
+  name        String // e.g. "iPhone Shortcut" - so multiple devices stay tellable apart
   lastUsedAt  DateTime? // shows at a glance whether it is still in use
   revokedAt   DateTime? // revoked, not deleted: the audit trail survives
   createdAt   DateTime  @default(now())
@@ -154,7 +156,8 @@ model Account {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
-  transactions Transaction[]
+  transactions        Transaction[]
+  pendingTransactions PendingTransaction[]
 
   @@index([userId])
 }
@@ -173,8 +176,9 @@ model Category {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  transactions  Transaction[]
-  merchantRules MerchantRule[]
+  transactions        Transaction[]
+  merchantRules       MerchantRule[]
+  pendingTransactions PendingTransaction[]
 
   @@unique([userId, name])
   @@index([userId])
@@ -197,7 +201,7 @@ model Transaction {
   // so imports need no sign transformation and can't invert one.
   amountCents Int
 
-  bookedAt    DateTime // KBC `Datum` (booking date, never `Valuta`)
+  bookedAt         DateTime // KBC `Datum` (booking date, never `Valuta`)
   counterparty     String? // KBC `Naam tegenpartij`
   counterpartyIban String? // KBC `Rekening tegenpartij` — best key for future auto-categorisation
   description      String? // KBC `Omschrijving` + `vrije mededeling`
@@ -207,7 +211,7 @@ model Transaction {
   // integrity check against the bank's own running balance.
   balanceAfterCents Int?
 
-  source      TransactionSource @default(MANUAL)
+  source TransactionSource @default(MANUAL)
 
   // Dedupe key. NO @@unique here on purpose: deleted rows must not block a
   // re-import, so this needs a PARTIAL unique index (WHERE deleted_at IS NULL),
@@ -243,4 +247,45 @@ model ImportBatch {
   transactions Transaction[]
 
   @@index([userId])
+}
+
+// ---- Review before import (decided 2026-09-27) ------------------------------
+// Rows shared through the iOS Shortcut WAIT here until Kilian reviews them in
+// the app. A separate table on purpose: every total, the balance and every
+// list read Transaction only, so a waiting row can never count by accident.
+model PendingTransaction {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId         String
+  account           Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  amountCents       Int // signed, like Transaction
+  bookedAt          DateTime // same type as Transaction.bookedAt
+  counterparty      String?
+  counterpartyIban  String?
+  description       String?
+  balanceAfterCents Int?
+  fingerprint       String // same fingerprintRow() as Transaction
+  // Suggested by a taught rule when the row arrived; kept on "Add these".
+  categoryId        String?
+  category          Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  filename          String?
+  createdAt         DateTime  @default(now())
+
+  // Sharing the same file twice before reviewing must not double anything.
+  @@unique([userId, fingerprint])
+  @@index([userId])
+}
+
+// "Removed in review" - remembered so later overlapping imports don't offer
+// the same bank transaction again. Only the fingerprint: nothing else about a
+// row you said no to is kept.
+model DiscardedFingerprint {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fingerprint String
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, fingerprint])
 }

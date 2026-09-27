@@ -247,5 +247,17 @@
     "lower": "A lower-case letter",
     "upper": "A capital letter",
     "number": "A number"
+  },
+  "review": {
+    "title": "Review 1 new transaction | Review {n} new transactions",
+    "intro": "These came in from your bank. Uncheck what shouldn't go in; it won't be offered again.",
+    "all": "Select all",
+    "none": "Select none",
+    "add": "Add 1 | Add {n}",
+    "removeAll": "Remove all",
+    "later": "Later",
+    "willRemove": "1 will be removed | {n} will be removed",
+    "done": "{added} added · {removed} removed",
+    "banner": "1 transaction waiting for your review | {n} transactions waiting for your review"
   }
 }

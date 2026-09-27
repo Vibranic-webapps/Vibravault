@@ -247,5 +247,17 @@
     "lower": "Een kleine letter",
     "upper": "Een hoofdletter",
     "number": "Een cijfer"
+  },
+  "review": {
+    "title": "Controleer 1 nieuwe transactie | Controleer {n} nieuwe transacties",
+    "intro": "Deze kwamen binnen van je bank. Vink af wat er niet in mag; dat wordt niet meer aangeboden.",
+    "all": "Alles aanvinken",
+    "none": "Niets aanvinken",
+    "add": "1 toevoegen | {n} toevoegen",
+    "removeAll": "Alles verwijderen",
+    "later": "Later",
+    "willRemove": "1 wordt verwijderd | {n} worden verwijderd",
+    "done": "{added} toegevoegd · {removed} verwijderd",
+    "banner": "1 transactie wacht op je controle | {n} transacties wachten op je controle"
   }
 }

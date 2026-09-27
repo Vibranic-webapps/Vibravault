@@ -1,5 +1,5 @@
+import { blockedFingerprints } from '~~/server/utils/importFilter'
 import { prisma } from '~~/server/utils/prisma'
-import { prismaLive } from '~~/server/utils/transactionQuery'
 import { requireUserId } from '~~/server/utils/auth'
 import { getDefaultAccountId } from '~~/server/utils/seed'
 import { parseKbcCsv } from '~~/shared/utils/kbcCsv'
@@ -21,11 +21,10 @@ export default defineEventHandler(async (event) => {
   if (!parsed.rows.length) throw createError({ statusCode: 400, statusMessage: 'Nothing to import' })
 
   const fingerprints = parsed.rows.map(fingerprintRow)
-  const existing = await prismaLive.transaction.findMany({
-    where: { userId, fingerprint: { in: fingerprints } },
-    select: { fingerprint: true },
-  })
-  const known = new Set(existing.map((e) => e.fingerprint))
+  // Skip what's already live or was removed in a review. Rows WAITING for
+  // review are not skipped: this import is itself reviewed (the preview), so
+  // they go live here and leave the waiting list below.
+  const known = await blockedFingerprints(userId, fingerprints, { pending: false })
 
   const accountId = await getDefaultAccountId(userId)
 
@@ -68,6 +67,10 @@ export default defineEventHandler(async (event) => {
           categoryId: pickRule(categorisingRules, r.description)?.categoryId ?? null,                    // uncategorised is a normal state
         })),
         skipDuplicates: true,
+      })
+      // Now live -> no longer waiting (else "Add these" would offer them again).
+      await tx.pendingTransaction.deleteMany({
+        where: { userId, fingerprint: { in: toInsert.map((x) => x.fingerprint) } },
       })
     }
     return b

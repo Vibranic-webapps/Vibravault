@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { prisma } from '~~/server/utils/prisma'
-import { prismaLive } from '~~/server/utils/transactionQuery'
+import { blockedFingerprints } from '~~/server/utils/importFilter'
 import { requireImportToken } from '~~/server/utils/importToken'
 import { getDefaultAccountId } from '~~/server/utils/seed'
 import { parseKbcCsv } from '~~/shared/utils/kbcCsv'
@@ -10,8 +10,9 @@ import { pickRule } from '~~/shared/utils/rulePick'
 import { reportEvent } from '~~/server/utils/vibradex'
 
 /**
- * One-shot import for the iOS Shortcut: parse, dedupe and commit in a single
- * request, because a share-sheet action has no room for a preview step.
+ * Import from the iOS Shortcut: parse, dedupe and PARK the new rows for
+ * review. A share-sheet action can't show a preview, so the review happens
+ * the next time the app opens (ReviewSheet) - nothing counts before that.
  *
  * Accepts the CSV either as multipart (Shortcuts' "Get Contents of URL" with a
  * file in the form) or as a raw body, since Shortcuts can be configured either
@@ -46,76 +47,65 @@ async function importFromShortcut(event: H3Event) {
   }
 
   const fingerprints = parsed.rows.map(fingerprintRow)
-  const existing = await prismaLive.transaction.findMany({
-    where: { userId, fingerprint: { in: fingerprints } },
-    select: { fingerprint: true },
-  })
-  const known = new Set(existing.map((e) => e.fingerprint))
-
+  // Skip what's already live, already removed in a review, or already waiting.
+  const blocked = await blockedFingerprints(userId, fingerprints, { pending: true })
   const accountId = await getDefaultAccountId(userId)
 
-  // Taught rules that carry a category are applied as rows arrive, so a rule
-  // taught once files every FUTURE import too. Only rules WITH a category are
-  // considered here: a more specific rule that only renames must not stop a
-  // broader rule from filing the row.
+  // A taught rule suggests the category now; the review shows it, and it's
+  // kept on "Add these". Only rules WITH a category are considered: a more
+  // specific rule that only renames must not stop a broader one from filing.
   const categorisingRules = (await loadRules(userId)).filter((r) => r.categoryId)
-  const toInsert = parsed.rows
+  const toPark = parsed.rows
     .map((r, i) => ({ r, fingerprint: fingerprints[i]! }))
-    .filter(({ fingerprint }) => !known.has(fingerprint))
+    .filter(({ fingerprint }) => !blocked.has(fingerprint))
 
-  await prisma.$transaction(async (tx) => {
-    const batch = await tx.importBatch.create({
-      data: {
+  // PARKED, not imported: nothing counts until it's reviewed in the app
+  // (decided 2026-09-27). PendingTransaction is a separate table, so no
+  // total, list or balance can see these rows yet.
+  if (toPark.length) {
+    await prisma.pendingTransaction.createMany({
+      data: toPark.map(({ r, fingerprint }) => ({
         userId,
+        accountId,
+        amountCents: r.amountCents,
+        bookedAt: new Date(r.bookedAt),
+        balanceAfterCents: r.balanceAfterCents,
+        counterparty: r.counterparty,
+        counterpartyIban: r.counterpartyIban,
+        description: r.description,
+        fingerprint,
+        categoryId: pickRule(categorisingRules, r.description)?.categoryId ?? null,
         filename,
-        rowsParsed: parsed.rows.length,
-        rowsInserted: toInsert.length,
-        rowsSkipped: parsed.rows.length - toInsert.length,
-      },
+      })),
+      skipDuplicates: true,
     })
-    if (toInsert.length) {
-      await tx.transaction.createMany({
-        data: toInsert.map(({ r, fingerprint }) => ({
-          userId,
-          accountId,
-          importBatchId: batch.id,
-          amountCents: r.amountCents,
-          bookedAt: new Date(r.bookedAt),
-          balanceAfterCents: r.balanceAfterCents,
-          counterparty: r.counterparty,
-          counterpartyIban: r.counterpartyIban,
-          description: r.description,
-          source: 'CSV',
-          fingerprint,
-          categoryId: pickRule(categorisingRules, r.description)?.categoryId ?? null,
-        })),
-        skipDuplicates: true,
-      })
-    }
-  })
+  }
 
-  const skipped = parsed.rows.length - toInsert.length
+  const skipped = parsed.rows.length - toPark.length
+  // The notification is read on the phone, so it follows the phone's
+  // language (Shortcuts sends it as Accept-Language).
+  const nl = (getHeader(event, 'accept-language') ?? '').toLowerCase().startsWith('nl')
   const summary = [
-    `${toInsert.length} added`,
-    skipped ? `${skipped} already there` : null,
-    parsed.errors.length ? `${parsed.errors.length} unreadable` : null,
-    parsed.meta.balanceCheck.ok ? null : '⚠ balance mismatch',
+    toPark.length
+      ? (nl ? `${toPark.length} wachten op je controle · open Vibravault` : `${toPark.length} waiting for your review · open Vibravault`)
+      : (nl ? 'Niets nieuws' : 'Nothing new'),
+    skipped ? (nl ? `${skipped} al bekend` : `${skipped} already known`) : null,
+    parsed.errors.length ? (nl ? `${parsed.errors.length} onleesbaar` : `${parsed.errors.length} unreadable`) : null,
+    parsed.meta.balanceCheck.ok ? null : (nl ? '⚠ saldo klopt niet' : '⚠ balance mismatch'),
   ].filter(Boolean).join(' · ')
 
   event.waitUntil?.(reportEvent(
-    parsed.meta.balanceCheck.ok ? 'Shortcut import completed' : 'Shortcut import: balance mismatch',
+    parsed.meta.balanceCheck.ok ? 'Shortcut import parked for review' : 'Shortcut import: balance mismatch',
     {
       type: parsed.meta.balanceCheck.ok ? 'info' : 'warning',
       severity: parsed.meta.balanceCheck.ok ? 'low' : 'medium',
-      details: { userId, filename, inserted: toInsert.length, skipped, balanceOk: parsed.meta.balanceCheck.ok },
+      details: { userId, filename, waiting: toPark.length, skipped, balanceOk: parsed.meta.balanceCheck.ok },
     },
   ))
 
-  // `summary` is a single readable line so the Shortcut can show it as a
-  // notification with one step.
   return {
     summary,
-    inserted: toInsert.length,
+    waiting: toPark.length,
     skipped,
     unreadable: parsed.errors.length,
     balanceOk: parsed.meta.balanceCheck.ok,
