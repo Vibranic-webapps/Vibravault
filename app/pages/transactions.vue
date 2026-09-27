@@ -46,13 +46,6 @@ const form = reactive({
   description: '',
 })
 
-// The nav's + button links here with ?new=1.
-//
-// This used to run ONCE, during setup - so it only worked when you arrived
-// from another page. Already on /transactions, tapping + just changed the
-// query: the page is reused, setup doesn't re-run, the form never opened.
-// Now we WATCH the query, and clear it after opening so the next tap on +
-// changes the URL again (otherwise ?new=1 -> ?new=1 is no navigation at all).
 const router = useRouter()
 watch(() => route.query.new, (flag) => {
   if (flag !== '1') return
@@ -103,8 +96,6 @@ function openEdit(t: Transaction) {
 
 async function save() {
   saving.value = true
-  // The SIGN is applied in exactly one place. If this conversion were repeated
-  // at each call site, a positive expense would appear eventually.
   const signed = form.direction === 'out' ? `-${form.amount.replace(/^[-+]/, '')}` : form.amount
   const payload = {
     amount: signed,
@@ -123,8 +114,6 @@ async function remove(t: Transaction) {
   await store.remove(t.id)
 }
 
-// Transfers can go either way (money in FROM Revolut, out TO Revolut), so
-// transfer categories are offered for both directions.
 const formCategories = computed(() => [
   ...(form.direction === 'in' ? categories.income : categories.expense),
   ...categories.transfer,
