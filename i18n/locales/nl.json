@@ -129,9 +129,6 @@
     "welcomeEyebrow": "Welkom",
     "welcomeTitle": "Laten we je kluis vullen",
     "welcomeBody": "Voeg je eerste betaling toe, of haal alles in één keer binnen uit je bankapp.",
-    "deleteConfirm": "Deze transactie verwijderen?",
-    "deleted": "Verwijderd",
-    "ruleSaved": "Regel bewaard | Regel bewaard, 1 transactie ingedeeld | Regel bewaard, {n} transacties ingedeeld",
     "bankOn": "Saldo volgens je bank op {date}",
     "plusManual": "plus 1 zelf toegevoegd | plus {n} zelf toegevoegd"
   },
@@ -161,5 +158,38 @@
     "groupIncome": "Inkomen",
     "groupTransfer": "Tussen je rekeningen",
     "change": "{field} wijzigen"
+  },
+  "tx": {
+    "title": "Transacties",
+    "filters": "Toon",
+    "all": "Alles",
+    "unsorted": "Niet ingedeeld",
+    "in": "In",
+    "out": "Uit",
+    "transfers": "Tussen rekeningen",
+    "moved": "{amount} verplaatst tussen je eigen rekeningen, niet meegeteld",
+    "emptyFilter": "Niets met deze filter.",
+    "showAll": "Toon alles",
+    "addFirst": "Voeg er een toe",
+    "deleteConfirm": "Deze transactie verwijderen?",
+    "deleted": "Verwijderd",
+    "ruleSaved": "Regel bewaard | Regel bewaard, 1 transactie ingedeeld | Regel bewaard, {n} transacties ingedeeld"
+  },
+  "addForm": {
+    "title": "Nieuwe transactie",
+    "direction": "Geld in of uit",
+    "out": "Uitgave",
+    "in": "Inkomen",
+    "amount": "Bedrag",
+    "name": "Wie of wat?",
+    "namePh": "bv. Colruyt",
+    "category": "Categorie",
+    "when": "Wanneer",
+    "today": "Vandaag",
+    "yesterday": "Gisteren",
+    "otherDay": "Andere dag",
+    "note": "Notitie",
+    "save": "Toevoegen",
+    "saved": "Toegevoegd"
   }
 }

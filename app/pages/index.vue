@@ -2,7 +2,7 @@
 import { Inbox, PenLine, FileUp, CircleDashed } from 'lucide-vue-next'
 import type { Week } from '~/components/home/WeekChart.vue'
 import type { Transaction } from '~/stores/transactions'
-import { useTransactionsStore, monthKey } from '~/stores/transactions'
+import { useTransactionsStore, monthKey, dayKey } from '~/stores/transactions'
 import { useCategoriesStore } from '~/stores/categories'
 import { useRulesStore } from '~/stores/rules'
 
@@ -30,6 +30,7 @@ interface Dashboard {
 
 const { t } = useI18n()
 const { money, monthName, localeTag } = useFormat()
+const addTx = useAddTransaction()
 const { toast } = useToast()
 const user = useAuthUser()
 const txStore = useTransactionsStore()
@@ -64,31 +65,14 @@ function shiftMonth(delta: number) {
   month.value = monthKey(new Date(y!, m! - 1 + delta, 1))
 }
 
-// ---- Stat tiles ----------------------------------------------------------
-// Each value's character count goes to CSS as --len so the font sizes to the
-// tile: always one line, however big the number.
-const tiles = computed(() => {
-  const s = data.value?.totals
-  if (!s) return []
-  return [
-    { key: 'in', label: t('home.in'), text: money(s.income, { signed: true }), cls: 'vv-amount-in' },
-    { key: 'out', label: t('home.out'), text: money(s.expense), cls: 'vv-amount-out' },
-    { key: 'net', label: t('home.net'), text: money(s.net, { signed: true }), cls: s.net < 0 ? 'vv-amount-out' : 'vv-amount-in' },
-  ]
-})
-
 // ---- Chart: which week is picked ------------------------------------------
 // Viewing the current month? Start on this week. Another month? Nothing
 // picked - the hint invites a tap.
 const week = ref<string | null>(null)
-function localToday() {
-  const d = new Date()
-  return `${monthKey(d)}-${String(d.getDate()).padStart(2, '0')}`
-}
 watch(
   () => data.value?.month,
   () => {
-    const today = localToday()
+    const today = dayKey(new Date())
     week.value = data.value?.weeks.find((w) => w.from <= today && today <= w.to)?.weekStart ?? null
   },
   { immediate: true },
@@ -111,16 +95,16 @@ function categoryOf(id: string | null) {
 
 async function onRemove(tx: Transaction) {
   viewing.value = null
-  if (!confirm(t('home.deleteConfirm'))) return
+  if (!confirm(t('tx.deleteConfirm'))) return
   if (await txStore.remove(tx.id)) {
-    toast(t('home.deleted'))
+    toast(t('tx.deleted'))
     await refresh()
   }
 }
 
 async function onRuleSaved(n: number) {
   teaching.value = null
-  toast(t('home.ruleSaved', n))
+  toast(t('tx.ruleSaved', n))
   await Promise.all([refresh(), rules.fetchAll()])
 }
 </script>
@@ -137,7 +121,7 @@ async function onRuleSaved(n: number) {
       <p class="w-body">{{ t('home.welcomeBody') }}</p>
       <div class="w-actions">
         <UiButton :icon="FileUp" to="/import">{{ t('add.import') }}</UiButton>
-        <UiButton :icon="PenLine" variant="ghost" to="/transactions?new=1">{{ t('add.manual') }}</UiButton>
+        <UiButton :icon="PenLine" variant="ghost" @click="addTx.show()">{{ t('add.manual') }}</UiButton>
       </div>
     </section>
 
@@ -147,12 +131,7 @@ async function onRuleSaved(n: number) {
       <UiMonthSwitcher v-model="month" class="months" />
 
       <div class="month-body" :class="{ refreshing }" :aria-busy="refreshing">
-        <div class="tiles">
-          <div v-for="tile in tiles" :key="tile.key" class="neu-3 tile">
-            <p class="t-label">{{ tile.label }}</p>
-            <p class="t-value" :class="tile.cls" :style="{ '--len': tile.text.length }">{{ tile.text }}</p>
-          </div>
-        </div>
+        <MoneyTiles class="tiles" :income="data.totals.income" :expense="data.totals.expense" :net="data.totals.net" />
 
         <section v-if="data.uncategorised" class="neu-3 card rows">
           <UiListRow
@@ -242,14 +221,7 @@ h2 { margin: 0 0 14px; font-size: 16px; font-weight: 800; }
 .card-head h2 { margin: 0; }
 .see-all { font-size: 14px; }
 
-/* Stat tiles - one line always (see `tiles` in the script). */
-.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
-.tile { padding: 14px 8px; text-align: center; container-type: inline-size; min-width: 0; }
-.t-label { margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--vv-muted); }
-.t-value {
-  margin: 0; white-space: nowrap; font-weight: 800; font-variant-numeric: tabular-nums;
-  font-size: clamp(10px, calc(100cqi / (var(--len, 10) * 0.64)), 16px);
-}
+.tiles { margin-bottom: 18px; }
 
 .empty p { margin: 0 0 14px; color: var(--vv-muted); font-size: 14px; }
 

@@ -31,11 +31,27 @@ useSwipeNav(shell)
 
 // --- Add sheet ------------------------------------------------------------
 const addOpen = ref(false)
+const addTx = useAddTransaction()
 
 async function go(path: string) {
   addOpen.value = false
   await navigateTo(path)
 }
+
+// "Type it in" swaps the Add sheet for the New transaction sheet, right here.
+function typeItIn() {
+  addOpen.value = false
+  addTx.show()
+}
+
+// Old links (and bookmarks) to /transactions?new=1 still open the form.
+const router = useRouter()
+watch(() => route.query.new, (flag) => {
+  if (flag !== '1' || !import.meta.client) return
+  addTx.show()
+  const { new: _dropped, ...rest } = route.query
+  router.replace({ query: rest })
+}, { immediate: true })
 </script>
 
 <template>
@@ -86,10 +102,12 @@ async function go(path: string) {
     </nav>
 
     <UiBottomSheet v-model="addOpen" :title="t('add.title')">
-      <UiListRow :icon="PenLine" :label="t('add.manual')" :hint="t('add.manualHint')" chevron @click="go('/transactions?new=1')" />
+      <UiListRow :icon="PenLine" :label="t('add.manual')" :hint="t('add.manualHint')" chevron @click="typeItIn" />
       <UiListRow :icon="FileUp" :label="t('add.import')" :hint="t('add.importHint')" chevron @click="go('/import')" />
       <UiListRow :icon="ScanLine" :label="t('add.receipt')" :hint="t('add.receiptHint')" :value="t('add.soon')" disabled />
     </UiBottomSheet>
+
+    <AddTransactionSheet />
   </div>
 </template>
 
