@@ -41,5 +41,5 @@ export default defineEventHandler(async (event) => {
   event.waitUntil?.(reportEvent('New user signed up', { details: { userId: user.id } }))
 
   setResponseStatus(event, 201)
-  return { id: user.id, email: user.email }
+  return { id: user.id, email: user.email, name: user.name }
 })

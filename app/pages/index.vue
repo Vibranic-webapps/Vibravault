@@ -13,6 +13,13 @@ interface Dashboard {
   hasAnyTransactions: boolean
 }
 
+const { t } = useI18n()
+const user = useAuthUser()
+// "Hey Kilian" - or a friendly fallback until a name is set in You.
+const greeting = computed(() =>
+  user.value?.name ? t('home.greeting', { name: user.value.name }) : t('home.greetingNoName'),
+)
+
 const month = ref(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`)
 
 const { data, refresh } = await useAsyncData<Dashboard>(
@@ -61,7 +68,7 @@ const showTable = ref(false)
   <div v-if="data">
     <header class="head">
       <div>
-        <h1>Dashboard</h1>
+        <h1>{{ greeting }}</h1>
         <p class="muted">{{ monthLabel }}</p>
       </div>
       <div class="months">

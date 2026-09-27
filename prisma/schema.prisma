@@ -48,6 +48,7 @@ enum TransactionSource {
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
+  name         String?  // what the app calls you ("Hey Kilian"); optional
   passwordHash String
   createdAt    DateTime @default(now())
 

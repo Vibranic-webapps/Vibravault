@@ -92,9 +92,15 @@
     "account": "Account",
     "rules": "Jouw regels",
     "phone": "Delen vanaf je telefoon",
-    "signOut": "Afmelden"
+    "signOut": "Afmelden",
+    "name": "Je naam",
+    "namePh": "Hoe mogen we je noemen?",
+    "nameHint": "Om je te begroeten op Start.",
+    "nameSaved": "Naam bewaard",
+    "nameTooLong": "Hou het onder 40 tekens"
   },
-  "brand": {
-    "home": "Vibravault — start"
+  "home": {
+    "greeting": "Hey {name}",
+    "greetingNoName": "Hey daar"
   }
 }
