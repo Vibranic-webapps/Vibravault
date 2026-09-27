@@ -131,7 +131,9 @@
     "welcomeBody": "Add your first payment, or bring everything in at once from your bank's app.",
     "deleteConfirm": "Delete this transaction?",
     "deleted": "Deleted",
-    "ruleSaved": "Rule saved | Rule saved, 1 transaction sorted | Rule saved, {n} transactions sorted"
+    "ruleSaved": "Rule saved | Rule saved, 1 transaction sorted | Rule saved, {n} transactions sorted",
+    "bankOn": "Your bank's balance on {date}",
+    "plusManual": "plus 1 added by hand | plus {n} added by hand"
   },
   "drawer": {
     "actions": "More actions",

@@ -4,6 +4,7 @@ import { prisma } from '~~/server/utils/prisma'
 import { transferCategoryIds, countsAsFlow } from '~~/server/utils/transfers'
 import { loadRules } from '~~/server/utils/merchantRules'
 import { transactionLabel } from '~~/shared/utils/merchant'
+import { accountBalance } from '~~/shared/utils/balance'
 
 /** Monday-start week index for a date, used to bucket a month into weeks. */
 function mondayOf(d: Date): Date {
@@ -38,14 +39,13 @@ export default defineEventHandler(async (event) => {
         balanceAfterCents: true, source: true,
       },
     }),
-    // Balance is ALL TIME, not this month - it is the account's position, and
-    // it is DERIVED, never stored. One source of truth. Per account, because
-    // each bank gets its own card on Home.
-    prismaLive.transaction.groupBy({
-      by: ['accountId'],
+    // Balance is ALL TIME, not this month - it is the account's position.
+    // Still DERIVED, never stored: the bank's own Saldo on the newest imported
+    // row, plus hand-typed rows after it (see shared/utils/balance.ts).
+    // Only the four columns that needs - cheap even with years of rows.
+    prismaLive.transaction.findMany({
       where: { userId },
-      _sum: { amountCents: true },
-      _max: { bookedAt: true },
+      select: { accountId: true, bookedAt: true, amountCents: true, balanceAfterCents: true, source: true },
     }),
     prisma.account.findMany({ where: { userId }, orderBy: { createdAt: 'asc' }, select: { id: true, name: true } }),
     prismaLive.transaction.count({ where: { userId } }),
@@ -59,13 +59,17 @@ export default defineEventHandler(async (event) => {
     transactionLabel(t.counterparty, t.description, rules)
 
   // ---- Bank cards ---------------------------------------------------------
-  const sums = new Map(perAccount.map((a) => [a.accountId, a]))
-  const accountCards = accounts.map((a) => ({
-    id: a.id,
-    name: a.name,
-    balanceCents: sums.get(a.id)?._sum.amountCents ?? 0,
-    lastBookedAt: sums.get(a.id)?._max.bookedAt ?? null,
-  }))
+  const accountCards = accounts.map((a) => {
+    const b = accountBalance(perAccount.filter((r) => r.accountId === a.id))
+    return {
+      id: a.id,
+      name: a.name,
+      balanceCents: b.cents,
+      fromBank: b.fromBank,
+      asOf: b.asOf,
+      addedSince: b.addedSince,
+    }
+  })
   const balanceCents = accountCards.reduce((n, a) => n + a.balanceCents, 0)
 
   // Balance above keeps EVERY row. Everything below that means "income" or

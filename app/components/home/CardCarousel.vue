@@ -5,7 +5,7 @@
  * you are, and `data-swipe-lock` tells the screen-swipe to leave these
  * sideways gestures alone - the cards own them.
  */
-interface Card { id: string; name: string; balanceCents: number; lastBookedAt: string | null }
+interface Card { id: string; name: string; balanceCents: number; fromBank: boolean; asOf: string | null; addedSince: number }
 const props = defineProps<{ cards: Card[] }>()
 const { t } = useI18n()
 
@@ -47,7 +47,13 @@ function goTo(i: number) {
         class="slide"
         :aria-label="many ? t('home.accountN', { n: i + 1, total: cards.length }) : undefined"
       >
-        <HomeBankCard :name="c.name" :balance-cents="c.balanceCents" :last-booked-at="c.lastBookedAt" />
+        <HomeBankCard
+          :name="c.name"
+          :balance-cents="c.balanceCents"
+          :from-bank="c.fromBank"
+          :as-of="c.asOf"
+          :added-since="c.addedSince"
+        />
       </div>
     </div>
 
