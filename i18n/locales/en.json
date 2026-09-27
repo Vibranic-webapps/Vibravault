@@ -132,5 +132,32 @@
     "deleteConfirm": "Delete this transaction?",
     "deleted": "Deleted",
     "ruleSaved": "Rule saved | Rule saved, 1 transaction sorted | Rule saved, {n} transactions sorted"
+  },
+  "drawer": {
+    "actions": "More actions",
+    "teach": "Rename & sort all like this",
+    "delete": "Delete",
+    "transferNote": "Between your own accounts, so not income or spending",
+    "whoPh": "Who was it?",
+    "date": "Date",
+    "category": "Category",
+    "note": "Note",
+    "addNote": "Add a note",
+    "account": "Account",
+    "balanceAfter": "Balance after",
+    "source": "Source",
+    "sourceManual": "Added by hand",
+    "sourceCsv": "Imported from your bank",
+    "sourcePsd2": "Synced with your bank",
+    "locked": "Amount and date come from your bank, so they stay the way the bank recorded them. Want a nicer name? Use ⋯ → Rename & sort all like this.",
+    "original": "What the bank wrote",
+    "enterAmount": "Enter an amount",
+    "pickDate": "Pick a date",
+    "couldNotSave": "That didn't save. Try again.",
+    "pickCategory": "Pick a category",
+    "groupSpending": "Spending",
+    "groupIncome": "Income",
+    "groupTransfer": "Between your accounts",
+    "change": "Change {field}"
   }
 }

@@ -6,15 +6,22 @@ import { X } from 'lucide-vue-next'
  * task (the Add sheet, and later the transaction drawer). Centred panel on
  * wider screens. Closes on the scrim, the X, Escape, or dragging it down.
  */
-interface Props { modelValue: boolean; title?: string }
-const props = defineProps<Props>()
+interface Props {
+  modelValue: boolean
+  title?: string
+  /** Spoken name when there's no visible title. */
+  label?: string
+  /** Off when the content handles Escape itself (e.g. first cancel an edit). */
+  closeOnEscape?: boolean
+}
+const props = withDefaults(defineProps<Props>(), { closeOnEscape: true })
 const emit = defineEmits<{ 'update:modelValue': [open: boolean] }>()
 const { t } = useI18n()
 
 const sheet = ref<HTMLElement | null>(null)
 
 function close() { emit('update:modelValue', false) }
-function onKey(e: KeyboardEvent) { if (e.key === 'Escape' && props.modelValue) close() }
+function onKey(e: KeyboardEvent) { if (e.key === 'Escape' && props.modelValue && props.closeOnEscape) close() }
 
 onMounted(() => window.addEventListener('keydown', onKey))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
@@ -109,7 +116,7 @@ const scrimStyle = computed(() => {
           :style="sheetStyle"
           role="dialog"
           aria-modal="true"
-          :aria-label="title"
+          :aria-label="title ?? label"
           tabindex="-1"
           @touchstart.passive="onTouchStart"
           @touchmove="onTouchMove"
