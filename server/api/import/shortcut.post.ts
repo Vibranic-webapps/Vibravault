@@ -1,3 +1,4 @@
+import type { H3Event } from 'h3'
 import { prisma } from '~~/server/utils/prisma'
 import { prismaLive } from '~~/server/utils/transactionQuery'
 import { requireImportToken } from '~~/server/utils/importToken'
@@ -20,7 +21,7 @@ import { reportEvent } from '~~/server/utils/vibradex'
  * matters: it is the only thing standing between a misparsed file and silent
  * bad data, so its result is reported back in the summary.
  */
-export default defineEventHandler(async (event) => {
+async function importFromShortcut(event: H3Event) {
   const userId = await requireImportToken(event)
 
   let data: Uint8Array | null = null
@@ -118,5 +119,28 @@ export default defineEventHandler(async (event) => {
     skipped,
     unreadable: parsed.errors.length,
     balanceOk: parsed.meta.balanceCheck.ok,
+  }
+}
+
+/**
+ * `?format=text`: answer with ONLY the summary line, as plain text. The
+ * Shortcut can then show it straight away (Get Contents of URL -> Show
+ * Notification) - no "Get Dictionary Value" step to find and fill in.
+ * Errors come back as readable text too ("Invalid import token", "No
+ * transactions found in that file"), so the notification says what went
+ * wrong. Without the flag: the original JSON, so older Shortcuts keep working.
+ */
+export default defineEventHandler(async (event) => {
+  const asText = getQuery(event).format === 'text'
+  if (!asText) return importFromShortcut(event)
+
+  setResponseHeader(event, 'content-type', 'text/plain; charset=utf-8')
+  try {
+    const result = await importFromShortcut(event)
+    return result.summary
+  } catch (e: unknown) {
+    const err = e as { statusCode?: number; statusMessage?: string }
+    setResponseStatus(event, err.statusCode ?? 500)
+    return err.statusMessage ?? 'Import failed'
   }
 })

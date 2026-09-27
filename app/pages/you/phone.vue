@@ -34,7 +34,9 @@ const busy = ref(false)
 // Where the Shortcut must send the file. On the server there's no window,
 // so fall back to the live address (the page re-renders on the client).
 const endpoint = computed(() =>
-  `${import.meta.client ? window.location.origin : 'https://vibravault.kilianfrederix.net'}/api/import/shortcut`,
+  // ?format=text: the answer is one readable line, so the Shortcut can show
+  // it as a notification directly (no "Get Dictionary Value" step).
+  `${import.meta.client ? window.location.origin : 'https://vibravault.kilianfrederix.net'}/api/import/shortcut?format=text`,
 )
 
 async function createKey() {
@@ -88,7 +90,7 @@ async function revoke(tk: ImportToken) {
         <li>{{ t('you.s3') }}</li>
         <li>{{ t('you.s4') }} <CopyField value="x-import-token" /> {{ t('you.s4b') }}</li>
         <li>{{ t('you.s5') }}</li>
-        <li>{{ t('you.s6') }} <CopyField value="summary" /> {{ t('you.s6b') }}</li>
+        <li>{{ t('you.s6') }}</li>
         <li>{{ t('you.s7') }}</li>
         <li>{{ t('you.s8') }}</li>
       </ol>
