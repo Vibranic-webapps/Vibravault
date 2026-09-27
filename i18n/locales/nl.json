@@ -259,5 +259,26 @@
     "willRemove": "1 wordt verwijderd | {n} worden verwijderd",
     "done": "{added} toegevoegd · {removed} verwijderd",
     "banner": "1 transactie wacht op je controle | {n} transacties wachten op je controle"
+  },
+  "import": {
+    "title": "Importeren van je bank",
+    "intro": "Exporteer je transacties uit je bankapp als CSV-bestand en kies het hier. Je ziet elke transactie voordat er iets wordt toegevoegd.",
+    "choose": "Kies een CSV-bestand",
+    "chooseHint": "Een KBC-export, tot 5 MB",
+    "reading": "Bestand lezen…",
+    "new": "Nieuw",
+    "known": "Al bekend",
+    "unreadable": "Onleesbaar",
+    "balanceOk": "Het lopende saldo klopt met je bank op elke rij.",
+    "balanceBad": "Het saldo klopt niet meer vanaf regel {line}. Er ontbreekt misschien een rij, dus controleer voor je toevoegt.",
+    "review": "Controleer 1 transactie | Controleer {n} transacties",
+    "nothingNew": "Niets nieuws in dit bestand. Alles staat al in Vibravault.",
+    "another": "Nog een bestand importeren",
+    "unreadableTitle": "Regels die we niet konden lezen",
+    "line": "Regel {line}",
+    "badFile": "Dat lijkt geen CSV-bestand van een bank.",
+    "tooBig": "Dat bestand is te groot (max 5 MB).",
+    "tip": "Tip: sla het opslaan over en deel het bestand rechtstreeks vanuit je bankapp.",
+    "tipLink": "Stel het in"
   }
 }

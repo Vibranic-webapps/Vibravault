@@ -259,5 +259,26 @@
     "willRemove": "1 will be removed | {n} will be removed",
     "done": "{added} added · {removed} removed",
     "banner": "1 transaction waiting for your review | {n} transactions waiting for your review"
+  },
+  "import": {
+    "title": "Import from your bank",
+    "intro": "Export your transactions from your banking app as a CSV file and pick it here. You'll see every transaction before anything is added.",
+    "choose": "Choose a CSV file",
+    "chooseHint": "A KBC export, up to 5 MB",
+    "reading": "Reading the file…",
+    "new": "New",
+    "known": "Already known",
+    "unreadable": "Unreadable",
+    "balanceOk": "The running balance matches your bank on every row.",
+    "balanceBad": "The balance doesn't add up from line {line}. A row may be missing, so check before adding.",
+    "review": "Review 1 transaction | Review {n} transactions",
+    "nothingNew": "Nothing new in this file. Everything in it is already in Vibravault.",
+    "another": "Import another file",
+    "unreadableTitle": "Lines we couldn't read",
+    "line": "Line {line}",
+    "badFile": "That doesn't look like a bank CSV file.",
+    "tooBig": "That file is too big (max 5 MB).",
+    "tip": "Tip: skip the saving step and share the file straight from your banking app.",
+    "tipLink": "Set it up"
   }
 }
