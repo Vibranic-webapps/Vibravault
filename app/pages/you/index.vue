@@ -1,17 +1,28 @@
 <script setup lang="ts">
-import { Sparkles, Smartphone, LogOut } from 'lucide-vue-next'
+import { Sparkles, Smartphone, Download, KeyRound, LogOut } from 'lucide-vue-next'
 import { useRulesStore } from '~/stores/rules'
 
 /**
- * "You" - Wave 2 version: everything that left the header (appearance,
- * sign-out, the way to settings) plus language. Wave 3 merges the rest of
- * /settings in here and rewrites it for a first-time user.
+ * "You" - settings and profile in ONE place (#1, #2), as grouped rows:
+ *   who you are      name (greets you on Home), email
+ *   preferences      language, appearance
+ *   your vault       rules, share from your phone, export
+ *   account          change password, sign out
+ * Rows with a chevron go one level down (/you/rules, /you/phone, ...).
  */
+interface ImportToken { id: string; revokedAt: string | null }
+
 const { t, locale, setLocale } = useI18n()
 const user = useAuthUser()
 const theme = useTheme()
+const { toast } = useToast()
 const rules = useRulesStore()
-await rules.fetchAll()
+
+const [, { data: tokens }] = await Promise.all([
+  rules.fetchAll(),
+  useAsyncData<ImportToken[]>('import-tokens', () => useRequestFetch()('/api/import-tokens')),
+])
+const phoneOn = computed(() => (tokens.value ?? []).some((tk) => !tk.revokedAt))
 
 const lang = computed({
   get: () => locale.value,
@@ -22,7 +33,6 @@ const initial = computed(() => ((user.value?.name || user.value?.email)?.[0] ?? 
 
 // --- Your name ------------------------------------------------------------
 // Saved when you leave the field (or press Enter) - no Save button to forget.
-const { toast } = useToast()
 const MAX_NAME = 40
 const name = ref(user.value?.name ?? '')
 const nameError = ref('')
@@ -40,10 +50,17 @@ async function saveName() {
     name.value = updated.name ?? ''
     toast(t('you.nameSaved'))
   } catch {
-    toast(t('common.retry'), 'bad')
+    toast(t('drawer.couldNotSave'), 'bad')
   } finally {
     savingName = false
   }
+}
+
+// --- Export ---------------------------------------------------------------
+// A plain navigation to the file: the browser (or iOS's preview, in the
+// installed app) handles the download and the Share button.
+function exportAll() {
+  window.location.href = `/api/transactions/export?lang=${locale.value}`
 }
 
 async function signOut() {
@@ -94,14 +111,16 @@ async function signOut() {
       />
     </section>
 
-    <h2>{{ t('you.tools') }}</h2>
+    <h2>{{ t('you.vault') }}</h2>
     <section class="neu-3 card rows">
-      <UiListRow :icon="Sparkles" :label="t('you.rules')" :value="String(rules.items.length)" to="/settings#rules" />
-      <UiListRow :icon="Smartphone" :label="t('you.phone')" to="/settings#phone" />
+      <UiListRow :icon="Sparkles" :label="t('you.rulesTitle')" :value="t('you.rulesCount', rules.items.length)" to="/you/rules" />
+      <UiListRow :icon="Smartphone" :label="t('you.phoneTitle')" :value="phoneOn ? t('you.phoneOn') : undefined" to="/you/phone" />
+      <UiListRow :icon="Download" :label="t('you.export')" :hint="t('you.exportHint')" @click="exportAll" />
     </section>
 
     <h2>{{ t('you.account') }}</h2>
     <section class="neu-3 card rows">
+      <UiListRow :icon="KeyRound" :label="t('you.password')" to="/you/password" />
       <UiListRow :icon="LogOut" :label="t('you.signOut')" danger @click="signOut" />
     </section>
   </div>
