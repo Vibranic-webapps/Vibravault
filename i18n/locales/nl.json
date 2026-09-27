@@ -132,5 +132,32 @@
     "deleteConfirm": "Deze transactie verwijderen?",
     "deleted": "Verwijderd",
     "ruleSaved": "Regel bewaard | Regel bewaard, 1 transactie ingedeeld | Regel bewaard, {n} transacties ingedeeld"
+  },
+  "drawer": {
+    "actions": "Meer acties",
+    "teach": "Hernoem en deel alles zoals dit in",
+    "delete": "Verwijderen",
+    "transferNote": "Tussen je eigen rekeningen, dus geen inkomen of uitgave",
+    "whoPh": "Wie was het?",
+    "date": "Datum",
+    "category": "Categorie",
+    "note": "Notitie",
+    "addNote": "Notitie toevoegen",
+    "account": "Rekening",
+    "balanceAfter": "Saldo erna",
+    "source": "Bron",
+    "sourceManual": "Zelf toegevoegd",
+    "sourceCsv": "Geïmporteerd van je bank",
+    "sourcePsd2": "Gesynchroniseerd met je bank",
+    "locked": "Bedrag en datum komen van je bank en blijven zoals de bank ze noteerde. Liever een mooiere naam? Gebruik ⋯ → Hernoem en deel alles zoals dit in.",
+    "original": "Wat de bank schreef",
+    "enterAmount": "Vul een bedrag in",
+    "pickDate": "Kies een datum",
+    "couldNotSave": "Dat lukte niet. Probeer opnieuw.",
+    "pickCategory": "Kies een categorie",
+    "groupSpending": "Uitgaven",
+    "groupIncome": "Inkomen",
+    "groupTransfer": "Tussen je rekeningen",
+    "change": "{field} wijzigen"
   }
 }
