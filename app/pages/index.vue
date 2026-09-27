@@ -14,7 +14,7 @@ import { useRulesStore } from '~/stores/rules'
  *   on what?             -> where it went
  *   what just happened?  -> latest 5, tap for the drawer
  */
-interface Account { id: string; name: string; balanceCents: number; lastBookedAt: string | null }
+interface Account { id: string; name: string; balanceCents: number; fromBank: boolean; asOf: string | null; addedSince: number }
 interface TopCategory { id: string | null; name: string | null; icon: string | null; color: string | null; total: number }
 interface Dashboard {
   month: string

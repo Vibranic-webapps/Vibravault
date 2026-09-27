@@ -131,7 +131,9 @@
     "welcomeBody": "Voeg je eerste betaling toe, of haal alles in één keer binnen uit je bankapp.",
     "deleteConfirm": "Deze transactie verwijderen?",
     "deleted": "Verwijderd",
-    "ruleSaved": "Regel bewaard | Regel bewaard, 1 transactie ingedeeld | Regel bewaard, {n} transacties ingedeeld"
+    "ruleSaved": "Regel bewaard | Regel bewaard, 1 transactie ingedeeld | Regel bewaard, {n} transacties ingedeeld",
+    "bankOn": "Saldo volgens je bank op {date}",
+    "plusManual": "plus 1 zelf toegevoegd | plus {n} zelf toegevoegd"
   },
   "drawer": {
     "actions": "Meer acties",
