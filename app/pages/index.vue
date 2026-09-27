@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Inbox, PenLine, FileUp, CircleDashed, ClipboardCheck } from 'lucide-vue-next'
+import { Inbox, PenLine, FileUp, ClipboardCheck } from 'lucide-vue-next'
 import type { Week } from '~/components/home/WeekChart.vue'
 import type { Transaction } from '~/stores/transactions'
 import { useTransactionsStore, monthKey, dayKey } from '~/stores/transactions'
@@ -170,8 +170,7 @@ async function onRuleSaved(n: number) {
                 :style="c.color ? { background: `var(--vv-${c.color})`, color: `var(--vv-${c.color}-fg)` } : {}"
                 aria-hidden="true"
               >
-                <template v-if="c.icon">{{ c.icon }}</template>
-                <CircleDashed v-else :size="18" />
+                <CategoryIcon :name="c.icon" :size="18" />
               </span>
               <span class="c-main">
                 <span class="c-top">

@@ -39,7 +39,7 @@ function tint(id: string | null) {
     <ul v-else class="neu-3 list">
       <li v-for="r in rules.items" :key="r.id" class="rule">
         <span class="r-tile neu" :style="tint(r.categoryId)" aria-hidden="true">
-          {{ r.categoryId ? categories.byId.get(r.categoryId)?.icon : '' }}
+          <CategoryIcon v-if="r.categoryId" :name="categories.byId.get(r.categoryId)?.icon" :size="17" />
         </span>
         <span class="r-main">
           <strong>{{ r.label ?? t('you.ruleKeepsName') }}</strong>

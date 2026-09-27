@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { CircleDashed } from 'lucide-vue-next'
 
 /**
  * One transaction in a list: category tile · name + date · amount.
@@ -35,8 +34,7 @@ const tile = computed(() =>
   <button type="button" class="tx" @click="emit('click')">
     <!-- No category yet = a dashed circle: "still open", not a broken icon. -->
     <span class="tile neu" :style="tile" aria-hidden="true">
-      <template v-if="icon">{{ icon }}</template>
-      <CircleDashed v-else :size="18" />
+      <CategoryIcon :name="icon" :size="18" />
     </span>
     <span class="main">
       <span class="name">{{ label }}</span>

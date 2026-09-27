@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { CircleDashed } from 'lucide-vue-next'
 import { useCategoriesStore } from '~/stores/categories'
 
 /**
@@ -51,7 +50,7 @@ function tint(c: { color: string }) {
           :disabled="disabled"
           @click="emit('update:modelValue', c.id)"
         >
-          <span class="ct-icon neu" :style="tint(c)" aria-hidden="true">{{ c.icon }}</span>
+          <span class="ct-icon neu" :style="tint(c)" aria-hidden="true"><CategoryIcon :name="c.icon" :size="20" /></span>
           <span class="ct-name">{{ c.name }}</span>
         </button>
       </div>
@@ -67,7 +66,7 @@ function tint(c: { color: string }) {
           :disabled="disabled"
           @click="emit('update:modelValue', null)"
         >
-          <span class="ct-icon neu" aria-hidden="true"><CircleDashed :size="20" /></span>
+          <span class="ct-icon neu" aria-hidden="true"><CategoryIcon :size="20" /></span>
           <span class="ct-name">{{ t('home.unsorted') }}</span>
         </button>
       </div>
