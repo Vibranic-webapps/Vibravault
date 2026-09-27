@@ -47,7 +47,9 @@ function onKey(e: KeyboardEvent) {
   <div class="field" :class="[size, { invalid: !!error }]">
     <label class="lbl" :for="id">{{ label }}</label>
 
-    <div class="wrap">
+    <!-- --pre-len: the prefix's character count, so "€" and "−€" both get
+         exactly the room they need (see .has-prefix). -->
+    <div class="wrap" :style="prefix ? { '--pre-len': prefix.length } : undefined">
       <span v-if="prefix" class="prefix" aria-hidden="true">{{ prefix }}</span>
 
       <select
@@ -107,16 +109,17 @@ function onKey(e: KeyboardEvent) {
 .control { font-family: inherit; }
 .area { resize: vertical; min-height: 88px; line-height: 1.45; }
 
+.field { --pre-size: 16px; }
 .prefix {
   position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-  font-weight: 700; color: var(--vv-muted); pointer-events: none;
+  font-size: var(--pre-size); font-weight: 700; color: var(--vv-muted); pointer-events: none;
 }
-.has-prefix { padding-left: 38px; }
+/* left inset + ~0.7em per prefix character + a gap before the text */
+.has-prefix { padding-left: calc(26px + var(--pre-len, 1) * var(--pre-size) * .7); }
 
 /* Large: the amount field, where the number IS the point of the screen. */
 .lg .control { min-height: 64px; font-size: 28px; font-weight: 800; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
-.lg .prefix { font-size: 22px; }
-.lg .has-prefix { padding-left: 44px; }
+.lg { --pre-size: 22px; }
 
 .invalid .control { box-shadow: var(--vv-p2), 0 0 0 2px var(--vv-negative-ring); }
 .msg { margin: 0; font-size: 12px; color: var(--vv-muted-2); }

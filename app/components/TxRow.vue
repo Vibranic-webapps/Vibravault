@@ -16,8 +16,10 @@ interface Props {
   icon?: string | null
   color?: string | null
   transfer?: boolean
+  /** Second line. Defaults to the date; lists grouped by day show the category instead. */
+  sub?: string | null
 }
-const props = withDefaults(defineProps<Props>(), { icon: null, color: null, transfer: false })
+const props = withDefaults(defineProps<Props>(), { icon: null, color: null, transfer: false, sub: null })
 const emit = defineEmits<{ click: [] }>()
 const { money, date } = useFormat()
 
@@ -38,7 +40,7 @@ const tile = computed(() =>
     </span>
     <span class="main">
       <span class="name">{{ label }}</span>
-      <span class="when">{{ date(bookedAt, { weekday: 'short', day: 'numeric', month: 'short' }) }}</span>
+      <span class="when">{{ sub ?? date(bookedAt, { weekday: 'short', day: 'numeric', month: 'short' }) }}</span>
     </span>
     <span class="amount" :class="amountClass">{{ money(amountCents, { signed: amountCents > 0 }) }}</span>
   </button>
@@ -59,6 +61,6 @@ const tile = computed(() =>
 }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .name { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.when { font-size: 12px; color: var(--vv-muted); text-transform: capitalize; }
+.when { font-size: 12px; color: var(--vv-muted); }
 .amount { font-size: 15px; font-weight: 700; white-space: nowrap; }
 </style>

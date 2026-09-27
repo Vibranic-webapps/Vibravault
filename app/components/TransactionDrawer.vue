@@ -3,7 +3,7 @@ import { EllipsisVertical, Sparkles, Trash2, Check, X, ChevronRight, ChevronLeft
 import { centsToInput } from '~~/shared/utils/money'
 import { transactionLabel } from '~~/shared/utils/merchant'
 import { useTransactionsStore, type Transaction } from '~/stores/transactions'
-import { useCategoriesStore, type Category } from '~/stores/categories'
+import type { Category } from '~/stores/categories'
 import { useRulesStore } from '~/stores/rules'
 
 /**
@@ -21,8 +21,8 @@ import { useRulesStore } from '~/stores/rules'
  *    running balance. Imported rows are FILED and RENAMED, never rewritten -
  *    renaming goes through taught rules.
  *
- * Category is picked from TILES in a second view of the same sheet, not a
- * dropdown: bigger targets, the category's own colour, and it saves on tap.
+ * Category is picked from TILES (CategoryPicker) in a second view of the same
+ * sheet, not a dropdown: bigger targets, the category's own colour, saves on tap.
  *
  * Every save sends ONE field. That is only safe because PATCH is a true
  * partial update.
@@ -44,7 +44,6 @@ const emit = defineEmits<{
 const { t: tr } = useI18n()
 const { money, date } = useFormat()
 const rules = useRulesStore()
-const categories = useCategoriesStore()
 const txStore = useTransactionsStore()
 
 // The sheet animates OUT after `transaction` becomes null. Keep showing the
@@ -155,15 +154,6 @@ function onInputKey(e: KeyboardEvent) {
 }
 
 // ---- Category picker -----------------------------------------------------
-// Groups that make sense for this row's direction, plus transfers (which go
-// either way). Tapping a tile saves and returns to the details.
-const groups = computed(() => [
-  isIncome.value
-    ? { key: 'income', title: tr('drawer.groupIncome'), items: categories.income }
-    : { key: 'spending', title: tr('drawer.groupSpending'), items: categories.expense },
-  { key: 'transfer', title: tr('drawer.groupTransfer'), items: categories.transfer },
-].filter((g) => g.items.length))
-
 // The tapped tile lights up IMMEDIATELY; the save (a round trip to the
 // database) confirms it a moment later. Without this, a tap looks ignored.
 const pendingId = ref<string | null | undefined>(undefined)
@@ -204,40 +194,12 @@ const sourceLabel = computed(() => ({
           <h2>{{ tr('drawer.pickCategory') }}</h2>
         </header>
 
-        <section v-for="g in groups" :key="g.key" class="p-group">
-          <h3>{{ g.title }}</h3>
-          <div class="tiles">
-            <button
-              v-for="c in g.items"
-              :key="c.id"
-              type="button"
-              class="cat-tile"
-              :class="{ on: chosenId === c.id }"
-              :aria-pressed="chosenId === c.id"
-              :disabled="saving"
-              @click="pick(c.id)"
-            >
-              <span class="ct-icon neu" :style="tint(c)" aria-hidden="true">{{ c.icon }}</span>
-              <span class="ct-name">{{ c.name }}</span>
-            </button>
-          </div>
-        </section>
-
-        <section class="p-group">
-          <div class="tiles">
-            <button
-              type="button"
-              class="cat-tile"
-              :class="{ on: chosenId === null }"
-              :aria-pressed="chosenId === null"
-              :disabled="saving"
-              @click="pick(null)"
-            >
-              <span class="ct-icon neu" aria-hidden="true"><CircleDashed :size="20" /></span>
-              <span class="ct-name">{{ tr('home.unsorted') }}</span>
-            </button>
-          </div>
-        </section>
+        <CategoryPicker
+          :model-value="chosenId"
+          :direction="isIncome ? 'in' : 'out'"
+          :disabled="saving"
+          @update:model-value="pick"
+        />
 
         <p v-if="fieldError" class="vv-error">{{ fieldError }}</p>
       </div>
@@ -461,23 +423,5 @@ dd.mono { font-family: ui-monospace, monospace; font-size: 12px; }
 /* ---- Category picker ---------------------------------------------------- */
 .p-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
 .p-head h2 { margin: 0; font-size: 19px; font-weight: 800; }
-.p-group + .p-group { margin-top: 18px; }
-.p-group h3 { margin: 0 0 10px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--vv-muted); }
-.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
-.cat-tile {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 12px 6px; min-height: 96px;
-  font: inherit; color: var(--vv-text); background: var(--vv-surface);
-  border: none; border-radius: var(--vv-r-sm); box-shadow: var(--vv-e1); cursor: pointer;
-  -webkit-tap-highlight-color: transparent; transition: box-shadow .12s ease;
-}
-/* The current category is pressed in with an accent ring - the only one. */
-.cat-tile.on { box-shadow: var(--vv-p1), 0 0 0 2px var(--vv-accent-ring); }
-.cat-tile:active { box-shadow: var(--vv-p1); }
-.cat-tile:disabled { cursor: progress; }
-.cat-tile:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 2px; }
-.ct-icon { display: grid; place-items: center; width: 42px; height: 42px; font-size: 19px; color: var(--vv-muted); border-radius: var(--vv-r-sm); }
-.ct-name { font-size: 12px; font-weight: 600; text-align: center; line-height: 1.25; overflow-wrap: anywhere; }
 
-@media (prefers-reduced-motion: reduce) { .cat-tile { transition: none; } }
 </style>

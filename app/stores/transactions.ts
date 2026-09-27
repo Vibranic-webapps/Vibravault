@@ -36,6 +36,12 @@ export function monthKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
+/** "2026-09-27" for a Date, in LOCAL time (toISOString would use UTC and
+ *  turn a late-evening "today" into tomorrow or yesterday). */
+export function dayKey(d: Date): string {
+  return `${monthKey(d)}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export const useTransactionsStore = defineStore('transactions', () => {
   // State
   const items = ref<Transaction[]>([])

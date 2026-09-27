@@ -129,9 +129,6 @@
     "welcomeEyebrow": "Welcome",
     "welcomeTitle": "Let's fill your vault",
     "welcomeBody": "Add your first payment, or bring everything in at once from your bank's app.",
-    "deleteConfirm": "Delete this transaction?",
-    "deleted": "Deleted",
-    "ruleSaved": "Rule saved | Rule saved, 1 transaction sorted | Rule saved, {n} transactions sorted",
     "bankOn": "Your bank's balance on {date}",
     "plusManual": "plus 1 added by hand | plus {n} added by hand"
   },
@@ -161,5 +158,38 @@
     "groupIncome": "Income",
     "groupTransfer": "Between your accounts",
     "change": "Change {field}"
+  },
+  "tx": {
+    "title": "Transactions",
+    "filters": "Show",
+    "all": "All",
+    "unsorted": "Not sorted",
+    "in": "In",
+    "out": "Out",
+    "transfers": "Between accounts",
+    "moved": "{amount} moved between your own accounts, not counted above",
+    "emptyFilter": "Nothing here with this filter.",
+    "showAll": "Show everything",
+    "addFirst": "Add one",
+    "deleteConfirm": "Delete this transaction?",
+    "deleted": "Deleted",
+    "ruleSaved": "Rule saved | Rule saved, 1 transaction sorted | Rule saved, {n} transactions sorted"
+  },
+  "addForm": {
+    "title": "New transaction",
+    "direction": "Money in or out",
+    "out": "Money out",
+    "in": "Money in",
+    "amount": "Amount",
+    "name": "Who or what?",
+    "namePh": "e.g. Colruyt",
+    "category": "Category",
+    "when": "When",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "otherDay": "Other day",
+    "note": "Note",
+    "save": "Add it",
+    "saved": "Added"
   }
 }
