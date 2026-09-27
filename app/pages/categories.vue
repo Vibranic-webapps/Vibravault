@@ -1,226 +1,96 @@
 <script setup lang="ts">
+import { Plus, ChevronRight } from 'lucide-vue-next'
 import { useCategoriesStore, type Category, type CategoryKind } from '~/stores/categories'
 
+/**
+ * Categories (Redesign v2, Wave 3): grouped rows - Spending, Income, Between
+ * your accounts - each with its tile, name and how many transactions it
+ * holds. Tap a row to edit it; "New category" opens the same sheet empty.
+ */
+const { t } = useI18n()
 const store = useCategoriesStore()
-await store.fetchAll()
+await store.fetchAll(true) // counts change as transactions move - always fresh here
 
-const GROUP_LABEL: Record<CategoryKind, string> = {
-  INCOME: 'Income', EXPENSE: 'Expenses', TRANSFER: 'Transfers',
-}
-const KIND_LABEL: Record<CategoryKind, string> = {
-  INCOME: 'Income', EXPENSE: 'Expense', TRANSFER: 'Transfer',
-}
+const GROUPS: CategoryKind[] = ['EXPENSE', 'INCOME', 'TRANSFER']
 
-const TINTS = Array.from({ length: 12 }, (_, i) => `cat-${i + 1}`)
-import { CATEGORY_ICONS } from '~~/shared/utils/categoryIcons'
-const ICONS = CATEGORY_ICONS
-
+const sheetOpen = ref(false)
 const editing = ref<Category | null>(null)
-const showForm = ref(false)
-const saving = ref(false)
+const newKind = ref<CategoryKind>('EXPENSE')
 
-const form = reactive<{ name: string; kind: CategoryKind; icon: string; color: string }>({
-  name: '', kind: 'EXPENSE', icon: 'package', color: 'cat-1',
-})
-
-function openCreate() {
+function openNew(kind: CategoryKind = 'EXPENSE') {
   editing.value = null
-  Object.assign(form, { name: '', kind: 'EXPENSE', icon: 'package', color: 'cat-1' })
-  store.error = null
-  showForm.value = true
+  newKind.value = kind
+  sheetOpen.value = true
 }
-
 function openEdit(c: Category) {
   editing.value = c
-  Object.assign(form, { name: c.name, kind: c.kind, icon: c.icon, color: c.color })
-  store.error = null
-  showForm.value = true
+  sheetOpen.value = true
 }
 
-async function save() {
-  saving.value = true
-  const payload = { name: form.name, kind: form.kind, icon: form.icon, color: form.color }
-  const ok = editing.value
-    ? await store.update(editing.value.id, payload)
-    : await store.create(payload)
-  saving.value = false
-  if (ok) showForm.value = false
-}
-
-async function remove(c: Category) {
-  // Transactions survive as uncategorised - the relation is SetNull, so deleting
-  // a category can never destroy financial history.
-  if (!confirm(`Delete "${c.name}"? Transactions in it become uncategorised.`)) return
-  await store.remove(c.id)
+function tint(c: Category) {
+  return { background: `var(--vv-${c.color})`, color: `var(--vv-${c.color}-fg)` }
 }
 </script>
 
 <template>
   <div>
     <header class="head">
-      <div>
-        <h1>Categories</h1>
-        <p class="muted">Colour is identity — it lives in the icon tile only.</p>
-      </div>
-      <button class="add-btn" type="button" @click="openCreate">+ New</button>
+      <h1>{{ t('cats.title') }}</h1>
+      <UiIconButton :icon="Plus" :label="t('cats.new')" @click="openNew()" />
     </header>
 
-    <p v-if="store.error && !showForm" class="vv-error">{{ store.error }}</p>
+    <section v-for="kind in GROUPS" :key="kind" class="group">
+      <h2>{{ t(`cats.${kind}`) }}</h2>
+      <p v-if="kind === 'TRANSFER'" class="note">{{ t('cats.transferNote') }}</p>
 
-    <section v-for="group in (['INCOME', 'EXPENSE', 'TRANSFER'] as const)" :key="group" class="group">
-      <h2>{{ GROUP_LABEL[group] }}</h2>
-      <p v-if="group === 'TRANSFER'" class="group-note">
-        Money between your own accounts (e.g. Revolut). Moves your balance, but never counts as income or spending.
-      </p>
-
-      <div class="neu-3 panel">
-        <p v-if="!store.items.filter(c => c.kind === group).length" class="empty">
-          No {{ GROUP_LABEL[group].toLowerCase() }} categories yet.
-        </p>
-
-        <div
-          v-for="(c, i) in store.items.filter(x => x.kind === group)"
+      <div class="neu-3 card">
+        <button
+          v-for="c in store.items.filter((x) => x.kind === kind)"
           :key="c.id"
+          type="button"
           class="row"
-          :class="{ 'neu-divider': i < store.items.filter(x => x.kind === group).length - 1 }"
+          @click="openEdit(c)"
         >
-          <span
-            class="icon neu"
-            :style="{ background: `var(--${c.color})`, color: `var(--${c.color}-fg)` }"
-            aria-hidden="true"
-          ><CategoryIcon :name="c.icon" :size="19" /></span>
-
-          <span class="row-name">{{ c.name }}</span>
-
-          <button class="link-btn" type="button" @click="openEdit(c)">Edit</button>
-          <button class="link-btn danger" type="button" @click="remove(c)">Delete</button>
-        </div>
+          <span class="tile neu" :style="tint(c)" aria-hidden="true"><CategoryIcon :name="c.icon" :size="19" /></span>
+          <span class="main">
+            <span class="name">{{ c.name }}</span>
+            <span v-if="c.count !== undefined" class="sub">{{ t('home.weekCount', c.count) }}</span>
+          </span>
+          <ChevronRight :size="18" class="chev" aria-hidden="true" />
+        </button>
+        <!-- New straight into this group: the type is already chosen. -->
+        <button type="button" class="row add" @click="openNew(kind)">
+          <span class="tile add-tile" aria-hidden="true"><Plus :size="19" /></span>
+          <span class="main"><span class="name">{{ t('cats.new') }}</span></span>
+        </button>
       </div>
     </section>
 
-    <!-- Form -->
-    <div v-if="showForm" class="overlay" @click.self="showForm = false">
-      <div class="neu-3 form" role="dialog" aria-modal="true" :aria-label="editing ? 'Edit category' : 'New category'">
-        <h2>{{ editing ? 'Edit category' : 'New category' }}</h2>
-
-        <p v-if="store.error" class="vv-error">{{ store.error }}</p>
-
-        <label class="vv-label" for="cname">Name</label>
-        <input id="cname" v-model="form.name" class="vv-field" maxlength="40" />
-
-        <span class="vv-label spaced">Type</span>
-        <div class="kinds">
-          <button
-            v-for="k in (['EXPENSE', 'INCOME', 'TRANSFER'] as const)"
-            :key="k"
-            type="button"
-            class="kind"
-            :class="{ on: form.kind === k }"
-            @click="form.kind = k"
-          >{{ KIND_LABEL[k] }}</button>
-        </div>
-
-        <span class="vv-label spaced">Icon</span>
-        <div class="icons">
-          <button
-            v-for="ic in ICONS"
-            :key="ic"
-            type="button"
-            class="icon-pick"
-            :class="{ on: form.icon === ic }"
-            :aria-label="ic"
-            @click="form.icon = ic"
-          ><CategoryIcon :name="ic" :size="18" /></button>
-        </div>
-
-        <span class="vv-label spaced">Colour</span>
-        <div class="tints">
-          <button
-            v-for="t in TINTS"
-            :key="t"
-            type="button"
-            class="tint"
-            :class="{ on: form.color === t }"
-            :style="{ background: `var(--vv-${t})` }"
-            :aria-label="t"
-            @click="form.color = t"
-          />
-        </div>
-
-        <div class="actions">
-          <button class="vv-btn vv-btn--ghost" type="button" @click="showForm = false">Cancel</button>
-          <button class="vv-btn" type="button" :disabled="saving || !form.name.trim()" @click="save">
-            {{ saving ? 'Saving…' : 'Save' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <CategorySheet :open="sheetOpen" :category="editing" :default-kind="newKind" @close="sheetOpen = false" />
   </div>
 </template>
 
 <style scoped>
-.head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 26px; }
-h1 { margin: 0 0 4px; font-size: 26px; }
-h2 { margin: 0 0 10px; font-size: 15px; color: var(--vv-muted); }
-.muted { margin: 0; color: var(--vv-muted); font-size: 14px; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.01em; }
+.group { margin-bottom: 22px; }
+h2 { margin: 0 4px 10px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--vv-muted); }
+.note { margin: -2px 4px 12px; font-size: 13px; line-height: 1.45; color: var(--vv-muted); }
+.card { padding: 2px 16px; }
+.empty { margin: 16px 0; font-size: 14px; color: var(--vv-muted); }
 
-.add-btn {
-  padding: 11px 18px; font: inherit; font-size: 14px; font-weight: 600;
-  color: var(--vv-accent-text); background: var(--vv-accent);
-  border: none; border-radius: var(--vv-r-badge); box-shadow: var(--vv-e1); cursor: pointer;
-  white-space: nowrap;
+.row {
+  display: flex; align-items: center; gap: 13px; width: 100%; min-height: 62px; padding: 8px 2px;
+  font: inherit; text-align: left; color: var(--vv-text);
+  background: none; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
-.add-btn:active { box-shadow: var(--vv-p1); }
-
-.group { margin-bottom: 30px; }
-.panel { padding: 8px 20px; }
-.group-note { margin: -4px 0 10px; font-size: 12px; color: var(--vv-muted-2); max-width: 60ch; }
-.empty { color: var(--vv-muted-2); font-size: 14px; padding: 14px 0; margin: 0; }
-
-/* Data-dense: flat rows, hairline dividers. No shadows. */
-.row { display: flex; align-items: center; gap: 14px; padding: 13px 0; }
-.icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--vv-r-sm); font-size: 18px; flex: none; }
-.row-name { flex: 1; font-size: 15px; font-weight: 600; }
-
-.link-btn {
-  padding: 6px 10px; font: inherit; font-size: 13px; font-weight: 600;
-  color: var(--vv-muted); background: none; border: none; border-radius: var(--vv-r-sm); cursor: pointer;
-}
-.link-btn:hover { color: var(--vv-text); }
-.link-btn.danger:hover { color: var(--vv-negative); }
-
-.overlay {
-  position: fixed; inset: 0; z-index: 40;
-  display: grid; place-items: center; padding: 24px;
-  background: rgba(0,0,0,.35); backdrop-filter: blur(2px);
-  overflow-y: auto;
-}
-.form { width: 100%; max-width: 440px; padding: 28px; }
-.spaced { margin-top: 18px; }
-
-.kinds { display: flex; gap: 8px; }
-.kind {
-  flex: 1; padding: 11px; font: inherit; font-size: 14px; font-weight: 600;
-  color: var(--vv-muted); background: var(--vv-surface);
-  border: none; border-radius: var(--vv-r-sm); box-shadow: var(--vv-e1); cursor: pointer;
-}
-.kind.on { color: var(--vv-accent); box-shadow: var(--vv-p1); }
-
-.icons { display: flex; flex-wrap: wrap; gap: 7px; }
-.icon-pick {
-  display: grid; place-items: center; color: var(--vv-muted);
-  width: 40px; height: 40px; font-size: 18px; line-height: 1;
-  background: var(--vv-surface); border: none; border-radius: var(--vv-r-sm);
-  box-shadow: var(--vv-e1); cursor: pointer;
-}
-.icon-pick.on { box-shadow: var(--vv-p1); color: var(--vv-accent); }
-
-.tints { display: flex; flex-wrap: wrap; gap: 8px; }
-.tint {
-  width: 34px; height: 34px; border: none; border-radius: var(--vv-r-sm);
-  box-shadow: var(--vv-e1); cursor: pointer;
-}
-.tint.on { box-shadow: var(--vv-p1), 0 0 0 2px var(--vv-accent-ring); }
-
-.actions { display: flex; gap: 10px; margin-top: 26px; }
+.row + .row { border-top: 1px solid var(--vv-shadow-dark); }
+.row:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 2px; border-radius: 8px; }
+.tile { display: grid; place-items: center; width: 42px; height: 42px; flex: none; border-radius: var(--vv-r-sm); }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.name { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub { font-size: 12px; color: var(--vv-muted); }
+.chev { color: var(--vv-muted-2); flex: none; }
+.add .name { color: var(--vv-accent); }
+.add-tile { color: var(--vv-accent); box-shadow: var(--vv-p1); }
 </style>

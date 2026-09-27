@@ -280,5 +280,52 @@
     "tooBig": "Dat bestand is te groot (max 5 MB).",
     "tip": "Tip: sla het opslaan over en deel het bestand rechtstreeks vanuit je bankapp.",
     "tipLink": "Stel het in"
+  },
+  "cats": {
+    "title": "Categorieën",
+    "new": "Nieuwe categorie",
+    "edit": "Categorie bewerken",
+    "EXPENSE": "Uitgaven",
+    "INCOME": "Inkomen",
+    "TRANSFER": "Tussen je rekeningen",
+    "transferNote": "Geld dat tussen je eigen rekeningen gaat, zoals opladen naar Revolut. Het verandert je saldo, maar telt nooit als inkomen of uitgave.",
+    "name": "Naam",
+    "namePh": "bv. Koffie",
+    "kind": "Soort",
+    "color": "Kleur",
+    "colorN": "Kleur {n}",
+    "icon": "Icoon",
+    "create": "Categorie maken",
+    "save": "Wijzigingen bewaren",
+    "delete": "Categorie verwijderen",
+    "deleteConfirm": "“{name}” verwijderen? De transacties blijven, maar zijn dan nog niet ingedeeld.",
+    "duplicate": "Je hebt al een categorie met die naam.",
+    "nameRequired": "Geef het een naam.",
+    "created": "Categorie gemaakt",
+    "deleted": "Categorie verwijderd"
+  },
+  "iconGroup": {
+    "money": "Geld",
+    "home": "Thuis",
+    "food": "Eten & drinken",
+    "transport": "Onderweg",
+    "care": "Gezondheid & verzorging",
+    "fun": "Plezier & leren",
+    "other": "Andere"
+  },
+  "teach": {
+    "title": "Hernoem en deel alles zoals dit in",
+    "lead": "Elke transactie met deze tekst, vroeger en later, volgt de regel.",
+    "match": "Als de banktekst dit bevat",
+    "matchHint": "Hou alleen het deel dat altijd hetzelfde blijft. Laat datums, uren en codes weg die telkens veranderen.",
+    "tooShort": "Minstens 3 tekens.",
+    "label": "Noem het",
+    "labelPh": "bv. Apple",
+    "category": "Deel het in bij",
+    "keepCategory": "Niet wijzigen",
+    "applyPast": "Deel ook eerdere transacties in die nog niet ingedeeld zijn",
+    "applyHint": "Transacties die je zelf indeelde, worden nooit gewijzigd.",
+    "nothing": "Geef het een naam of kies een categorie.",
+    "save": "Regel bewaren"
   }
 }

@@ -9,6 +9,8 @@ export interface Category {
   icon: string
   /** Design-system token name (cat-1..12), NOT a hex - resolves per theme. */
   color: string
+  /** Live transactions in it (from the list endpoint; absent right after a create/update). */
+  count?: number
 }
 
 export interface CategoryInput {
@@ -23,6 +25,9 @@ export const useCategoriesStore = defineStore('categories', () => {
   const items = ref<Category[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  /** HTTP status of the last failure (409 = name already exists), so the
+   *  screen can say it in the app's language instead of the server's. */
+  const errorStatus = ref<number | null>(null)
   const loaded = ref(false)
 
   // Getters
@@ -33,6 +38,7 @@ export const useCategoriesStore = defineStore('categories', () => {
 
   // Actions
   function message(e: unknown): string {
+    errorStatus.value = (e as { statusCode?: number } | null)?.statusCode ?? null
     if (typeof e === 'object' && e && 'statusMessage' in e) {
       const m = (e as { statusMessage?: unknown }).statusMessage
       if (typeof m === 'string') return m
@@ -73,7 +79,8 @@ export const useCategoriesStore = defineStore('categories', () => {
     try {
       const updated = await $fetch<Category>(`/api/categories/${id}`, { method: 'PATCH', body: input })
       const i = items.value.findIndex((c) => c.id === id)
-      if (i !== -1) items.value[i] = updated
+      // Keep the count: the update endpoint doesn't send it.
+      if (i !== -1) items.value[i] = { ...updated, count: items.value[i]!.count }
       return true
     } catch (e: unknown) {
       error.value = message(e)
@@ -93,5 +100,5 @@ export const useCategoriesStore = defineStore('categories', () => {
     }
   }
 
-  return { items, loading, error, loaded, income, expense, transfer, byId, fetchAll, create, update, remove }
+  return { items, loading, error, errorStatus, loaded, income, expense, transfer, byId, fetchAll, create, update, remove }
 })
