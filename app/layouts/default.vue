@@ -108,6 +108,8 @@ watch(() => route.query.new, (flag) => {
     </UiBottomSheet>
 
     <AddTransactionSheet />
+    <!-- Pops up by itself when the Shortcut parked transactions for review. -->
+    <ReviewSheet />
   </div>
 </template>
 

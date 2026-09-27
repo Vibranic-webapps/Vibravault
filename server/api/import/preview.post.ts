@@ -1,4 +1,4 @@
-import { prismaLive } from '~~/server/utils/transactionQuery'
+import { blockedFingerprints } from '~~/server/utils/importFilter'
 import { requireUserId } from '~~/server/utils/auth'
 import { parseKbcCsv } from '~~/shared/utils/kbcCsv'
 import { fingerprintRow } from '~~/server/utils/import'
@@ -20,13 +20,9 @@ export default defineEventHandler(async (event) => {
 
   const fingerprints = parsed.rows.map(fingerprintRow)
 
-  // Only LIVE rows block an import: a soft-deleted transaction must not stop
-  // the same row arriving again from a later, overlapping export.
-  const existing = await prismaLive.transaction.findMany({
-    where: { userId, fingerprint: { in: fingerprints } },
-    select: { fingerprint: true },
-  })
-  const known = new Set(existing.map((e) => e.fingerprint))
+  // Live rows and rows removed in a review block an import. A soft-DELETED
+  // transaction does not: it may arrive again from a later, overlapping file.
+  const known = await blockedFingerprints(userId, fingerprints, { pending: false })
 
   const rows = parsed.rows.map((r, i) => ({
     ...r,

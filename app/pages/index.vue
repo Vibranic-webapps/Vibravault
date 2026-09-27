@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Inbox, PenLine, FileUp, CircleDashed } from 'lucide-vue-next'
+import { Inbox, PenLine, FileUp, CircleDashed, ClipboardCheck } from 'lucide-vue-next'
 import type { Week } from '~/components/home/WeekChart.vue'
 import type { Transaction } from '~/stores/transactions'
 import { useTransactionsStore, monthKey, dayKey } from '~/stores/transactions'
@@ -31,6 +31,7 @@ interface Dashboard {
 const { t } = useI18n()
 const { money, monthName, localeTag } = useFormat()
 const addTx = useAddTransaction()
+const pending = usePending()
 const { toast } = useToast()
 const user = useAuthUser()
 const txStore = useTransactionsStore()
@@ -112,6 +113,16 @@ async function onRuleSaved(n: number) {
 <template>
   <div>
     <h1 class="hello">{{ greeting }}</h1>
+
+    <!-- Shortcut transactions waiting for review ("Later" was tapped). -->
+    <section v-if="pending.items.value.length" class="neu-3 card rows review">
+      <UiListRow
+        :icon="ClipboardCheck"
+        :label="t('review.banner', pending.items.value.length)"
+        chevron
+        @click="pending.open.value = true"
+      />
+    </section>
 
     <!-- First run: a card of €0,00 over an empty chart reads as broken, not
          as new. Show a welcome instead until there's something to show. -->
@@ -217,6 +228,7 @@ h2 { margin: 0 0 14px; font-size: 16px; font-weight: 800; }
 
 .card { padding: 20px; margin-bottom: 18px; }
 .rows { padding: 4px 16px; }
+.review { margin-bottom: 18px; }
 .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
 .card-head h2 { margin: 0; }
 .see-all { font-size: 14px; }
