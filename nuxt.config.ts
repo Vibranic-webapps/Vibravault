@@ -28,6 +28,10 @@ export default defineNuxtConfig({
   //   language too (no flash of English before Dutch).
   i18n: {
     strategy: 'no_prefix',
+    // Only used for SEO link tags (which a login-walled app doesn't need), but
+    // without it the module warns on every render. Override per environment
+    // with NUXT_PUBLIC_I18N_BASE_URL if ever needed.
+    baseUrl: 'https://vibravault.kilianfrederix.net',
     defaultLocale: 'en',
     locales: [
       { code: 'en', language: 'en-GB', name: 'English', file: 'en.json' },
