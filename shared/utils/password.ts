@@ -37,5 +37,3 @@ export function isPasswordValid(value: string): boolean {
 export function passwordProblems(value: string): string[] {
   return PASSWORD_RULES.filter((rule) => !rule.test(value)).map((r) => r.label.toLowerCase())
 }
-
-export const STRENGTH_LABELS = ['', 'Weak', 'Fair', 'Good', 'Strong'] as const

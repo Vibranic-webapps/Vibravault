@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { Check, Circle } from 'lucide-vue-next'
-import { passwordRuleResults, isPasswordValid } from '~~/shared/utils/password'
+import { isPasswordValid } from '~~/shared/utils/password'
 
 /**
  * Change your password. The rules come from the same shared module the
@@ -15,7 +14,6 @@ const next = ref('')
 const error = ref('')
 const busy = ref(false)
 
-const rules = computed(() => passwordRuleResults(next.value))
 const ready = computed(() => !!current.value && isPasswordValid(next.value))
 
 async function save() {
@@ -43,16 +41,7 @@ async function save() {
       <UiField v-model="current" :label="t('you.pwCurrent')" type="password" autocomplete="current-password" :error="error" />
       <UiField v-model="next" :label="t('you.pwNew')" type="password" autocomplete="new-password" />
 
-      <div>
-        <p class="needs">{{ t('you.pwNeeds') }}</p>
-        <ul class="rules">
-          <li v-for="r in rules" :key="r.id" :class="{ ok: r.passed }">
-            <component :is="r.passed ? Check : Circle" :size="16" aria-hidden="true" />
-            {{ t(`passwordRule.${r.id}`) }}
-            <span class="sr">{{ r.passed ? '✓' : '' }}</span>
-          </li>
-        </ul>
-      </div>
+      <PasswordStrength :password="next" />
 
       <UiButton type="submit" :loading="busy" :disabled="!ready">{{ t('you.pwSave') }}</UiButton>
     </form>
@@ -61,9 +50,4 @@ async function save() {
 
 <style scoped>
 .card { display: grid; gap: 18px; padding: 20px; }
-.needs { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: var(--vv-muted); }
-.rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; color: var(--vv-muted); }
-.rules li { display: flex; align-items: center; gap: 8px; }
-.rules li.ok { color: var(--vv-accent); font-weight: 600; }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>
