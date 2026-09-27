@@ -66,13 +66,13 @@ async function save() {
         <select id="r-cat" v-model="form.categoryId" class="vv-field">
           <option value="">Don't change the category</option>
           <optgroup label="Expenses">
-            <option v-for="c in categories.expense" :key="c.id" :value="c.id">{{ c.icon }} {{ c.name }}</option>
+            <option v-for="c in categories.expense" :key="c.id" :value="c.id">{{ c.name }}</option>
           </optgroup>
           <optgroup label="Income">
-            <option v-for="c in categories.income" :key="c.id" :value="c.id">{{ c.icon }} {{ c.name }}</option>
+            <option v-for="c in categories.income" :key="c.id" :value="c.id">{{ c.name }}</option>
           </optgroup>
           <optgroup label="Transfers">
-            <option v-for="c in categories.transfer" :key="c.id" :value="c.id">{{ c.icon }} {{ c.name }}</option>
+            <option v-for="c in categories.transfer" :key="c.id" :value="c.id">{{ c.name }}</option>
           </optgroup>
         </select>
 

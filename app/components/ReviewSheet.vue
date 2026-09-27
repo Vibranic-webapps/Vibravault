@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, CircleDashed } from 'lucide-vue-next'
+import { Check } from 'lucide-vue-next'
 import { useCategoriesStore } from '~/stores/categories'
 import { useTransactionsStore } from '~/stores/transactions'
 
@@ -107,8 +107,7 @@ function tint(id: string | null) {
           <input type="checkbox" class="sr" :checked="selected.has(r.id)" @change="toggle(r.id)" />
           <span class="box" aria-hidden="true"><Check v-if="selected.has(r.id)" :size="15" :stroke-width="3" /></span>
           <span class="tile neu" :style="tint(r.categoryId)" aria-hidden="true">
-            <template v-if="category(r.categoryId)">{{ category(r.categoryId)!.icon }}</template>
-            <CircleDashed v-else :size="17" />
+            <CategoryIcon :name="category(r.categoryId)?.icon" :size="17" />
           </span>
           <span class="main">
             <span class="name">{{ r.label }}</span>

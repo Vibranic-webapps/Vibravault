@@ -1,3 +1,5 @@
+import { isCategoryIcon } from '~~/shared/utils/categoryIcons'
+
 /** Shared validation for create + update, so the two can't drift apart. */
 export function validateCategoryInput(body: any) {
   const name = typeof body?.name === 'string' ? body.name.trim() : ''
@@ -15,7 +17,8 @@ export function validateCategoryInput(body: any) {
   if (!/^cat-(1[0-2]|[1-9])$/.test(color)) {
     throw createError({ statusCode: 400, statusMessage: 'Unknown colour' })
   }
-  if (!icon || [...icon].length > 4) {
+  // Only icons from the curated Lucide set (shared/utils/categoryIcons.ts).
+  if (!isCategoryIcon(icon)) {
     throw createError({ statusCode: 400, statusMessage: 'Pick an icon' })
   }
 

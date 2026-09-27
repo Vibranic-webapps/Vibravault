@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EllipsisVertical, Sparkles, Trash2, Check, X, ChevronRight, ChevronLeft, CircleDashed } from 'lucide-vue-next'
+import { EllipsisVertical, Sparkles, Trash2, Check, X, ChevronRight, ChevronLeft } from 'lucide-vue-next'
 import { centsToInput } from '~~/shared/utils/money'
 import { transactionLabel } from '~~/shared/utils/merchant'
 import { useTransactionsStore, type Transaction } from '~/stores/transactions'
@@ -208,8 +208,7 @@ const sourceLabel = computed(() => ({
       <div v-else>
         <header class="top">
           <span class="icon neu" :style="tint(category)" aria-hidden="true">
-            <template v-if="category">{{ category.icon }}</template>
-            <CircleDashed v-else :size="20" />
+            <CategoryIcon :name="category?.icon" :size="21" />
           </span>
 
           <div class="menu-wrap">
@@ -290,8 +289,7 @@ const sourceLabel = computed(() => ({
             <dd>
               <button class="cat-row" type="button" @click="menuOpen = false; picking = true">
                 <span class="cr-icon" :style="tint(category)" aria-hidden="true">
-                  <template v-if="category">{{ category.icon }}</template>
-                  <CircleDashed v-else :size="14" />
+                  <CategoryIcon :name="category?.icon" :size="14" />
                 </span>
                 <span>{{ category?.name ?? tr('home.unsorted') }}</span>
                 <ChevronRight :size="16" class="chev" aria-hidden="true" />

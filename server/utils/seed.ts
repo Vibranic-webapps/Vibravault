@@ -20,24 +20,24 @@ const DEFAULT_CATEGORIES = [
   // Income. "Holiday pay" and "Year-end premium" exist from day one because
   // Kilian is interim (Accent): those arrive from third parties (RJV /
   // Sociaal Fonds), not the employer, and must not pollute weekly wage averages.
-  { name: 'Wage',              kind: 'INCOME',  icon: '💼', color: 'cat-5' },
-  { name: 'Holiday pay',       kind: 'INCOME',  icon: '🌴', color: 'cat-4' },
-  { name: 'Year-end premium',  kind: 'INCOME',  icon: '🎁', color: 'cat-3' },
-  { name: 'Other income',      kind: 'INCOME',  icon: '💰', color: 'cat-2' },
+  { name: 'Wage',              kind: 'INCOME',  icon: 'briefcase', color: 'cat-5' },
+  { name: 'Holiday pay',       kind: 'INCOME',  icon: 'tree-palm', color: 'cat-4' },
+  { name: 'Year-end premium',  kind: 'INCOME',  icon: 'gift', color: 'cat-3' },
+  { name: 'Other income',      kind: 'INCOME',  icon: 'coins', color: 'cat-2' },
 
   // Expenses.
-  { name: 'Groceries',         kind: 'EXPENSE', icon: '🛒', color: 'cat-1' },
-  { name: 'Housing',           kind: 'EXPENSE', icon: '🏠', color: 'cat-7' },
-  { name: 'Utilities',         kind: 'EXPENSE', icon: '💡', color: 'cat-6' },
-  { name: 'Transport',         kind: 'EXPENSE', icon: '🚲', color: 'cat-8' },
-  { name: 'Subscriptions',     kind: 'EXPENSE', icon: '📺', color: 'cat-9' },
-  { name: 'Eating out',        kind: 'EXPENSE', icon: '🍽️', color: 'cat-12' },
-  { name: 'Shopping',          kind: 'EXPENSE', icon: '🛍️', color: 'cat-10' },
-  { name: 'Health',            kind: 'EXPENSE', icon: '💊', color: 'cat-11' },
-  { name: 'Other expense',     kind: 'EXPENSE', icon: '📦', color: 'cat-2' },
+  { name: 'Groceries',         kind: 'EXPENSE', icon: 'shopping-cart', color: 'cat-1' },
+  { name: 'Housing',           kind: 'EXPENSE', icon: 'house', color: 'cat-7' },
+  { name: 'Utilities',         kind: 'EXPENSE', icon: 'lightbulb', color: 'cat-6' },
+  { name: 'Transport',         kind: 'EXPENSE', icon: 'bike', color: 'cat-8' },
+  { name: 'Subscriptions',     kind: 'EXPENSE', icon: 'tv', color: 'cat-9' },
+  { name: 'Eating out',        kind: 'EXPENSE', icon: 'utensils', color: 'cat-12' },
+  { name: 'Shopping',          kind: 'EXPENSE', icon: 'shopping-bag', color: 'cat-10' },
+  { name: 'Health',            kind: 'EXPENSE', icon: 'pill', color: 'cat-11' },
+  { name: 'Other expense',     kind: 'EXPENSE', icon: 'package', color: 'cat-2' },
 
   // Money between the user's own accounts - neither income nor spending.
-  { name: 'Own accounts',      kind: 'TRANSFER', icon: '🔁', color: 'cat-7' },
+  { name: 'Own accounts',      kind: 'TRANSFER', icon: 'repeat', color: 'cat-7' },
 ] as const
 
 /**

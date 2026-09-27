@@ -12,19 +12,20 @@ const KIND_LABEL: Record<CategoryKind, string> = {
 }
 
 const TINTS = Array.from({ length: 12 }, (_, i) => `cat-${i + 1}`)
-const ICONS = ['💼','💰','🎁','🌴','🛒','🏠','💡','🚲','📺','🍽️','🛍️','💊','📦','☕','🎬','✈️','📱','🎓','🐾','🎵']
+import { CATEGORY_ICONS } from '~~/shared/utils/categoryIcons'
+const ICONS = CATEGORY_ICONS
 
 const editing = ref<Category | null>(null)
 const showForm = ref(false)
 const saving = ref(false)
 
 const form = reactive<{ name: string; kind: CategoryKind; icon: string; color: string }>({
-  name: '', kind: 'EXPENSE', icon: '📦', color: 'cat-1',
+  name: '', kind: 'EXPENSE', icon: 'package', color: 'cat-1',
 })
 
 function openCreate() {
   editing.value = null
-  Object.assign(form, { name: '', kind: 'EXPENSE', icon: '📦', color: 'cat-1' })
+  Object.assign(form, { name: '', kind: 'EXPENSE', icon: 'package', color: 'cat-1' })
   store.error = null
   showForm.value = true
 }
@@ -87,7 +88,7 @@ async function remove(c: Category) {
             class="icon neu"
             :style="{ background: `var(--${c.color})`, color: `var(--${c.color}-fg)` }"
             aria-hidden="true"
-          >{{ c.icon }}</span>
+          ><CategoryIcon :name="c.icon" :size="19" /></span>
 
           <span class="row-name">{{ c.name }}</span>
 
@@ -127,8 +128,9 @@ async function remove(c: Category) {
             type="button"
             class="icon-pick"
             :class="{ on: form.icon === ic }"
+            :aria-label="ic"
             @click="form.icon = ic"
-          >{{ ic }}</button>
+          ><CategoryIcon :name="ic" :size="18" /></button>
         </div>
 
         <span class="vv-label spaced">Colour</span>
@@ -206,11 +208,12 @@ h2 { margin: 0 0 10px; font-size: 15px; color: var(--vv-muted); }
 
 .icons { display: flex; flex-wrap: wrap; gap: 7px; }
 .icon-pick {
+  display: grid; place-items: center; color: var(--vv-muted);
   width: 40px; height: 40px; font-size: 18px; line-height: 1;
   background: var(--vv-surface); border: none; border-radius: var(--vv-r-sm);
   box-shadow: var(--vv-e1); cursor: pointer;
 }
-.icon-pick.on { box-shadow: var(--vv-p1); }
+.icon-pick.on { box-shadow: var(--vv-p1); color: var(--vv-accent); }
 
 .tints { display: flex; flex-wrap: wrap; gap: 8px; }
 .tint {

@@ -108,7 +108,7 @@ const tints = Array.from({ length: 12 }, (_, i) => `cat-${i + 1}`)
           v-model="cat"
           :label="t('design.fieldCategory')"
           as="select"
-          :options="[{ value: 'groceries', label: '🛒 Groceries' }, { value: 'housing', label: '🏠 Housing' }]"
+          :options="[{ value: 'groceries', label: 'Groceries' }, { value: 'housing', label: 'Housing' }]"
         />
         <UiField v-model="bad" :label="t('design.fieldError')" :error="t('design.fieldErrorMsg')" />
       </div>
