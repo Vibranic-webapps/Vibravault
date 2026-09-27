@@ -280,5 +280,52 @@
     "tooBig": "That file is too big (max 5 MB).",
     "tip": "Tip: skip the saving step and share the file straight from your banking app.",
     "tipLink": "Set it up"
+  },
+  "cats": {
+    "title": "Categories",
+    "new": "New category",
+    "edit": "Edit category",
+    "EXPENSE": "Spending",
+    "INCOME": "Income",
+    "TRANSFER": "Between your accounts",
+    "transferNote": "Money moving between your own accounts, like a top-up to Revolut. It changes your balance but never counts as income or spending.",
+    "name": "Name",
+    "namePh": "e.g. Coffee",
+    "kind": "Type",
+    "color": "Colour",
+    "colorN": "Colour {n}",
+    "icon": "Icon",
+    "create": "Create category",
+    "save": "Save changes",
+    "delete": "Delete category",
+    "deleteConfirm": "Delete “{name}”? Its transactions stay, but become not sorted yet.",
+    "duplicate": "You already have a category with that name.",
+    "nameRequired": "Give it a name.",
+    "created": "Category created",
+    "deleted": "Category deleted"
+  },
+  "iconGroup": {
+    "money": "Money",
+    "home": "Home",
+    "food": "Food & drinks",
+    "transport": "Getting around",
+    "care": "Health & care",
+    "fun": "Fun & learning",
+    "other": "Other"
+  },
+  "teach": {
+    "title": "Rename & sort all like this",
+    "lead": "Every transaction with this text, past and future, follows the rule.",
+    "match": "When the bank text contains",
+    "matchHint": "Keep only the part that stays the same. Leave out dates, times and codes that change every time.",
+    "tooShort": "At least 3 characters.",
+    "label": "Call it",
+    "labelPh": "e.g. Apple",
+    "category": "Sort it under",
+    "keepCategory": "Don't change",
+    "applyPast": "Also sort past transactions that aren't sorted yet",
+    "applyHint": "Transactions you sorted yourself are never changed.",
+    "nothing": "Give it a name or pick a category.",
+    "save": "Save rule"
   }
 }

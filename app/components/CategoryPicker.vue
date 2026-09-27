@@ -17,7 +17,9 @@ const props = withDefaults(defineProps<{
   modelValue: string | null
   direction: 'in' | 'out'
   disabled?: boolean
-}>(), { disabled: false })
+  /** Label of the "no category" tile. Default: "Not sorted yet". */
+  noneLabel?: string
+}>(), { disabled: false, noneLabel: undefined })
 const emit = defineEmits<{ 'update:modelValue': [id: string | null] }>()
 
 const { t } = useI18n()
@@ -67,7 +69,7 @@ function tint(c: { color: string }) {
           @click="emit('update:modelValue', null)"
         >
           <span class="ct-icon neu" aria-hidden="true"><CategoryIcon :size="20" /></span>
-          <span class="ct-name">{{ t('home.unsorted') }}</span>
+          <span class="ct-name">{{ noneLabel ?? t('home.unsorted') }}</span>
         </button>
       </div>
     </section>
