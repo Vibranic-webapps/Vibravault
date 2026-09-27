@@ -1,12 +1,7 @@
 import type { H3Event } from 'h3'
-import { prisma } from '~~/server/utils/prisma'
-import { blockedFingerprints } from '~~/server/utils/importFilter'
 import { requireImportToken } from '~~/server/utils/importToken'
-import { getDefaultAccountId } from '~~/server/utils/seed'
+import { parkForReview } from '~~/server/utils/importFilter'
 import { parseKbcCsv } from '~~/shared/utils/kbcCsv'
-import { fingerprintRow } from '~~/server/utils/import'
-import { loadRules } from '~~/server/utils/merchantRules'
-import { pickRule } from '~~/shared/utils/rulePick'
 import { reportEvent } from '~~/server/utils/vibradex'
 
 /**
@@ -46,48 +41,15 @@ async function importFromShortcut(event: H3Event) {
     throw createError({ statusCode: 400, statusMessage: 'No transactions found in that file' })
   }
 
-  const fingerprints = parsed.rows.map(fingerprintRow)
-  // Skip what's already live, already removed in a review, or already waiting.
-  const blocked = await blockedFingerprints(userId, fingerprints, { pending: true })
-  const accountId = await getDefaultAccountId(userId)
+  // Parked for review, never imported directly (decided 2026-09-27).
+  const { waiting, skipped } = await parkForReview(userId, parsed, filename)
 
-  // A taught rule suggests the category now; the review shows it, and it's
-  // kept on "Add these". Only rules WITH a category are considered: a more
-  // specific rule that only renames must not stop a broader one from filing.
-  const categorisingRules = (await loadRules(userId)).filter((r) => r.categoryId)
-  const toPark = parsed.rows
-    .map((r, i) => ({ r, fingerprint: fingerprints[i]! }))
-    .filter(({ fingerprint }) => !blocked.has(fingerprint))
-
-  // PARKED, not imported: nothing counts until it's reviewed in the app
-  // (decided 2026-09-27). PendingTransaction is a separate table, so no
-  // total, list or balance can see these rows yet.
-  if (toPark.length) {
-    await prisma.pendingTransaction.createMany({
-      data: toPark.map(({ r, fingerprint }) => ({
-        userId,
-        accountId,
-        amountCents: r.amountCents,
-        bookedAt: new Date(r.bookedAt),
-        balanceAfterCents: r.balanceAfterCents,
-        counterparty: r.counterparty,
-        counterpartyIban: r.counterpartyIban,
-        description: r.description,
-        fingerprint,
-        categoryId: pickRule(categorisingRules, r.description)?.categoryId ?? null,
-        filename,
-      })),
-      skipDuplicates: true,
-    })
-  }
-
-  const skipped = parsed.rows.length - toPark.length
   // The notification is read on the phone, so it follows the phone's
   // language (Shortcuts sends it as Accept-Language).
   const nl = (getHeader(event, 'accept-language') ?? '').toLowerCase().startsWith('nl')
   const summary = [
-    toPark.length
-      ? (nl ? `${toPark.length} wachten op je controle · open Vibravault` : `${toPark.length} waiting for your review · open Vibravault`)
+    waiting
+      ? (nl ? `${waiting} wachten op je controle · open Vibravault` : `${waiting} waiting for your review · open Vibravault`)
       : (nl ? 'Niets nieuws' : 'Nothing new'),
     skipped ? (nl ? `${skipped} al bekend` : `${skipped} already known`) : null,
     parsed.errors.length ? (nl ? `${parsed.errors.length} onleesbaar` : `${parsed.errors.length} unreadable`) : null,
@@ -99,13 +61,13 @@ async function importFromShortcut(event: H3Event) {
     {
       type: parsed.meta.balanceCheck.ok ? 'info' : 'warning',
       severity: parsed.meta.balanceCheck.ok ? 'low' : 'medium',
-      details: { userId, filename, waiting: toPark.length, skipped, balanceOk: parsed.meta.balanceCheck.ok },
+      details: { userId, filename, waiting: waiting, skipped, balanceOk: parsed.meta.balanceCheck.ok },
     },
   ))
 
   return {
     summary,
-    waiting: toPark.length,
+    waiting: waiting,
     skipped,
     unreadable: parsed.errors.length,
     balanceOk: parsed.meta.balanceCheck.ok,

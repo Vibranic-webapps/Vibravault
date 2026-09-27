@@ -1,213 +1,160 @@
 <script setup lang="ts">
-import { formatCents } from '~~/shared/utils/money'
-import { transactionLabel } from '~~/shared/utils/merchant'
-import { useRulesStore } from '~/stores/rules'
+import { FileUp, CircleCheck, TriangleAlert, Smartphone } from 'lucide-vue-next'
 
-const rules = useRulesStore()
-await rules.fetchAll()
-
-interface PreviewRow {
-  bookedAt: string
-  amountCents: number
-  balanceAfterCents: number | null
-  description: string
-  /** The bank's own name field - filled for transfers, blank for card payments. */
-  counterparty: string | null
-  counterpartyIban: string | null
-  duplicate: boolean
-  lineNumber: number
-}
-interface Preview {
+/**
+ * Import from your bank (Redesign v2, Wave 3).
+ *   1. pick the CSV your banking app exported
+ *   2. see what's in it: new / already known / unreadable, and whether the
+ *      bank's running balance adds up (the signal that a row went missing)
+ *   3. "Review N transactions" -> the same review sheet as the Shortcut
+ * Nothing counts until it's added there.
+ */
+interface UploadResult {
   filename: string
-  meta: {
-    delimiter: string; encoding: string; headerCount: number; dataRows: number
-    balanceCheck: { ok: boolean; checked: number; firstMismatchLine: number | null }
-  }
+  rows: number
+  waiting: number
+  skipped: number
   errors: { line: number; reason: string }[]
-  rows: PreviewRow[]
-  newCount: number
-  duplicateCount: number
+  balanceCheck: { ok: boolean; checked: number; firstMismatchLine: number | null }
 }
 
-const file = ref<File | null>(null)
-const preview = ref<Preview | null>(null)
-const result = ref<{ inserted: number; skipped: number } | null>(null)
-const error = ref<string | null>(null)
+const { t } = useI18n()
+const pending = usePending()
+
+const input = ref<HTMLInputElement | null>(null)
 const busy = ref(false)
+const error = ref('')
+const result = ref<UploadResult | null>(null)
 
-function onPick(e: Event) {
-  const input = e.target as HTMLInputElement
-  file.value = input.files?.[0] ?? null
-  preview.value = null
+async function onPick(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  busy.value = true
+  error.value = ''
   result.value = null
-  error.value = null
-  if (file.value) doPreview()
-}
-
-async function post<T>(url: string): Promise<T> {
-  const body = new FormData()
-  body.append('file', file.value!)
-  return $fetch<T>(url, { method: 'POST', body })
-}
-
-async function doPreview() {
-  busy.value = true
-  error.value = null
   try {
-    preview.value = await post<Preview>('/api/import/preview')
-  } catch (e: any) {
-    error.value = e?.statusMessage ?? 'Could not read that file'
+    const body = new FormData()
+    body.append('file', file)
+    result.value = await $fetch<UploadResult>('/api/import/upload', { method: 'POST', body })
+    await pending.refresh()
+  } catch (err: unknown) {
+    const status = (err as { statusCode?: number }).statusCode
+    error.value = status === 413 ? t('import.tooBig') : t('import.badFile')
   } finally {
     busy.value = false
+    // Same file picked again must still fire "change".
+    if (input.value) input.value.value = ''
   }
 }
 
-async function doCommit() {
-  busy.value = true
-  error.value = null
-  try {
-    result.value = await post('/api/import/commit')
-    preview.value = null
-  } catch (e: any) {
-    error.value = e?.statusMessage ?? 'Import failed'
-  } finally {
-    busy.value = false
-  }
+function again() {
+  result.value = null
+  error.value = ''
+  input.value?.click()
 }
 </script>
 
 <template>
   <div>
-    <h1>Import</h1>
-    <p class="muted">Upload a CSV export from your bank. Nothing is written until you confirm.</p>
+    <SubPageHeader :title="t('import.title')" back="/" />
+    <p class="intro">{{ t('import.intro') }}</p>
 
-    <p v-if="error" class="vv-error">{{ error }}</p>
+    <!-- The whole card is the file button: big target, one tap. -->
+    <label v-if="!result" class="pick" :class="{ busy }">
+      <input
+        ref="input"
+        type="file"
+        accept=".csv,text/csv,text/comma-separated-values"
+        class="sr"
+        :disabled="busy"
+        @change="onPick"
+      />
+      <UiIconTile :icon="FileUp" size="lg" />
+      <strong>{{ busy ? t('import.reading') : t('import.choose') }}</strong>
+      <small>{{ t('import.chooseHint') }}</small>
+    </label>
 
-    <!-- Step 1: pick a file -->
-    <div class="neu-3 card">
-      <label class="drop">
-        <input type="file" accept=".csv,text/csv" class="file" @change="onPick" />
-        <span class="drop-icon" aria-hidden="true">⇪</span>
-        <span class="drop-main">{{ file ? file.name : 'Choose a CSV file' }}</span>
-        <span class="drop-sub">KBC export · max 5 MB</span>
-      </label>
-    </div>
+    <p v-if="error" class="vv-error" role="alert">{{ error }}</p>
 
-    <!-- Step 2: preview -->
-    <section v-if="preview" class="neu-3 card">
-      <h2>{{ preview.filename }}</h2>
+    <section v-if="result" class="neu-3 card" aria-live="polite">
+      <h2 class="file">{{ result.filename }}</h2>
 
       <div class="stats">
-        <div><span class="s-label">New</span><span class="s-value in">{{ preview.newCount }}</span></div>
-        <div><span class="s-label">Already there</span><span class="s-value">{{ preview.duplicateCount }}</span></div>
-        <div><span class="s-label">Unreadable</span><span class="s-value" :class="preview.errors.length ? 'out' : ''">{{ preview.errors.length }}</span></div>
+        <div class="stat"><strong class="vv-amount-in">{{ result.waiting }}</strong><small>{{ t('import.new') }}</small></div>
+        <div class="stat"><strong>{{ result.skipped }}</strong><small>{{ t('import.known') }}</small></div>
+        <div class="stat"><strong :class="{ 'vv-amount-out': result.errors.length }">{{ result.errors.length }}</strong><small>{{ t('import.unreadable') }}</small></div>
       </div>
 
-      <!-- The bank's own running balance is a checksum. Saying so out loud is
-           what makes an importer feel trustworthy rather than scary. -->
-      <p class="check" :class="preview.meta.balanceCheck.ok ? 'ok' : 'bad'">
-        <template v-if="preview.meta.balanceCheck.ok">
-          ✓ Balance check passed — {{ preview.meta.balanceCheck.checked }} running totals match the bank
-        </template>
-        <template v-else>
-          ⚠ Balance mismatch from line {{ preview.meta.balanceCheck.firstMismatchLine }} — a row may be missing
-        </template>
+      <p v-if="result.balanceCheck.checked" class="check" :class="result.balanceCheck.ok ? 'ok' : 'bad'">
+        <component :is="result.balanceCheck.ok ? CircleCheck : TriangleAlert" :size="18" aria-hidden="true" />
+        <span>
+          {{ result.balanceCheck.ok
+            ? t('import.balanceOk')
+            : t('import.balanceBad', { line: result.balanceCheck.firstMismatchLine }) }}
+        </span>
       </p>
 
-      <p class="meta">
-        {{ preview.meta.dataRows }} rows · {{ preview.meta.headerCount }} columns ·
-        delimiter “{{ preview.meta.delimiter }}” · {{ preview.meta.encoding }}
-      </p>
+      <details v-if="result.errors.length" class="errs">
+        <summary>{{ t('import.unreadableTitle') }}</summary>
+        <ul>
+          <li v-for="e in result.errors" :key="e.line"><strong>{{ t('import.line', { line: e.line }) }}</strong> {{ e.reason }}</li>
+        </ul>
+      </details>
 
-      <ul v-if="preview.errors.length" class="errs">
-        <li v-for="e in preview.errors" :key="e.line">Line {{ e.line }}: {{ e.reason }}</li>
-      </ul>
-
-      <div class="rows">
-        <div
-          v-for="(r, i) in preview.rows"
-          :key="r.lineNumber"
-          class="row"
-          :class="{ dim: r.duplicate, 'neu-divider': i < preview.rows.length - 1 }"
-        >
-          <span class="badge" :class="r.duplicate ? 'dup' : 'new'">{{ r.duplicate ? 'dup' : 'new' }}</span>
-          <span class="r-main">
-            <strong>{{ transactionLabel(r.counterparty, r.description, rules.items) }}</strong>
-            <small>{{ r.bookedAt }}</small>
-          </span>
-          <span :class="r.amountCents < 0 ? 'vv-amount-out' : 'vv-amount-in'">
-            {{ formatCents(r.amountCents, { signed: r.amountCents > 0 }) }}
-          </span>
-        </div>
+      <div class="actions">
+        <UiButton v-if="pending.items.value.length" @click="pending.open.value = true">
+          {{ t('import.review', pending.items.value.length) }}
+        </UiButton>
+        <p v-else class="nothing">{{ t('import.nothingNew') }}</p>
+        <UiButton variant="ghost" @click="again">{{ t('import.another') }}</UiButton>
       </div>
-
-      <button
-        class="vv-btn commit"
-        type="button"
-        :disabled="busy || preview.newCount === 0"
-        @click="doCommit"
-      >
-        {{ preview.newCount ? `Import ${preview.newCount} transaction${preview.newCount === 1 ? '' : 's'}` : 'Nothing new to import' }}
-      </button>
+      <!-- Kept mounted for "Import another file". -->
+      <input ref="input" type="file" accept=".csv,text/csv,text/comma-separated-values" class="sr" @change="onPick" />
     </section>
 
-    <!-- Step 3: done -->
-    <section v-if="result" class="neu-3 card done">
-      <p class="done-title">Imported</p>
-      <p class="done-body">
-        {{ result.inserted }} added · {{ result.skipped }} already there
+    <section class="neu-3 card tip">
+      <UiIconTile :icon="Smartphone" size="sm" />
+      <p>
+        {{ t('import.tip') }}
+        <NuxtLink class="vv-link" to="/you/phone">{{ t('import.tipLink') }}</NuxtLink>
       </p>
-      <NuxtLink class="vv-btn narrow" to="/transactions">Categorise them</NuxtLink>
     </section>
   </div>
 </template>
 
 <style scoped>
-h1 { margin: 0 0 4px; font-size: 26px; }
-h2 { margin: 0 0 14px; font-size: 15px; font-weight: 700; word-break: break-all; }
-.muted { margin: 0 0 22px; color: var(--vv-muted); font-size: 14px; }
-.card { padding: 22px; margin-bottom: 20px; }
+.intro { margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: var(--vv-muted); }
 
-.drop {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 30px 20px; cursor: pointer; text-align: center;
-  border-radius: var(--vv-r-md); box-shadow: var(--vv-p2);
+.pick {
+  display: grid; justify-items: center; gap: 8px; padding: 34px 20px; margin-bottom: 18px;
+  text-align: center; border-radius: var(--vv-r-lg); box-shadow: var(--vv-p2); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.file { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.drop-icon { font-size: 26px; color: var(--vv-accent); }
-.drop-main { font-size: 15px; font-weight: 600; word-break: break-all; }
-.drop-sub { font-size: 12px; color: var(--vv-muted-2); }
+.pick strong { margin-top: 6px; font-size: 17px; font-weight: 800; }
+.pick small { font-size: 13px; color: var(--vv-muted); }
+.pick.busy { cursor: progress; opacity: .7; }
+.pick:focus-within { outline: 2px solid var(--vv-accent-ring); outline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
 
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; text-align: center; }
-.stats div { display: flex; flex-direction: column; gap: 2px; }
-.s-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--vv-muted-2); }
-.s-value { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.in { color: var(--vv-accent); }
-.out { color: var(--vv-negative); }
+.card { padding: 20px; margin-bottom: 18px; }
+.file { margin: 0 0 16px; font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.stat { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px; border-radius: var(--vv-r-sm); box-shadow: var(--vv-p1); }
+.stat strong { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.stat small { font-size: 12px; color: var(--vv-muted); text-align: center; }
 
-.check { margin: 0 0 8px; padding: 10px 12px; font-size: 13px; font-weight: 600; border-radius: var(--vv-r-sm); }
-.check.ok { color: var(--vv-accent); background: color-mix(in srgb, var(--vv-accent) 10%, transparent); }
-.check.bad { color: var(--vv-negative); background: var(--vv-negative-bg); }
-.meta { margin: 0 0 14px; font-size: 12px; color: var(--vv-muted-2); }
-.errs { margin: 0 0 14px; padding-left: 18px; font-size: 12px; color: var(--vv-negative); }
+.check { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 14px; font-size: 14px; line-height: 1.45; }
+.check.ok { color: var(--vv-accent); }
+.check.bad { color: var(--vv-negative); font-weight: 600; }
+.check svg { flex: none; margin-top: 1px; }
 
-.rows { max-height: 320px; overflow-y: auto; }
-.row { display: flex; align-items: center; gap: 12px; padding: 11px 0; }
-.row.dim { opacity: .45; }
-.badge {
-  flex: none; padding: 3px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: .05em; border-radius: var(--vv-r-badge); box-shadow: var(--vv-e1);
-}
-.badge.new { color: var(--vv-accent); }
-.badge.dup { color: var(--vv-muted-2); }
-.r-main { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.r-main strong { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.r-main small { font-size: 11px; color: var(--vv-muted); }
-.row > span:last-child { font-size: 13px; font-weight: 700; white-space: nowrap; }
+.errs { margin-bottom: 14px; font-size: 13px; }
+.errs summary { cursor: pointer; font-weight: 600; color: var(--vv-muted); }
+.errs ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--vv-muted); }
 
-.commit { margin-top: 18px; }
-.done { text-align: center; }
-.done-title { margin: 0 0 4px; font-size: 18px; font-weight: 700; color: var(--vv-accent); }
-.done-body { margin: 0 0 18px; font-size: 14px; color: var(--vv-muted); }
-.narrow { max-width: 240px; margin: 0 auto; display: block; text-align: center; text-decoration: none; }
+.actions { display: grid; gap: 10px; }
+.nothing { margin: 0; font-size: 14px; text-align: center; color: var(--vv-muted); }
+
+.tip { display: flex; align-items: center; gap: 14px; }
+.tip p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--vv-muted); }
 </style>
