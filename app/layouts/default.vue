@@ -2,7 +2,8 @@
 import { House, List, Plus, Tag, User, PenLine, FileUp, ScanLine } from 'lucide-vue-next'
 
 /**
- * The app shell (Redesign v2, Wave 2): logo header, the bottom bar
+ * The app shell (Redesign v2, Wave 2): no header - each screen starts with
+ * its own title ("Hey Kilian", "Transactions"...). Then the bottom bar
  * Home · Transactions · [+] · Categories · You, swiping between those four
  * screens, and the Add sheet behind the +.
  *
@@ -39,12 +40,6 @@ async function go(path: string) {
 
 <template>
   <div ref="shell" class="shell">
-    <header class="shell-head">
-      <NuxtLink to="/" class="brand" :aria-label="t('brand.home')">
-        <AppLogo />
-      </NuxtLink>
-    </header>
-
     <main class="shell-main">
       <slot />
     </main>
@@ -106,15 +101,11 @@ async function go(path: string) {
   padding-bottom: calc(116px + env(safe-area-inset-bottom));
 }
 
-.shell-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+/* No header, so the page itself clears the notch / status bar. */
+.shell-main {
   max-width: 900px; margin: 0 auto;
-  padding: calc(20px + env(safe-area-inset-top)) 24px 10px;
+  padding: calc(28px + env(safe-area-inset-top)) 24px 24px;
 }
-.brand { text-decoration: none; border-radius: var(--vv-r-badge); }
-.brand:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 4px; }
-
-.shell-main { max-width: 900px; margin: 0 auto; padding: 8px 24px 24px; }
 
 /* --- Bottom bar --------------------------------------------------------- */
 .bar {
@@ -156,8 +147,7 @@ async function go(path: string) {
 .add:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 3px; }
 
 @media (max-width: 560px) {
-  .shell-head { padding: calc(16px + env(safe-area-inset-top)) 18px 8px; }
-  .shell-main { padding: 8px 18px 24px; }
+  .shell-main { padding: calc(22px + env(safe-area-inset-top)) 18px 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .tab-ic, .add { transition: none; }

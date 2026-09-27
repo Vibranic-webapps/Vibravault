@@ -18,7 +18,33 @@ const lang = computed({
   set: (v: string) => setLocale(v as 'en' | 'nl'),
 })
 
-const initial = computed(() => (user.value?.email?.[0] ?? '?').toUpperCase())
+const initial = computed(() => ((user.value?.name || user.value?.email)?.[0] ?? '?').toUpperCase())
+
+// --- Your name ------------------------------------------------------------
+// Saved when you leave the field (or press Enter) - no Save button to forget.
+const { toast } = useToast()
+const MAX_NAME = 40
+const name = ref(user.value?.name ?? '')
+const nameError = ref('')
+let savingName = false // Enter then tapping away must not save twice
+
+async function saveName() {
+  const clean = name.value.replace(/\s+/g, ' ').trim()
+  if (savingName || clean === (user.value?.name ?? '')) return // nothing changed
+  if (clean.length > MAX_NAME) { nameError.value = t('you.nameTooLong'); return }
+  nameError.value = ''
+  savingName = true
+  try {
+    const updated = await $fetch('/api/auth/me', { method: 'PATCH', body: { name: clean } })
+    user.value = updated
+    name.value = updated.name ?? ''
+    toast(t('you.nameSaved'))
+  } catch {
+    toast(t('common.retry'), 'bad')
+  } finally {
+    savingName = false
+  }
+}
 
 async function signOut() {
   await $fetch('/api/auth/logout', { method: 'POST' })
@@ -31,9 +57,23 @@ async function signOut() {
   <div>
     <h1>{{ t('you.title') }}</h1>
 
-    <section class="neu-3 card who">
-      <span class="avatar neu" aria-hidden="true">{{ initial }}</span>
-      <span class="email">{{ user?.email }}</span>
+    <section class="neu-3 card">
+      <div class="who">
+        <span class="avatar neu" aria-hidden="true">{{ initial }}</span>
+        <span class="email">{{ user?.email }}</span>
+      </div>
+      <UiField
+        v-model="name"
+        class="name"
+        :label="t('you.name')"
+        :placeholder="t('you.namePh')"
+        :hint="t('you.nameHint')"
+        :error="nameError"
+        autocomplete="given-name"
+        :maxlength="MAX_NAME"
+        @enter="saveName"
+        @focusout="saveName"
+      />
     </section>
 
     <h2>{{ t('you.settings') }}</h2>
@@ -80,5 +120,6 @@ h2 { margin: 26px 0 10px; font-size: 12px; font-weight: 800; letter-spacing: .08
   font-size: 20px; font-weight: 800; color: var(--vv-accent);
   border-radius: var(--vv-r-sm);
 }
+.name { margin-top: 18px; }
 .email { min-width: 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
 </style>

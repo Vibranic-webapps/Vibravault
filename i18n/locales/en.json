@@ -92,9 +92,15 @@
     "account": "Account",
     "rules": "Your rules",
     "phone": "Share from your phone",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "name": "Your name",
+    "namePh": "What should we call you?",
+    "nameHint": "Used to greet you on Home.",
+    "nameSaved": "Name saved",
+    "nameTooLong": "Keep it under 40 characters"
   },
-  "brand": {
-    "home": "Vibravault — home"
+  "home": {
+    "greeting": "Hey {name}",
+    "greetingNoName": "Hey there"
   }
 }

@@ -1,4 +1,4 @@
-export interface AuthUser { id: string; email: string }
+export interface AuthUser { id: string; email: string; name: string | null }
 
 /** Shared, SSR-safe auth state. useState survives hydration, so the server's
  *  answer isn't thrown away and re-fetched on the client. */

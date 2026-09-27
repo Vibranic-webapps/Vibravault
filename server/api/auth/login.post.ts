@@ -25,5 +25,5 @@ export default defineEventHandler(async (event) => {
 
   event.waitUntil?.(reportEvent('User logged in', { details: { userId: user.id } }))
 
-  return { id: user.id, email: user.email }
+  return { id: user.id, email: user.email, name: user.name }
 })
