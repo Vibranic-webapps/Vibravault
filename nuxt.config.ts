@@ -44,6 +44,10 @@ export default defineNuxtConfig({
       fallbackLocale: 'en',
     },
   },
+  // Settings moved into the You tab (Redesign v2) - old links still land.
+  routeRules: {
+    '/settings': { redirect: { to: '/you', statusCode: 301 } },
+  },
   runtimeConfig: {
     databaseUrl: process.env.DATABASE_URL,
   },

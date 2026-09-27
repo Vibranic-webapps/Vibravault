@@ -23,7 +23,7 @@ const leftTabs = computed(() => tabs.value.slice(0, 2))
 const rightTabs = computed(() => tabs.value.slice(2))
 
 // Which tab lights up. Pages that live UNDER a tab light up their parent.
-const activeTab = computed(() => (route.path === '/settings' ? '/you' : route.path))
+const activeTab = computed(() => (route.path.startsWith('/you/') ? '/you' : route.path))
 
 // --- Swipe between the main screens --------------------------------------
 const shell = ref<HTMLElement | null>(null)
