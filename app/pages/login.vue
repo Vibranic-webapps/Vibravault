@@ -1,125 +1,55 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
+const { t } = useI18n()
 const user = useAuthUser()
 
 const email = ref('')
 const password = ref('')
 const remember = ref(true)
-const error = ref<string | null>(null)
-const pending = ref(false)
+const error = ref('')
+const busy = ref(false)
 
 async function submit() {
-  error.value = null
-  pending.value = true
+  error.value = ''
+  busy.value = true
   try {
     user.value = await $fetch('/api/auth/login', {
       method: 'POST',
       body: { email: email.value, password: password.value, remember: remember.value },
     })
     await navigateTo('/')
-  } catch (e: any) {
-    error.value = e?.statusMessage ?? 'Something went wrong'
+  } catch (e: unknown) {
+    // One message for "unknown email" and "wrong password" - the server
+    // deliberately doesn't say which, and neither does the screen.
+    error.value = (e as { statusCode?: number }).statusCode === 401 ? t('auth.wrongLogin') : t('auth.generic')
   } finally {
-    pending.value = false
+    busy.value = false
   }
 }
 </script>
 
 <template>
-  <main class="page">
-    <form class="neu-3 card" @submit.prevent="submit">
-      <!-- Brand tag: hangs off the top edge of the card, slightly rotated. -->
-      <p class="brand">Vibravault</p>
+  <AuthCard :title="t('auth.loginTitle')" :sub="t('auth.loginSub')">
+    <form class="form" @submit.prevent="submit">
+      <UiField v-model="email" :label="t('auth.email')" type="email" inputmode="email" autocomplete="email" required />
+      <UiField v-model="password" :label="t('auth.password')" type="password" autocomplete="current-password" required :error="error" />
 
-      <h1>Welcome back</h1>
-      <p class="sub">Sign in to your vault</p>
-
-      <p v-if="error" class="vv-error">{{ error }}</p>
-
-      <label class="vv-label" for="email">Email</label>
-      <input id="email" v-model="email" class="vv-field" type="email" autocomplete="email" required />
-
-      <label class="vv-label spaced" for="password">Password</label>
-      <input id="password" v-model="password" class="vv-field" type="password" autocomplete="current-password" required />
-
-      <div class="row-between spaced">
-        <label class="check">
-          <input v-model="remember" type="checkbox" class="box" />
-          <span class="check-label">Remember me</span>
-        </label>
-
-        <NuxtLink class="vv-link small" to="/forgot-password">Forgot password?</NuxtLink>
+      <div class="between">
+        <UiCheckbox v-model="remember">{{ t('auth.remember') }}</UiCheckbox>
+        <NuxtLink class="vv-link small" to="/forgot-password">{{ t('auth.forgot') }}</NuxtLink>
       </div>
 
-      <button class="vv-btn spaced-lg" type="submit" :disabled="pending">
-        {{ pending ? 'Signing in…' : 'Sign in' }}
-      </button>
-
-      <p class="foot">
-        No account yet? <NuxtLink class="vv-link" to="/signup">Create one</NuxtLink>
-      </p>
+      <UiButton type="submit" :loading="busy">{{ t('auth.signIn') }}</UiButton>
     </form>
-  </main>
+
+    <p class="foot">{{ t('auth.noAccount') }} <NuxtLink class="vv-link" to="/signup">{{ t('auth.createOne') }}</NuxtLink></p>
+  </AuthCard>
 </template>
 
 <style scoped>
-.page { min-height: 100vh; display: grid; place-items: center; padding: 40px 24px 24px; }
-
-/* position:relative anchors the brand tag; the extra top padding makes room
-   for the half of it that overhangs the card. */
-.card { position: relative; width: 100%; max-width: 420px; padding: 46px 34px 34px; }
-
-.brand {
-  position: absolute;
-  top: -17px;
-  left: 50%;
-  /* translate first, then rotate — order matters: rotating first would swing
-     the element around and break the centring. */
-  transform: translateX(-50%) rotate(-3deg);
-  margin: 0;
-  padding: 9px 22px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: #fff;
-  background: var(--vv-brand);
-  border-radius: 14px;
-  box-shadow: var(--vv-e2);
-}
-
-h1 { margin: 0 0 4px; font-size: 26px; text-align: center; }
-.sub { margin: 0 0 26px; color: var(--vv-muted); font-size: 15px; text-align: center; }
-.spaced { margin-top: 18px; }
-.spaced-lg { margin-top: 26px; }
-.foot { margin: 20px 0 0; text-align: center; font-size: 14px; color: var(--vv-muted); }
-
-.row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.small { font-size: 13px; }
-
-/* Checkbox in the system's own language: unchecked is a HOLE (pressed in),
-   checked pops OUT and fills with the accent. A real <input type="checkbox">
-   with appearance:none, so keyboard, label click and screen readers all work
-   natively instead of being re-implemented on a <button>. */
-.check { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-.box {
-  appearance: none; -webkit-appearance: none;
-  position: relative; width: 22px; height: 22px; flex: none; margin: 0;
-  border: none; border-radius: 8px;
-  background: var(--vv-surface); box-shadow: var(--vv-p1);
-  cursor: pointer;
-  transition: background .16s ease, box-shadow .16s ease;
-}
-.box:checked { background: var(--vv-accent); box-shadow: var(--vv-e1); }
-.box:checked::after {
-  content: ''; position: absolute; left: 7px; top: 3px;
-  width: 5px; height: 10px;
-  border: solid var(--vv-accent-text); border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-.box:focus-visible { box-shadow: var(--vv-p1), 0 0 0 2px var(--vv-accent-ring); }
-.box:checked:focus-visible { box-shadow: var(--vv-e1), 0 0 0 2px var(--vv-accent-ring); }
-.check-label { font-size: 13px; font-weight: 600; color: var(--vv-muted); }
+.form { display: grid; gap: 18px; }
+.between { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.small { font-size: 14px; }
+.foot { margin: 22px 0 0; text-align: center; font-size: 14px; color: var(--vv-muted); }
 </style>

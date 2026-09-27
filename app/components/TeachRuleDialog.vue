@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Check } from 'lucide-vue-next'
 import { extractMerchant } from '~~/shared/utils/merchant'
 import type { Transaction } from '~/stores/transactions'
 import { useRulesStore } from '~/stores/rules'
@@ -86,14 +85,10 @@ async function save() {
         <CategoryPicker v-model="categoryId" :direction="direction" :none-label="t('teach.keepCategory')" />
       </div>
 
-      <label v-if="categoryId" class="check">
-        <input v-model="applyToExisting" type="checkbox" class="sr" />
-        <span class="box" aria-hidden="true"><Check v-if="applyToExisting" :size="15" :stroke-width="3" /></span>
-        <span>
-          {{ t('teach.applyPast') }}
-          <small>{{ t('teach.applyHint') }}</small>
-        </span>
-      </label>
+      <UiCheckbox v-if="categoryId" v-model="applyToExisting">
+        {{ t('teach.applyPast') }}
+        <small>{{ t('teach.applyHint') }}</small>
+      </UiCheckbox>
 
       <p v-if="error" class="vv-error" role="alert">{{ error }}</p>
 
@@ -107,14 +102,4 @@ async function save() {
 .lead { margin: 0; font-size: 14px; line-height: 1.5; color: var(--vv-muted); }
 .label { margin: 0 0 10px; font-size: 13px; font-weight: 700; color: var(--vv-muted); }
 
-.check { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; font-size: 14px; font-weight: 600; }
-.check small { display: block; margin-top: 3px; font-size: 12px; font-weight: 400; color: var(--vv-muted); }
-.sr { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.box {
-  display: grid; place-items: center; width: 26px; height: 26px; flex: none;
-  color: var(--vv-accent-text); background: var(--vv-surface);
-  border-radius: 8px; box-shadow: var(--vv-p1);
-}
-.sr:checked + .box { background: var(--vv-accent); box-shadow: var(--vv-e1); }
-.sr:focus-visible + .box { outline: 2px solid var(--vv-accent-ring); outline-offset: 2px; }
 </style>
