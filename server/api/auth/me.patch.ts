@@ -1,5 +1,6 @@
 import { prisma } from '~~/server/utils/prisma'
 import { requireUserId } from '~~/server/utils/auth'
+import { refuseIfDemo, toAuthUser } from '~~/server/utils/demo'
 
 const MAX_NAME = 40
 
@@ -7,6 +8,12 @@ const MAX_NAME = 40
 // (the app then just says "Hey there").
 export default defineEventHandler(async (event) => {
   const userId = await requireUserId(event)
+
+  // The shared demo account's name is what every visitor sees: read-only.
+  const me = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
+  if (!me) throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
+  refuseIfDemo(me.email)
+
   const body = await readBody<{ name?: unknown }>(event)
 
   if (!body || !('name' in body)) {
@@ -21,9 +28,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: `Name can be at most ${MAX_NAME} characters` })
   }
 
-  return prisma.user.update({
+  const user = await prisma.user.update({
     where: { id: userId },
     data: { name: name || null },
     select: { id: true, email: true, name: true },
   })
+  return toAuthUser(user)
 })

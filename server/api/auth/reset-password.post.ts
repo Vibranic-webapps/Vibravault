@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { prisma } from '~~/server/utils/prisma'
 import { hashPassword, createSession } from '~~/server/utils/auth'
 import { isPasswordValid, passwordProblems } from '~~/shared/utils/password'
+import { refuseIfDemo } from '~~/server/utils/demo'
 
 export default defineEventHandler(async (event) => {
   const { token, password } = await readBody<{ token?: unknown; password?: unknown }>(event)
@@ -20,12 +21,17 @@ export default defineEventHandler(async (event) => {
 
   const record = await prisma.passwordResetToken.findUnique({
     where: { hashedToken: createHash('sha256').update(token).digest('hex') },
+    include: { user: { select: { email: true } } },
   })
 
   const invalid = !record || record.usedAt !== null || record.expiresAt < new Date()
   if (invalid) {
     throw createError({ statusCode: 400, statusMessage: 'This reset link is invalid or has expired' })
   }
+
+  // A link for the shared demo account (e.g. one issued before the demo lock)
+  // changes nothing and is NOT consumed.
+  refuseIfDemo(record!.user.email)
 
   const passwordHash = await hashPassword(password)
 

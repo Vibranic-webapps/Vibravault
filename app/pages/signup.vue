@@ -27,8 +27,8 @@ async function submit() {
     })
     await navigateTo('/')
   } catch (e: unknown) {
-    const status = (e as { statusCode?: number; statusMessage?: string }).statusCode
-    const message = (e as { statusMessage?: string }).statusMessage ?? ''
+    const status = (e as { statusCode?: number }).statusCode
+    const message = serverMessage(e)
     if (status === 409) emailError.value = t('auth.emailTaken')
     else if (status === 400 && /email/i.test(message)) emailError.value = t('auth.badEmail')
     else error.value = t('auth.generic')

@@ -146,7 +146,12 @@
     "pwNew": "New password",
     "pwSave": "Change password",
     "pwWrong": "That's not your current password.",
-    "pwDone": "Password changed. You're signed out everywhere else."
+    "pwDone": "Password changed. You're signed out everywhere else.",
+    "demoNotice": "Demo account. Look around and try everything; your name and password are locked so the next visitor can use it too.",
+    "demoLocked": "The demo account can't change this.",
+    "demoPwLocked": "The demo account's password is locked, so the next visitor can sign in too.",
+    "backToYou": "Back to You",
+    "demoKeysLocked": "Keys can't be made on the demo account, so nobody keeps access after their visit. The steps below show how it works."
   },
   "home": {
     "greeting": "Hey {name}",

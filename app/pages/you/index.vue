@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Sparkles, Smartphone, Download, KeyRound, LogOut } from 'lucide-vue-next'
+import { Sparkles, Smartphone, Download, KeyRound, LogOut, Lock } from 'lucide-vue-next'
 import { useRulesStore } from '~/stores/rules'
 
 /**
@@ -9,6 +9,10 @@ import { useRulesStore } from '~/stores/rules'
  *   your vault       rules, share from your phone, export
  *   account          change password, sign out
  * Rows with a chevron go one level down (/you/rules, /you/phone, ...).
+ *
+ * The shared DEMO account (its login is public) gets a notice instead of the
+ * things the server refuses for it: the name is shown read-only and the
+ * "Change password" row is hidden. Everything else works as for anyone.
  */
 interface ImportToken { id: string; revokedAt: string | null }
 
@@ -29,6 +33,7 @@ const lang = computed({
   set: (v: string) => setLocale(v as 'en' | 'nl'),
 })
 
+const isDemo = computed(() => !!user.value?.demo)
 const initial = computed(() => ((user.value?.name || user.value?.email)?.[0] ?? '?').toUpperCase())
 
 // --- Your name ------------------------------------------------------------
@@ -49,8 +54,15 @@ async function saveName() {
     user.value = updated
     name.value = updated.name ?? ''
     toast(t('you.nameSaved'))
-  } catch {
-    toast(t('drawer.couldNotSave'), 'bad')
+  } catch (e: unknown) {
+    // 403 = the demo account (its name is locked server-side). Put the old
+    // name back so the field doesn't pretend the change stuck.
+    if ((e as { statusCode?: number }).statusCode === 403) {
+      name.value = user.value?.name ?? ''
+      toast(t('you.demoLocked'), 'bad')
+    } else {
+      toast(t('drawer.couldNotSave'), 'bad')
+    }
   } finally {
     savingName = false
   }
@@ -74,12 +86,22 @@ async function signOut() {
   <div>
     <h1>{{ t('you.title') }}</h1>
 
+    <section v-if="isDemo" class="neu-3 card notice">
+      <UiIconTile :icon="Lock" size="sm" />
+      <p>{{ t('you.demoNotice') }}</p>
+    </section>
+
     <section class="neu-3 card">
       <div class="who">
         <span class="avatar neu" aria-hidden="true">{{ initial }}</span>
-        <span class="email">{{ user?.email }}</span>
+        <span class="ident">
+          <!-- Demo: the name is locked, so show it as text, not as a field. -->
+          <strong v-if="isDemo && user?.name" class="shown-name">{{ user.name }}</strong>
+          <span class="email">{{ user?.email }}</span>
+        </span>
       </div>
       <UiField
+        v-if="!isDemo"
         v-model="name"
         class="name"
         :label="t('you.name')"
@@ -120,7 +142,7 @@ async function signOut() {
 
     <h2>{{ t('you.account') }}</h2>
     <section class="neu-3 card rows">
-      <UiListRow :icon="KeyRound" :label="t('you.password')" to="/you/password" />
+      <UiListRow v-if="!isDemo" :icon="KeyRound" :label="t('you.password')" to="/you/password" />
       <UiListRow :icon="LogOut" :label="t('you.signOut')" danger @click="signOut" />
     </section>
   </div>
@@ -140,5 +162,11 @@ h2 { margin: 26px 0 10px; font-size: 12px; font-weight: 800; letter-spacing: .08
   border-radius: var(--vv-r-sm);
 }
 .name { margin-top: 18px; }
+.ident { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.shown-name { font-size: 17px; font-weight: 800; overflow-wrap: anywhere; }
 .email { min-width: 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.shown-name + .email { font-size: 14px; color: var(--vv-muted); }
+
+.notice { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; padding: 16px 18px; }
+.notice p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--vv-muted); }
 </style>
