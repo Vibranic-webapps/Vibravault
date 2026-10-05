@@ -1,3 +1,4 @@
+import { refuseIfDemo } from '~~/server/utils/demo'
 import { createHash, randomBytes } from 'node:crypto'
 import type { H3Event } from 'h3'
 import { prisma } from './prisma'
@@ -40,12 +41,15 @@ export async function requireImportToken(event: H3Event): Promise<string> {
 
   const token = await prisma.importToken.findUnique({
     where: { hashedToken: hash(header) },
-    select: { id: true, userId: true, revokedAt: true },
+    select: { id: true, userId: true, revokedAt: true, user: { select: { email: true } } },
   })
 
   if (!token || token.revokedAt) {
     throw createError({ statusCode: 401, statusMessage: 'Invalid or revoked import token' })
   }
+
+  // Keys made for the shared demo account before the demo lock stop working.
+  refuseIfDemo(token.user.email)
 
   // Fire-and-forget: a "last used" timestamp must never slow or fail an import.
   prisma.importToken

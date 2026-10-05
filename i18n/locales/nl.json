@@ -146,7 +146,12 @@
     "pwNew": "Nieuw wachtwoord",
     "pwSave": "Wachtwoord wijzigen",
     "pwWrong": "Dat is niet je huidige wachtwoord.",
-    "pwDone": "Wachtwoord gewijzigd. Je bent overal elders afgemeld."
+    "pwDone": "Wachtwoord gewijzigd. Je bent overal elders afgemeld.",
+    "demoNotice": "Demo-account. Kijk gerust rond en probeer alles uit; je naam en wachtwoord liggen vast, zodat de volgende bezoeker hem ook kan gebruiken.",
+    "demoLocked": "Dit kan je niet wijzigen in het demo-account.",
+    "demoPwLocked": "Het wachtwoord van het demo-account ligt vast, zodat de volgende bezoeker ook kan aanmelden.",
+    "backToYou": "Terug naar Jij",
+    "demoKeysLocked": "Op het demo-account kan je geen sleutel maken, zodat niemand na zijn bezoek nog toegang houdt. De stappen hieronder tonen hoe het werkt."
   },
   "home": {
     "greeting": "Hey {name}",

@@ -2,6 +2,7 @@ import { prisma } from '~~/server/utils/prisma'
 import { hashPassword, createSession } from '~~/server/utils/auth'
 import { ensureUserSeeded } from '~~/server/utils/seed'
 import { reportEvent } from '~~/server/utils/vibradex'
+import { refuseIfDemo, toAuthUser } from '~~/server/utils/demo'
 import { isPasswordValid, passwordProblems } from '~~/shared/utils/password'
 
 export default defineEventHandler(async (event) => {
@@ -15,6 +16,11 @@ export default defineEventHandler(async (event) => {
   if (!normalizedEmail.includes('@')) {
     throw createError({ statusCode: 400, statusMessage: 'Enter a valid email' })
   }
+
+  // Nobody may register a demo address with a password of their own: the demo
+  // account would be theirs, and locked. To (re)create or repair the demo
+  // user, use a one-off script - never empty DEMO_EMAILS on production.
+  refuseIfDemo(normalizedEmail)
 
   // Enforced here, not just in the UI: the page's checklist is a courtesy,
   // this is the rule. Same module both sides, so they can never drift.
@@ -45,5 +51,5 @@ export default defineEventHandler(async (event) => {
   event.waitUntil?.(reportEvent('New user signed up', { details: { userId: user.id } }))
 
   setResponseStatus(event, 201)
-  return { id: user.id, email: user.email, name: user.name }
+  return toAuthUser(user)
 })

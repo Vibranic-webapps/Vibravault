@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { prisma } from '~~/server/utils/prisma'
 import { sendMail, resetEmail } from '~~/server/utils/mail'
+import { isDemoEmail } from '~~/server/utils/demo'
 
 const RESET_TTL_MS = 1000 * 60 * 60 // 1 hour
 
@@ -15,7 +16,9 @@ export default defineEventHandler(async (event) => {
   // Only do work if the account exists - but ALWAYS return the same response.
   // Answering differently for known vs unknown addresses turns this endpoint
   // into a way to enumerate who has an account.
-  if (user) {
+  // The shared demo account gets no reset link: it answers exactly like an
+  // unknown address does.
+  if (user && !isDemoEmail(user.email)) {
     const rawToken = randomBytes(32).toString('hex')
 
     // Same pattern as sessions: the link carries the raw token, the DB stores

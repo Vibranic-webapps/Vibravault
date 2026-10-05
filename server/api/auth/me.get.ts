@@ -1,6 +1,7 @@
 import { prisma } from '~~/server/utils/prisma'
 import { readSession } from '~~/server/utils/auth'
 import { ensureUserSeeded } from '~~/server/utils/seed'
+import { toAuthUser } from '~~/server/utils/demo'
 
 // Returns the current user, or null. Deliberately NOT a 401: route middleware
 // asks "who am I?" on every navigation, and "nobody" is a normal answer.
@@ -18,5 +19,5 @@ export default defineEventHandler(async (event) => {
   // COUNTs); it does real work at most once per user, ever.
   await ensureUserSeeded(user.id)
 
-  return user
+  return toAuthUser(user)
 })

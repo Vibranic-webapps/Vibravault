@@ -18,6 +18,7 @@ interface ImportToken {
 }
 
 const { t } = useI18n()
+const user = useAuthUser()
 const { date } = useFormat()
 const { toast } = useToast()
 
@@ -74,6 +75,7 @@ async function revoke(tk: ImportToken) {
         <p class="warn">{{ t('you.keyCopyNow') }}</p>
         <CopyField :value="created" />
       </div>
+      <p v-else-if="user?.demo" class="body locked">{{ t('you.demoKeysLocked') }}</p>
       <div v-else class="create">
         <UiField v-model="deviceName" :label="t('you.deviceName')" :maxlength="40" @enter="createKey" />
         <UiButton :icon="KeyRound" :loading="busy" @click="createKey">{{ t('you.createKey') }}</UiButton>
@@ -130,6 +132,7 @@ async function revoke(tk: ImportToken) {
 .body { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: var(--vv-muted); }
 .step .body:last-child { margin-bottom: 0; }
 .create { display: grid; gap: 12px; }
+.locked { margin: 0; font-weight: 600; }
 .warn { margin: 0; font-size: 13px; font-weight: 700; color: var(--vv-negative); }
 
 .how { margin: 0; padding-left: 22px; display: grid; gap: 12px; font-size: 14px; line-height: 1.5; }

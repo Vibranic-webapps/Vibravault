@@ -27,7 +27,7 @@ async function submit() {
     user.value = await $fetch('/api/auth/me')
     await navigateTo('/')
   } catch (e: unknown) {
-    const message = (e as { statusMessage?: string }).statusMessage ?? ''
+    const message = serverMessage(e)
     error.value = /invalid|expired/i.test(message) ? t('auth.expired') : t('auth.generic')
   } finally {
     busy.value = false

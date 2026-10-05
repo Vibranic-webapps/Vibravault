@@ -1,6 +1,7 @@
 import { prisma } from '~~/server/utils/prisma'
 import { verifyPassword, createSession } from '~~/server/utils/auth'
 import { reportEvent } from '~~/server/utils/vibradex'
+import { toAuthUser } from '~~/server/utils/demo'
 
 export default defineEventHandler(async (event) => {
   const { email, password, remember } = await readBody<{
@@ -25,5 +26,5 @@ export default defineEventHandler(async (event) => {
 
   event.waitUntil?.(reportEvent('User logged in', { details: { userId: user.id } }))
 
-  return { id: user.id, email: user.email, name: user.name }
+  return toAuthUser(user)
 })

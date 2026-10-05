@@ -1,6 +1,7 @@
 import { prisma } from '~~/server/utils/prisma'
 import { requireUserId, verifyPassword, hashPassword, createSession } from '~~/server/utils/auth'
 import { isPasswordValid, passwordProblems } from '~~/shared/utils/password'
+import { refuseIfDemo } from '~~/server/utils/demo'
 
 /**
  * Change your password while signed in.
@@ -10,16 +11,21 @@ import { isPasswordValid, passwordProblems } from '~~/shared/utils/password'
  * - Same rules as signup / reset, from the same shared module.
  * - Every session is ended (then this device signs straight back in): if a
  *   stolen session exists anywhere, changing the password must evict it.
+ * - The shared demo account is refused up front, BEFORE the current password
+ *   is checked, so this endpoint can't be used to guess it either.
  */
 export default defineEventHandler(async (event) => {
   const userId = await requireUserId(event)
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, passwordHash: true } })
+  if (user) refuseIfDemo(user.email)
+
   const { current, next } = await readBody<{ current?: unknown; next?: unknown }>(event)
 
   if (typeof current !== 'string' || typeof next !== 'string') {
     throw createError({ statusCode: 400, statusMessage: 'Current and new password are required' })
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } })
   if (!user || !(await verifyPassword(current, user.passwordHash))) {
     // 403, not 401: you ARE signed in - the password you typed is just wrong.
     throw createError({ statusCode: 403, statusMessage: 'Current password is not right' })
