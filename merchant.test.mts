@@ -1,6 +1,7 @@
 /**
  * Test harness for extractMerchant. Run:  npx tsx merchant.test.mts
- * Inputs are real rows from Kilian's own KBC export.
+ * Inputs keep the exact shape of real KBC export rows, but every name, number
+ * and place in them is anonymised.
  *
  * Inputs are passed RAW - with the bank's long runs of spaces intact - so the
  * test also proves extractMerchant cleans its own input. (It used to be
