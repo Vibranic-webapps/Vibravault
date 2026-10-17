@@ -67,6 +67,9 @@ export default defineNuxtConfig({
         // iOS ignores manifest icons for the home screen and wants this file.
         // Without it, iOS uses a shrunken screenshot of the page as the icon.
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        // Browser-tab icon: 32px for normal screens, 192px for sharp (retina) screens.
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/icon-192.png' },
       ],
       meta: [
         // Older iOS reads these instead of the manifest; kept for both.
