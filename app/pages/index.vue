@@ -46,7 +46,7 @@ const greeting = computed(() =>
 const month = ref(monthKey(new Date()))
 
 // Categories + rules feed the drawer (names, tiles, rule labels).
-const [{ data, refresh, status }] = await Promise.all([
+const [{ data, refresh, status, error }] = await Promise.all([
   useAsyncData<Dashboard>(
     'dashboard',
     () => useRequestFetch()('/api/dashboard', { query: { month: month.value } }),
@@ -108,6 +108,14 @@ async function onRuleSaved(n: number) {
   toast(t('tx.ruleSaved', n))
   await Promise.all([refresh(), rules.fetchAll()])
 }
+
+// Pull to refresh: refetch this month and what feeds it. The stores and
+// useAsyncData swallow their errors into `.error`, so check them to tell
+// "up to date" from "couldn't refresh".
+onPullRefresh(async () => {
+  await Promise.all([refresh(), categories.fetchAll(true), rules.fetchAll(), pending.refresh()])
+  if (error.value || categories.error || rules.error) throw new Error('refresh failed')
+})
 </script>
 
 <template>

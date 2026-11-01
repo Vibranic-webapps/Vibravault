@@ -67,6 +67,13 @@
     "month": "Maandkiezer",
     "money": "Bedragen"
   },
+  "pull": {
+    "pull": "Trek om te vernieuwen",
+    "release": "Laat los om te vernieuwen",
+    "refreshing": "Vernieuwen…",
+    "updated": "Bijgewerkt",
+    "failed": "Vernieuwen mislukt"
+  },
   "nav": {
     "home": "Start",
     "transactions": "Transacties",
