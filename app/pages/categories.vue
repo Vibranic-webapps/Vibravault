@@ -13,6 +13,12 @@ await store.fetchAll(true) // counts change as transactions move - always fresh 
 
 const GROUPS: CategoryKind[] = ['EXPENSE', 'INCOME', 'TRANSFER']
 
+// Pull to refresh: counts change as transactions move, so refetch the list.
+onPullRefresh(async () => {
+  await store.fetchAll(true)
+  if (store.error) throw new Error('refresh failed')
+})
+
 const sheetOpen = ref(false)
 const editing = ref<Category | null>(null)
 const newKind = ref<CategoryKind>('EXPENSE')

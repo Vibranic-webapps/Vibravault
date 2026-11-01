@@ -12,6 +12,10 @@ import { House, List, Plus, Tag, User, PenLine, FileUp, ScanLine } from 'lucide-
 const { t } = useI18n()
 const route = useRoute()
 
+// Pull down at the top of a main screen to refetch its data. The page says what
+// "refresh" means (onPullRefresh); the app itself is never reloaded.
+const refreshHandler = providePullRefresh()
+
 const tabs = computed(() => [
   { to: '/', label: t('nav.home'), icon: House },
   { to: '/transactions', label: t('nav.transactions'), icon: List },
@@ -57,7 +61,9 @@ watch(() => route.query.new, (flag) => {
 <template>
   <div ref="shell" class="shell">
     <main class="shell-main">
-      <slot />
+      <UiPullToRefresh :refresh="refreshHandler">
+        <slot />
+      </UiPullToRefresh>
     </main>
 
     <nav class="bar" :aria-label="t('nav.main')">

@@ -102,6 +102,13 @@ async function onRuleSaved(n: number) {
   toast(t('tx.ruleSaved', n))
   await Promise.all([store.fetchMonth(), rules.fetchAll()])
 }
+
+// Pull to refresh: refetch the month being viewed (not the current one) and what
+// feeds the rows. The stores swallow their errors into `.error`, so check them.
+onPullRefresh(async () => {
+  await Promise.all([store.fetchMonth(store.month), categories.fetchAll(true), rules.fetchAll()])
+  if (store.error || categories.error || rules.error) throw new Error('refresh failed')
+})
 </script>
 
 <template>

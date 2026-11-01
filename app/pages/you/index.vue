@@ -22,11 +22,18 @@ const theme = useTheme()
 const { toast } = useToast()
 const rules = useRulesStore()
 
-const [, { data: tokens }] = await Promise.all([
+const [, { data: tokens, refresh: refreshTokens, error: tokensError }] = await Promise.all([
   rules.fetchAll(),
   useAsyncData<ImportToken[]>('import-tokens', () => useRequestFetch()('/api/import-tokens')),
 ])
 const phoneOn = computed(() => (tokens.value ?? []).some((tk) => !tk.revokedAt))
+
+// Pull to refresh: refetch the rules count and the phone-link state. Never touches
+// the name field, so an edit in progress is safe.
+onPullRefresh(async () => {
+  await Promise.all([rules.fetchAll(), refreshTokens()])
+  if (rules.error || tokensError.value) throw new Error('refresh failed')
+})
 
 const lang = computed({
   get: () => locale.value,

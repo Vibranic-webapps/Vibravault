@@ -67,6 +67,13 @@
     "month": "Month switcher",
     "money": "Money"
   },
+  "pull": {
+    "pull": "Pull to refresh",
+    "release": "Release to refresh",
+    "refreshing": "Refreshing…",
+    "updated": "Up to date",
+    "failed": "Couldn't refresh"
+  },
   "nav": {
     "home": "Home",
     "transactions": "Transactions",
