@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Sparkles, Smartphone, Download, KeyRound, LogOut, Lock } from 'lucide-vue-next'
+import { Target, Sparkles, Smartphone, Download, KeyRound, LogOut, Lock } from 'lucide-vue-next'
 import { useRulesStore } from '~/stores/rules'
 
 /**
@@ -142,6 +142,7 @@ async function signOut() {
 
     <h2>{{ t('you.vault') }}</h2>
     <section class="neu-3 card rows">
+      <UiListRow :icon="Target" :label="t('goals.title')" to="/goals" />
       <UiListRow :icon="Sparkles" :label="t('you.rulesTitle')" :value="t('you.rulesCount', rules.items.length)" to="/you/rules" />
       <UiListRow :icon="Smartphone" :label="t('you.phoneTitle')" :value="phoneOn ? t('you.phoneOn') : undefined" to="/you/phone" />
       <UiListRow :icon="Download" :label="t('you.export')" :hint="t('you.exportHint')" @click="exportAll" />
