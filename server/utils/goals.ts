@@ -46,6 +46,8 @@ function parseDueDate(value: unknown): Date | null {
   const v = value.trim()
   if (DAY_RE.test(v)) return parseDayString(v)
   if (DATETIME_RE.test(v)) {
+    // JS silently rolls 2027-02-30T... over to 2 March, so the date part must be a real day first.
+    if (!parseDayString(v.slice(0, 10))) return null
     const instant = new Date(v)
     return Number.isNaN(instant.getTime()) ? null : parseDayString(brusselsDayKey(instant))
   }
@@ -58,6 +60,7 @@ function parseContributedAt(value: unknown): Date | null {
   const v = value.trim()
   if (DAY_RE.test(v)) return parseDayString(v)
   if (DATETIME_RE.test(v)) {
+    if (!parseDayString(v.slice(0, 10))) return null // same rollover guard as parseDueDate
     const d = new Date(v)
     return Number.isNaN(d.getTime()) ? null : d
   }
