@@ -425,6 +425,8 @@
     "noActivity": "Nothing logged yet. Add the first amount.",
     "removeEntry": "Remove the entry of {date}, {amount}",
     "removeConfirm": "Remove this entry of {amount}?",
+    "removeTitle": "Remove entry",
+    "removeAction": "Remove",
     "entryRemoved": "Entry removed",
     "emptyTitle": "No savings goals yet",
     "emptyBody": "Pick something to save for, set a target and log what you put aside.",

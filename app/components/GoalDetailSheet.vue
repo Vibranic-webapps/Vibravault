@@ -54,28 +54,30 @@ function entryDate(iso: string) {
   return date(iso, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 }
 
-const removing = ref<string | null>(null)
-async function removeEntry(id: string, amountCents: number) {
-  const g = goal.value
-  if (!g || removing.value) return
-  if (!confirm(t('goals.removeConfirm', { amount: money(Math.abs(amountCents)) }))) return
-  removing.value = id
-  const ok = await store.removeContribution(g.id, id)
-  removing.value = null
-  if (ok) toast(t('goals.entryRemoved'))
-  else toast(store.failure ? goalErrorMessage(store.failure, i18n, money) : t('goals.err.generic'), 'bad')
-}
+// Both destructive actions ask first, in our own dialog (not the browser's confirm()).
+type Pending = { kind: 'entry'; id: string; amountCents: number } | { kind: 'archive' }
+const pending = ref<Pending | null>(null)
+const confirming = ref(false)
 
-const archiving = ref(false)
-async function archiveGoal() {
+const confirmCopy = computed(() => {
+  const p = pending.value
+  if (p?.kind === 'entry') {
+    return { title: t('goals.removeTitle'), body: t('goals.removeConfirm', { amount: money(Math.abs(p.amountCents)) }), confirm: t('goals.removeAction') }
+  }
+  return { title: t('goals.archive'), body: t('goals.archiveConfirm', { name: goal.value?.name ?? '' }), confirm: t('goals.archive') }
+})
+
+async function runPending() {
+  const p = pending.value
   const g = goal.value
-  if (!g || archiving.value || !confirm(t('goals.archiveConfirm', { name: g.name }))) return
-  archiving.value = true
-  const ok = await store.archive(g.id)
-  archiving.value = false
+  if (!p || !g || confirming.value) return
+  confirming.value = true
+  const ok = p.kind === 'entry' ? await store.removeContribution(g.id, p.id) : await store.archive(g.id)
+  confirming.value = false
+  pending.value = null
   if (ok) {
-    toast(t('goals.archived'))
-    emit('close')
+    toast(p.kind === 'entry' ? t('goals.entryRemoved') : t('goals.archived'))
+    if (p.kind === 'archive') emit('close')
   } else {
     toast(store.failure ? goalErrorMessage(store.failure, i18n, money) : t('goals.err.generic'), 'bad')
   }
@@ -83,7 +85,7 @@ async function archiveGoal() {
 </script>
 
 <template>
-  <UiBottomSheet v-model="open" :title="goal?.name ?? t('goals.title')" :close-on-escape="!busy">
+  <UiBottomSheet v-model="open" :title="goal?.name ?? t('goals.title')" :close-on-escape="!busy && !pending">
     <div v-if="goal" class="body">
       <section class="hero">
         <p class="saved">{{ money(goal.savedCents) }}</p>
@@ -137,9 +139,8 @@ async function archiveGoal() {
             <button
               type="button"
               class="e-del"
-              :disabled="removing === c.id"
-              :aria-label="t('goals.removeEntry', { date: entryDate(c.contributedAt), amount: money(c.amountCents, { signed: true }) })"
-              @click="removeEntry(c.id, c.amountCents)"
+                            :aria-label="t('goals.removeEntry', { date: entryDate(c.contributedAt), amount: money(c.amountCents, { signed: true }) })"
+              @click="pending = { kind: 'entry', id: c.id, amountCents: c.amountCents }"
             >
               <Trash2 :size="17" aria-hidden="true" />
             </button>
@@ -149,9 +150,21 @@ async function archiveGoal() {
 
       <div class="manage">
         <UiButton :icon="Pencil" variant="ghost" @click="emit('edit')">{{ t('goals.edit') }}</UiButton>
-        <UiButton :icon="Archive" variant="danger" :loading="archiving" @click="archiveGoal">{{ t('goals.archive') }}</UiButton>
+        <UiButton :icon="Archive" variant="danger" @click="pending = { kind: 'archive' }">{{ t('goals.archive') }}</UiButton>
       </div>
     </div>
+
+    <UiConfirmDialog
+      :open="!!pending"
+      :title="confirmCopy.title"
+      :body="confirmCopy.body"
+      :confirm-label="confirmCopy.confirm"
+      :cancel-label="t('common.cancel')"
+      destructive
+      :loading="confirming"
+      @confirm="runPending"
+      @cancel="pending = null"
+    />
   </UiBottomSheet>
 </template>
 
@@ -163,7 +176,7 @@ async function archiveGoal() {
 .of { margin: 0; font-size: 14px; color: var(--vv-muted); font-variant-numeric: tabular-nums; }
 .hero :deep(.track) { margin-top: 4px; }
 .status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 4px 0 0; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.status.done { color: var(--vv-brand); }
+.status.done { color: var(--vv-goal); }
 .due { margin: 0; font-size: 13px; color: var(--vv-muted); }
 
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

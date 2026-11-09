@@ -425,6 +425,8 @@
     "noActivity": "Nog niets genoteerd. Voeg het eerste bedrag toe.",
     "removeEntry": "Verwijder de invoer van {date}, {amount}",
     "removeConfirm": "Deze invoer van {amount} verwijderen?",
+    "removeTitle": "Invoer verwijderen",
+    "removeAction": "Verwijderen",
     "entryRemoved": "Invoer verwijderd",
     "emptyTitle": "Nog geen spaardoelen",
     "emptyBody": "Kies iets om voor te sparen, stel een doelbedrag in en noteer wat je opzij zet.",

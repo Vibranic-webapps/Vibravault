@@ -87,6 +87,6 @@ const dueText = computed(() =>
 .of { font-size: 14px; color: var(--vv-muted); }
 
 .status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.status.done { color: var(--vv-brand); }
+.status.done { color: var(--vv-goal); }
 .due { font-size: 13px; color: var(--vv-muted); }
 </style>

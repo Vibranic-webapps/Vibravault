@@ -55,6 +55,8 @@
   --vv-accent-text:   #FFFFFF;
   --vv-negative:      var(--vv-coral);
   --vv-brand:         var(--vv-indigo);
+  /* Savings goals: progress fill + reached accent. Amber = a coin you are putting aside; never teal/coral/indigo. */
+  --vv-goal:          var(--vv-cat-1-fg);
   --vv-accent-ring:   rgba(15,110,86,.45);
   --vv-negative-ring: rgba(216,90,48,.5);
   --vv-negative-bg:   rgba(216,90,48,.09);
@@ -150,6 +152,8 @@
     --vv-accent-text:   #10221D;
     --vv-negative:      #F0774B;
     --vv-brand:         #7C72D6;
+    /* Savings goals: progress fill + reached accent. Amber = a coin you are putting aside; never teal/coral/indigo. */
+    --vv-goal:          var(--vv-cat-1-fg);
     --vv-accent-ring:   rgba(31,163,127,.5);
     --vv-negative-ring: rgba(240,119,75,.55);
     --vv-negative-bg:   rgba(240,119,75,.14);
@@ -189,6 +193,8 @@
   --vv-accent-text:   #10221D;
   --vv-negative:      #F0774B;
   --vv-brand:         #7C72D6;
+  /* Savings goals: progress fill + reached accent. Amber = a coin you are putting aside; never teal/coral/indigo. */
+  --vv-goal:          var(--vv-cat-1-fg);
   --vv-accent-ring:   rgba(31,163,127,.5);
   --vv-negative-ring: rgba(240,119,75,.55);
   --vv-negative-bg:   rgba(240,119,75,.14);

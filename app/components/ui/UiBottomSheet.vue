@@ -5,6 +5,7 @@ import { X } from 'lucide-vue-next'
  * A sheet that slides up from the bottom - how phone apps show a focused
  * task (the Add sheet, and later the transaction drawer). Centred panel on
  * wider screens. Closes on the scrim, the X, Escape, or dragging it down.
+ * Focus: moves in on open, is trapped inside, and returns to the opener on close.
  */
 interface Props {
   modelValue: boolean
@@ -26,14 +27,72 @@ function onKey(e: KeyboardEvent) { if (e.key === 'Escape' && props.modelValue &&
 onMounted(() => window.addEventListener('keydown', onKey))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
-// Move focus into the sheet when it opens, so keyboard and screen-reader
-// users land where the action is. Also forget any leftover drag offset.
+// --- Focus handling -----------------------------------------------------------
+// Open: remember what had focus (the button that opened us), move focus into
+// the sheet, and make the page behind inert. Close: undo both and hand focus
+// back. Tab / Shift+Tab wrap inside the sheet (onSheetKey).
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+const scrim = ref<HTMLElement | null>(null)
+let opener: HTMLElement | null = null
+let inerted: HTMLElement[] = []
+
+function focusables(): HTMLElement[] {
+  const root = sheet.value
+  if (!root) return []
+  // offsetParent === null = display:none, so it can't take focus.
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null)
+}
+
+function onSheetKey(e: KeyboardEvent) {
+  if (e.key !== 'Tab') return
+  const items = focusables()
+  const first = items[0]
+  const last = items[items.length - 1]
+  if (!first || !last) { e.preventDefault(); sheet.value?.focus(); return }
+  const active = document.activeElement
+  if (e.shiftKey && (active === first || active === sheet.value)) { e.preventDefault(); last.focus() }
+  else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus() }
+}
+
+// The page behind (and any sheet underneath this one) must not be reachable.
+// Live regions (toasts) stay out of it so announcements still work.
+function lockBackground() {
+  for (const el of Array.from(document.body.children)) {
+    if (!(el instanceof HTMLElement) || el === scrim.value || el.hasAttribute('inert')) continue
+    if (el.matches('script, style, [aria-live]') || el.querySelector('[aria-live]')) continue
+    el.setAttribute('inert', '')
+    inerted.push(el)
+  }
+}
+function unlockBackground() {
+  inerted.forEach((el) => el.removeAttribute('inert'))
+  inerted = []
+}
+
+function release() {
+  unlockBackground()
+  const target = opener
+  opener = null
+  if (target && target.isConnected) target.focus()
+}
+
+// flush 'pre': runs before the DOM updates, so activeElement is still the opener.
 watch(() => props.modelValue, (open) => {
   if (open) {
     dragY.value = 0
-    nextTick(() => sheet.value?.focus())
+    opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    nextTick(() => {
+      lockBackground()
+      ;(focusables()[0] ?? sheet.value)?.focus()
+    })
+  } else {
+    release()
   }
 })
+
+onBeforeUnmount(() => { if (props.modelValue) release() })
 
 // --- Drag down to close -----------------------------------------------------
 // The sheet follows the finger downward. Let go past 30% of its height - or
@@ -108,7 +167,7 @@ const scrimStyle = computed(() => {
 <template>
   <Teleport to="body">
     <Transition name="sheet">
-      <div v-if="modelValue" class="scrim" :style="scrimStyle" @click.self="close">
+      <div v-if="modelValue" ref="scrim" class="scrim" :style="scrimStyle" @click.self="close">
         <div
           ref="sheet"
           class="neu-4 sheet"
@@ -118,6 +177,7 @@ const scrimStyle = computed(() => {
           aria-modal="true"
           :aria-label="title ?? label"
           tabindex="-1"
+          @keydown="onSheetKey"
           @touchstart.passive="onTouchStart"
           @touchmove="onTouchMove"
           @touchend.passive="onTouchEnd"
