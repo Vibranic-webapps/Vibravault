@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Inbox, PenLine, FileUp, ClipboardCheck } from 'lucide-vue-next'
+import { Inbox, PenLine, FileUp, ClipboardCheck, Target } from 'lucide-vue-next'
 import type { Week } from '~/components/home/WeekChart.vue'
 import type { Transaction } from '~/stores/transactions'
 import { useTransactionsStore, monthKey, dayKey } from '~/stores/transactions'
 import { useCategoriesStore } from '~/stores/categories'
 import { useRulesStore } from '~/stores/rules'
+import { useGoalsStore } from '~/stores/goals'
 
 /**
  * Home (Redesign v2, Wave 3). Top to bottom, the order you'd ask the questions:
@@ -37,6 +38,7 @@ const user = useAuthUser()
 const txStore = useTransactionsStore()
 const categories = useCategoriesStore()
 const rules = useRulesStore()
+const goals = useGoalsStore()
 
 // "Hey Kilian" - or a friendly fallback until a name is set in You.
 const greeting = computed(() =>
@@ -54,6 +56,7 @@ const [{ data, refresh, status, error }] = await Promise.all([
   ),
   categories.fetchAll(),
   rules.fetchAll(),
+  goals.fetchAll(true), // errors land in goals.error; the card just stays hidden
 ])
 
 // Refetch keeps the frame: while the next month loads, the current one stays
@@ -113,8 +116,8 @@ async function onRuleSaved(n: number) {
 // useAsyncData swallow their errors into `.error`, so check them to tell
 // "up to date" from "couldn't refresh".
 onPullRefresh(async () => {
-  await Promise.all([refresh(), categories.fetchAll(true), rules.fetchAll(), pending.refresh()])
-  if (error.value || categories.error || rules.error) throw new Error('refresh failed')
+  await Promise.all([refresh(), categories.fetchAll(true), rules.fetchAll(), pending.refresh(), goals.fetchAll(true)])
+  if (error.value || categories.error || rules.error || goals.error) throw new Error('refresh failed')
 })
 </script>
 
@@ -146,6 +149,12 @@ onPullRefresh(async () => {
 
     <template v-else-if="data">
       <HomeCardCarousel :cards="data.accounts" />
+
+      <!-- Savings goal: the most pressing one. No goals yet = one quiet row, no banner. -->
+      <GoalCard v-if="goals.featured" class="goal-card" :goal="goals.featured" to="/goals" compact />
+      <section v-else-if="goals.loaded && !goals.error" class="neu-3 card rows goal-prompt">
+        <UiListRow :icon="Target" :label="t('goals.setPrompt')" to="/goals" />
+      </section>
 
       <UiMonthSwitcher v-model="month" class="months" />
 
@@ -236,6 +245,7 @@ h2 { margin: 0 0 14px; font-size: 16px; font-weight: 800; }
 .card { padding: 20px; margin-bottom: 18px; }
 .rows { padding: 4px 16px; }
 .review { margin-bottom: 18px; }
+.goal-card, .goal-prompt { margin-bottom: 18px; }
 .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
 .card-head h2 { margin: 0; }
 .see-all { font-size: 14px; }
