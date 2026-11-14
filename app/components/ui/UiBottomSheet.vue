@@ -58,14 +58,20 @@ function onSheetKey(e: KeyboardEvent) {
 
 // The page behind (and any sheet underneath this one) must not be reachable.
 // Live regions (toasts) stay out of it so announcements still work.
-function lockBackground() {
-  for (const el of Array.from(document.body.children)) {
+// An element that CONTAINS a live region can't be made inert as a whole (inert content
+// is not announced), so we go one level down and inert its other children instead.
+// The app root holds the toaster and the pull-to-refresh live region, so without this
+// descent nothing behind the sheet would ever be locked.
+function lockTree(parent: Element, depth = 0) {
+  for (const el of Array.from(parent.children)) {
     if (!(el instanceof HTMLElement) || el === scrim.value || el.hasAttribute('inert')) continue
-    if (el.matches('script, style, [aria-live]') || el.querySelector('[aria-live]')) continue
+    if (el.matches('script, style, [aria-live]')) continue
+    if (el.querySelector('[aria-live]') && depth < 6) { lockTree(el, depth + 1); continue }
     el.setAttribute('inert', '')
     inerted.push(el)
   }
 }
+function lockBackground() { lockTree(document.body) }
 function unlockBackground() {
   inerted.forEach((el) => el.removeAttribute('inert'))
   inerted = []
@@ -75,7 +81,12 @@ function release() {
   unlockBackground()
   const target = opener
   opener = null
-  if (target && target.isConnected) target.focus()
+  if (target && target.isConnected) { target.focus(); return }
+  // The opener is gone (e.g. its row was just deleted): hand focus to the sheet still
+  // open underneath, if any, so Tab can't drift into the page behind it.
+  const dialogs = Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"]')).filter((d) => d !== sheet.value && !d.closest('[inert]'))
+  const under = dialogs[dialogs.length - 1]
+  if (under) nextTick(() => { (Array.from(under.querySelectorAll<HTMLElement>(FOCUSABLE)).find((el) => el.offsetParent !== null) ?? under).focus() })
 }
 
 // flush 'pre': runs before the DOM updates, so activeElement is still the opener.
