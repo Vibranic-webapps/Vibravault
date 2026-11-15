@@ -314,6 +314,10 @@ model Goal {
   imageMime   String? // 'image/jpeg' | 'image/webp' | 'image/png'; set exactly when imageData is (CHECK added by hand)
   imageUrl    String? // a pasted https link; at most one of imageData / imageUrl is set (enforced in the API)
   tint        String? // pastel name: 'mint' | 'blush' | 'sky' | 'lavender' | 'butter' (validated in the API, so a new colour needs no migration)
+  // How the picture is framed inside the card (applied in CSS, never baked into the bytes). Ranges CHECKed by hand in the migration.
+  imageFocusX Int       @default(50) // focus point, % from the left, 0..100
+  imageFocusY Int       @default(50) // focus point, % from the top, 0..100
+  imageZoom   Int       @default(100) // percent, 100 = no zoom .. 300 = 3x
   deletedAt   DateTime? // soft delete
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

@@ -19,6 +19,13 @@ export const GOAL_IMAGE_URL_MAX = 2000
 export const GOAL_IMAGE_MIMES = ['image/jpeg', 'image/webp', 'image/png'] as const
 type GoalImageMime = (typeof GOAL_IMAGE_MIMES)[number]
 
+// How the picture is framed in the card (CSS object-position + scale). Same ranges as the DB CHECKs.
+export const GOAL_IMAGE_FOCUS_MIN = 0
+export const GOAL_IMAGE_FOCUS_MAX = 100
+export const GOAL_IMAGE_ZOOM_MIN = 100 // 100 = no zoom
+export const GOAL_IMAGE_ZOOM_MAX = 300 // 300 = 3x
+export const GOAL_IMAGE_FRAMING_DEFAULT = { imageFocusX: 50, imageFocusY: 50, imageZoom: 100 } as const
+
 /**
  * A goal row WITHOUT the picture bytes. Every query except the image route uses
  * `omit: goalOmitImage`, so the bytes (up to 150 KB per goal) never ride along
@@ -116,6 +123,20 @@ function validTint(raw: unknown): GoalTint | null {
   return raw as GoalTint
 }
 
+/** Strict whole number in [min, max]: no strings, floats, NaN or null (a client bug, not something to guess at). */
+function validFramingInt(raw: unknown, min: number, max: number, message: string, code: string, field: string): number {
+  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < min || raw > max) {
+    throw goalError(400, message, code, field)
+  }
+  return raw
+}
+
+const validFocus = (raw: unknown, field: 'imageFocusX' | 'imageFocusY') =>
+  validFramingInt(raw, GOAL_IMAGE_FOCUS_MIN, GOAL_IMAGE_FOCUS_MAX, 'Focus must be a whole number from 0 to 100', 'GOAL_IMAGE_FOCUS_INVALID', field)
+
+const validZoom = (raw: unknown) =>
+  validFramingInt(raw, GOAL_IMAGE_ZOOM_MIN, GOAL_IMAGE_ZOOM_MAX, 'Zoom must be a whole number from 100 to 300', 'GOAL_IMAGE_ZOOM_INVALID', 'imageZoom')
+
 /** A pasted picture link: https only, no embedded credentials, reasonable length. */
 function validImageUrl(raw: unknown): string | null {
   if (raw === null || raw === '') return null
@@ -173,6 +194,9 @@ interface GoalLookData {
   imageUrl?: string | null
   imageData?: Buffer | null
   imageMime?: GoalImageMime | null
+  imageFocusX?: number
+  imageFocusY?: number
+  imageZoom?: number
 }
 
 /**
@@ -181,6 +205,9 @@ interface GoalLookData {
  *  - `image` + `imageUrl` (both set), or `removeImage: true` + either -> 400 (ambiguous).
  *  - `removeImage: true` clears upload and link.
  *  - `imageUrl: null` clears only the link; `image: null` is treated as "not sent".
+ *  - Framing (`imageFocusX/Y` 0..100, `imageZoom` 100..300): whole numbers only. An omitted key keeps
+ *    its value, EXCEPT when the picture is replaced or removed: then every framing key the request
+ *    does not send is reset to 50/50/100 (a new picture must not inherit the old crop).
  */
 function parseGoalLook(b: Record<string, unknown>): GoalLookData {
   const out: GoalLookData = {}
@@ -212,6 +239,17 @@ function parseGoalLook(b: Record<string, unknown>): GoalLookData {
     out.imageMime = null
   } else if (url === null) {
     out.imageUrl = null // clear the link only
+  }
+
+  // Framing: validate what was sent (a bad value is a 400 even when the picture also changes) ...
+  if (b.imageFocusX !== undefined) out.imageFocusX = validFocus(b.imageFocusX, 'imageFocusX')
+  if (b.imageFocusY !== undefined) out.imageFocusY = validFocus(b.imageFocusY, 'imageFocusY')
+  if (b.imageZoom !== undefined) out.imageZoom = validZoom(b.imageZoom)
+  // ... then a new / removed picture starts from the default crop, unless the request set its own.
+  if (hasUpload || url || remove) {
+    out.imageFocusX ??= GOAL_IMAGE_FRAMING_DEFAULT.imageFocusX
+    out.imageFocusY ??= GOAL_IMAGE_FRAMING_DEFAULT.imageFocusY
+    out.imageZoom ??= GOAL_IMAGE_FRAMING_DEFAULT.imageZoom
   }
   return out
 }
@@ -294,6 +332,9 @@ export function serializeGoal(goal: GoalRow, savedCents: number, now = new Date(
     dueDate: dayOf(goal.dueDate), // 'YYYY-MM-DD' calendar day, or null
     tint: goal.tint, // 'mint' | 'blush' | 'sky' | 'lavender' | 'butter' | null
     imageSrc: goalImageSrc(goal), // URL for <img src>, or null
+    imageFocusX: goal.imageFocusX, // 0..100, % from the left (object-position)
+    imageFocusY: goal.imageFocusY, // 0..100, % from the top
+    imageZoom: goal.imageZoom, // 100..300, percent (100 = no zoom)
     createdAt: goal.createdAt,
     updatedAt: goal.updatedAt,
     ...goalProgress({ targetCents: goal.targetCents, savedCents, dueDate: goal.dueDate, now }),
