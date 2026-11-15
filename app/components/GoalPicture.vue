@@ -5,7 +5,15 @@
  * frame. Sizes itself to its parent: put it in a box with a height.
  * Emits `broken` when the image fails to load, so the card can switch to dark-on-tint text.
  */
-const props = defineProps<{ src: string | null; name: string; fit?: 'contain' | 'cover' }>()
+const props = defineProps<{
+  src: string | null
+  name: string
+  fit?: 'contain' | 'cover'
+  /** Which part of a `cover` picture shows: focus point in % and zoom in % (100 = none). */
+  focusX?: number
+  focusY?: number
+  zoom?: number
+}>()
 const emit = defineEmits<{ broken: [] }>()
 
 const failed = ref(false)
@@ -14,6 +22,14 @@ function onError() {
   failed.value = true
   emit('broken')
 }
+// Same numbers -> same crop everywhere (Home card, drawer, form preview, editor).
+const imgStyle = computed(() => {
+  if (props.fit !== 'cover') return undefined
+  const x = props.focusX ?? 50
+  const y = props.focusY ?? 50
+  const z = (props.zoom ?? 100) / 100
+  return { objectPosition: `${x}% ${y}%`, transformOrigin: `${x}% ${y}%`, transform: z === 1 ? undefined : `scale(${z})` }
+})
 const initial = computed(() => (props.name.trim()[0] ?? '?').toUpperCase())
 </script>
 
@@ -22,6 +38,7 @@ const initial = computed(() => (props.name.trim()[0] ?? '?').toUpperCase())
     <img
       v-if="src && !failed"
       :src="src"
+      :style="imgStyle"
       alt=""
       decoding="async"
       loading="lazy"

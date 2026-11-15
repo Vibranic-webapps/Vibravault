@@ -135,7 +135,7 @@ function onClickCapture(e: MouseEvent) {
       >
         <button type="button" class="open" :aria-label="t('goals.openN', { name: g.name })" @click="emit('open', g.id)">
           <span class="stage">
-            <GoalPicture :src="g.imageSrc" :name="g.name" fit="cover" @broken="broken.add(g.id)" />
+            <GoalPicture :src="g.imageSrc" :name="g.name" fit="cover" :focus-x="g.imageFocusX" :focus-y="g.imageFocusY" :zoom="g.imageZoom" @broken="broken.add(g.id)" />
           </span>
           <span class="name">{{ g.name }}</span>
         </button>

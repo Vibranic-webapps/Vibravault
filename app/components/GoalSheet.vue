@@ -2,6 +2,7 @@
 import { goalProgress } from '~~/shared/goals'
 import { centsToInput } from '~~/shared/utils/money'
 import { ImagePlus, Link2, Trash2 } from 'lucide-vue-next'
+import { DEFAULT_FRAMING, type GoalFraming } from '~/utils/goalLook'
 import {
   useGoalsStore, parseEuroToCents, goalErrorMessage, GOAL_LIMITS, type Goal, type GoalInput,
 } from '~/stores/goals'
@@ -36,6 +37,8 @@ const linkOpen = ref(false)
 const link = ref('')
 const removed = ref(false) // the user took the current picture away
 const fileEl = ref<HTMLInputElement | null>(null)
+// Which part of the picture shows (the server resets it with a new or removed picture, so do we).
+const framing = ref<GoalFraming>({ ...DEFAULT_FRAMING })
 
 type FieldKey = 'name' | 'targetCents' | 'dueDate' | 'image' | 'imageUrl'
 const errors = reactive<Record<FieldKey, string>>({ name: '', targetCents: '', dueDate: '', image: '', imageUrl: '' })
@@ -59,6 +62,9 @@ watch(() => props.open, (isOpen) => {
   link.value = ''
   linkOpen.value = false
   removed.value = false
+  framing.value = g
+    ? { focusX: g.imageFocusX, focusY: g.imageFocusY, zoom: g.imageZoom }
+    : { ...DEFAULT_FRAMING }
   clearErrors()
 })
 
@@ -75,6 +81,10 @@ const previewSrc = computed(() => {
   if (linkOpen.value && linkOk.value) return link.value.trim()
   return removed.value ? null : (props.goal?.imageSrc ?? null)
 })
+// A pasted link is a different picture: start it centred. (linkOpen is false whenever the sheet re-opens, so this never fires then.)
+watch(link, () => {
+  if (linkOpen.value && linkOk.value && link.value.trim() !== props.goal?.imageSrc) framing.value = { ...DEFAULT_FRAMING }
+})
 const hasPicture = computed(() => !!previewSrc.value)
 
 async function onPick(e: Event) {
@@ -88,6 +98,7 @@ async function onPick(e: Event) {
     link.value = ''
     linkOpen.value = false
     removed.value = false
+    framing.value = { ...DEFAULT_FRAMING }
   } catch (err) {
     errors.image = t(err instanceof Error && err.message === 'too-big' ? 'goals.err.GOAL_IMAGE_TOO_LARGE' : 'goals.err.GOAL_IMAGE_INVALID')
   }
@@ -97,6 +108,7 @@ function removePicture() {
   link.value = ''
   linkOpen.value = false
   removed.value = true
+  framing.value = { ...DEFAULT_FRAMING }
   errors.image = errors.imageUrl = ''
 }
 
@@ -149,12 +161,21 @@ async function save() {
   else if (linkOpen.value && linkOk.value && link.value.trim() !== g?.imageSrc) look.imageUrl = link.value.trim()
   else if (removed.value && g?.imageSrc) look.removeImage = true
 
+  // Framing: all three numbers together when any changed (or on create, when it is not the default).
+  const f = framing.value
+  const framingChanged = g
+    ? f.focusX !== g.imageFocusX || f.focusY !== g.imageFocusY || f.zoom !== g.imageZoom
+    : f.focusX !== DEFAULT_FRAMING.focusX || f.focusY !== DEFAULT_FRAMING.focusY || f.zoom !== DEFAULT_FRAMING.zoom
+  // No picture left (removed / none): the server keeps the default framing, so send none.
+  const withFraming = framingChanged && !!previewSrc.value && !look.removeImage
+  const frameKeys = withFraming ? { imageFocusX: f.focusX, imageFocusY: f.focusY, imageZoom: f.zoom } : {}
+
   saving.value = true
   let result: Goal | null = null
   if (!g) {
     result = await store.create({
       name: nextName, targetCents: nextTarget, ...(nextDue ? { dueDate: nextDue } : {}),
-      ...(tint.value ? { tint: tint.value } : {}), ...look,
+      ...(tint.value ? { tint: tint.value } : {}), ...look, ...frameKeys,
     })
   } else {
     // PATCH only what changed (an empty PATCH is an error); dueDate null clears the deadline.
@@ -163,7 +184,7 @@ async function save() {
     if (nextTarget !== g.targetCents) patch.targetCents = nextTarget
     if (nextDue !== g.dueDate) patch.dueDate = nextDue
     if (tint.value !== g.tint) patch.tint = tint.value
-    Object.assign(patch, look)
+    Object.assign(patch, look, frameKeys)
     if (!Object.keys(patch).length) { saving.value = false; emit('close'); return }
     result = await store.update(g.id, patch)
   }
@@ -231,7 +252,14 @@ async function save() {
         <legend>{{ t('goals.look') }}</legend>
         <div class="pic-row">
           <div class="pic" :style="goalTintStyle(shownTint)">
-            <GoalPicture :src="previewSrc" :name="name || '?'" fit="cover" />
+            <GoalPicture
+              :src="previewSrc"
+              :name="name || '?'"
+              fit="cover"
+              :focus-x="framing.focusX"
+              :focus-y="framing.focusY"
+              :zoom="framing.zoom"
+            />
           </div>
           <div class="pic-actions">
             <UiButton variant="ghost" :block="false" :icon="ImagePlus" @click="fileEl?.click()">
@@ -241,6 +269,8 @@ async function save() {
             <UiButton v-if="hasPicture" variant="ghost" :block="false" :icon="Trash2" @click="removePicture">{{ t('goals.imageRemove') }}</UiButton>
           </div>
         </div>
+        <!-- Which part of the picture shows on the card. Hidden without a picture (or when its link is broken). -->
+        <GoalFrameEditor v-if="previewSrc" v-model="framing" :src="previewSrc" :name="name || '?'" :style="goalTintStyle(shownTint)" />
         <input ref="fileEl" class="file" type="file" accept="image/*" tabindex="-1" aria-hidden="true" @change="onPick">
         <p v-if="errors.image" class="vv-error" role="alert">{{ errors.image }}</p>
         <UiField
