@@ -187,7 +187,7 @@ function onClickCapture(e: MouseEvent) {
 
 .gcard {
   position: relative; display: flex; flex-direction: column; gap: 8px;
-  --edge: 10px; /* gap between the floating controls and the card's edge */
+  --edge: 14px; /* gap between the floating controls / text and the card's edge: clears the progress line, which hugs the corner */
   width: 100%; height: var(--h); padding: 12px; overflow: hidden;
   font: inherit; color: var(--vv-text); text-align: left; border: none;
 }
@@ -243,9 +243,9 @@ function onClickCapture(e: MouseEvent) {
 .gcard:not(.newcard) { padding: 0; }
 .gcard:not(.newcard) .open { position: absolute; inset: 0; gap: 0; border-radius: inherit; }
 .stage { position: absolute; inset: 0; background: var(--g-bg); }
-.name { position: absolute; left: 12px; right: 12px; bottom: 62px; z-index: 1; }
+.name { position: absolute; left: var(--edge); right: var(--edge); bottom: 68px; z-index: 1; }
 .newcard .name { position: static; }
-.gcard:not(.newcard) .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 var(--edge) var(--edge) 12px; }
+.gcard:not(.newcard) .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 var(--edge) var(--edge); }
 .pictured .stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 72%; background: var(--vv-scrim); }
 .pictured .name,
 .pictured .amounts strong,
