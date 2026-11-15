@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Inbox, PenLine, FileUp, ClipboardCheck, Plus } from 'lucide-vue-next'
+import { Inbox, PenLine, FileUp, ClipboardCheck } from 'lucide-vue-next'
 import type { Week } from '~/components/home/WeekChart.vue'
 import type { Transaction } from '~/stores/transactions'
 import { useTransactionsStore, monthKey, dayKey } from '~/stores/transactions'
@@ -82,7 +82,6 @@ function shiftMonth(delta: number) {
 const monthZone = ref<HTMLElement | null>(null)
 useSwipeZone(monthZone, (dir) => shiftMonth(dir === 'next' ? 1 : -1))
 
-const goalsPanel = ref<{ openNew: () => void } | null>(null)
 
 // ---- Chart: which week is picked ------------------------------------------
 // Viewing the current month? Start on this week. Another month? Nothing
@@ -165,13 +164,13 @@ onPullRefresh(async () => {
     <template v-else-if="data">
       <HomeCardCarousel :cards="data.accounts" />
 
-      <!-- Savings goals: all of them, right here. Tap one to open it. -->
+      <!-- Savings goals: a bending carousel of small cards. Tap one to open it, tap its + to add money. -->
       <section class="goals" aria-labelledby="goals-h">
         <div class="card-head">
           <h2 id="goals-h">{{ t('goals.title') }}</h2>
-          <UiIconButton v-if="goals.items.length" :icon="Plus" :label="t('goals.new')" @click="goalsPanel?.openNew()" />
+          <NuxtLink v-if="goals.items.length" class="vv-link see-all" to="/goals">{{ t('home.seeAll') }}</NuxtLink>
         </div>
-        <GoalsPanel ref="goalsPanel" compact :limit="3" />
+        <GoalsPanel compact />
       </section>
 
       <!-- The month section: switcher, In / Out / Net, the weeks chart. Sideways swipes here move between months. -->
@@ -271,8 +270,8 @@ onPullRefresh(async () => {
 h2 { margin: 0 0 14px; font-size: 16px; font-weight: 800; }
 
 .months { margin: 0 0 18px; }
-.goals { margin-bottom: 18px; }
-.goals .card-head { margin-bottom: 12px; }
+.goals { margin-bottom: 0; }
+.goals .card-head { margin-bottom: 0; }
 .month-zone { touch-action: pan-y pinch-zoom; } /* vertical scroll stays native; sideways is ours */
 
 .load { display: grid; gap: 18px; }

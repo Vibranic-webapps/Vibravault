@@ -385,7 +385,8 @@
   "goals": {
     "title": "Savings goals",
     "setPrompt": "Set a savings goal",
-    "seeAllN": "See all {n} goals",
+    "openN": "Open {name}",
+    "addTo": "Add money to {name}",
     "new": "New goal",
     "edit": "Edit goal",
     "create": "Create goal",

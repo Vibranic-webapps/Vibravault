@@ -9,9 +9,8 @@ import type { Goal } from '~/stores/goals'
  *
  * `to` makes the whole card a link (dashboard); without it the card is a
  * button that emits `click` (the goals list opens the detail sheet).
- * `compact` drops the due-date line for the dashboard.
  */
-interface Props { goal: Goal; to?: string; compact?: boolean }
+interface Props { goal: Goal; to?: string }
 const props = defineProps<Props>()
 const emit = defineEmits<{ click: [] }>()
 
@@ -64,7 +63,7 @@ const dueText = computed(() =>
       <template v-else>{{ t('goals.toGo', { amount: money(goal.remainingCents) }) }}</template>
     </span>
 
-    <span v-if="dueText && !compact" class="due">{{ dueText }}</span>
+    <span v-if="dueText" class="due">{{ dueText }}</span>
   </component>
 </template>
 

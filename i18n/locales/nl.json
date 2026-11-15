@@ -385,7 +385,8 @@
   "goals": {
     "title": "Spaardoelen",
     "setPrompt": "Stel een spaardoel in",
-    "seeAllN": "Alle {n} doelen bekijken",
+    "openN": "{name} openen",
+    "addTo": "Geld toevoegen aan {name}",
     "new": "Nieuw doel",
     "edit": "Doel bewerken",
     "create": "Doel maken",
