@@ -55,17 +55,71 @@ watch(() => props.goals.length, () => nextTick(() => { if (!reduced) bend() }))
 function onScroll() {
   if (!reduced) schedule()
 }
+
+// --- Mouse drag ------------------------------------------------------------
+// Touch scrolls a native scroller by itself; a mouse does not. So with a mouse
+// we drag the row by hand, then glide to the nearest card.
+const dragging = ref(false)
+let startX = 0
+let startScroll = 0
+let moved = 0
+let pointer = -1
+
+function onPointerDown(e: PointerEvent) {
+  moved = 0 // every press starts clean, so a mouse drag can't swallow a later tap
+  if (e.pointerType !== 'mouse' || e.button !== 0 || !track.value) return
+  pointer = e.pointerId
+  startX = e.clientX
+  startScroll = track.value.scrollLeft
+}
+function onPointerMove(e: PointerEvent) {
+  const el = track.value
+  if (e.pointerId !== pointer || !el) return
+  moved = e.clientX - startX
+  if (!dragging.value && Math.abs(moved) < 6) return // a click, not a drag
+  if (!dragging.value) {
+    dragging.value = true // snapping off while dragging, or the row fights the hand
+    el.setPointerCapture(e.pointerId)
+  }
+  el.scrollLeft = startScroll - moved
+}
+function onPointerUp(e: PointerEvent) {
+  const el = track.value
+  if (e.pointerId !== pointer || !el) return
+  pointer = -1
+  if (!dragging.value) return
+  el.releasePointerCapture(e.pointerId)
+  const mid = el.scrollLeft + el.clientWidth / 2
+  let best: HTMLElement | null = null
+  let gap = Infinity
+  for (const slide of Array.from(el.children) as HTMLElement[]) {
+    const d = Math.abs(slide.offsetLeft + slide.offsetWidth / 2 - mid)
+    if (d < gap) { gap = d; best = slide }
+  }
+  dragging.value = false // snapping back on
+  if (best) el.scrollTo({ left: best.offsetLeft + best.offsetWidth / 2 - el.clientWidth / 2, behavior: reduced ? 'auto' : 'smooth' })
+}
+// The mouse-up after a drag must not count as a click on the card under it.
+function onClickCapture(e: MouseEvent) {
+  if (Math.abs(moved) >= 6) { e.stopPropagation(); e.preventDefault(); moved = 0 }
+}
 </script>
 
 <template>
   <div
     ref="track"
     class="track"
+    :class="{ dragging }"
     role="group"
     aria-roledescription="carousel"
     :aria-label="t('goals.title')"
     data-swipe-lock
     @scroll.passive="onScroll"
+    @pointerdown="onPointerDown"
+    @pointermove="onPointerMove"
+    @pointerup="onPointerUp"
+    @pointercancel="onPointerUp"
+    @click.capture="onClickCapture"
   >
     <div v-for="g in goals" :key="g.id" class="slide">
       <div class="neu-3 gcard">
@@ -103,6 +157,9 @@ function onScroll() {
   margin: 0 calc(-1 * var(--bleed)); padding: 22px calc(50% - var(--w) / 2) 30px;
 }
 .track::-webkit-scrollbar { display: none; }
+@media (hover: hover) { .track { cursor: grab; } }
+.track.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+.track.dragging .gcard { pointer-events: none; }
 .slide { flex: 0 0 var(--w); scroll-snap-align: center; will-change: transform, opacity; }
 
 .gcard {
