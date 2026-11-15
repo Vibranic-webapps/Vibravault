@@ -2,7 +2,7 @@
 import { useCategoriesStore } from '~/stores/categories'
 
 /**
- * Home's budgets: plan vs actual for the month on screen, as small SQUARE tiles four to a row
+ * Home's budgets: plan vs actual for the month on screen, as small SQUARE tiles three to a row
  * (up to six: two rows). One tile per category that has a monthly limit, the ones
  * closest to (or past) their limit first. Each tile is tinted in its category's own pastel
  * and the category icon is drawn huge and faint behind it. Reading order: the name (small),
@@ -65,7 +65,7 @@ const rows = computed(() =>
 
     <ul v-if="rows.length" class="grid">
       <li v-for="r in rows" :key="r.id" class="tile neu" :class="r.state" :style="{ '--bg': `var(--vv-${r.color})`, '--ink': `var(--vv-${r.color}-fg)`, '--len': r.left.length + 3 }">
-        <span class="bgicon" aria-hidden="true"><CategoryIcon :name="r.icon" :size="64" stroke-width="1.5" /></span>
+        <span class="bgicon" aria-hidden="true"><CategoryIcon :name="r.icon" :size="84" stroke-width="1.5" /></span>
         <span class="name">{{ r.name }}</span>
         <span class="bottom">
           <span class="left"><strong>{{ r.left }}</strong><small>{{ r.leftWord }}</small></span>
@@ -93,26 +93,26 @@ const rows = computed(() =>
 .head h2 { margin: 0; font-size: 16px; font-weight: 800; }
 .month { margin-left: 8px; font-size: 13px; font-weight: 600; color: var(--vv-muted); }
 .more { font-size: 14px; }
-.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
 
 /* A small square tile wears its category's pastel; text and bar use that pastel's ink (the same pair as the category tile).
-   The category icon is drawn big and faint in the bottom-right corner, cropped by the tile. Four fit in a row on a phone. */
+   The category icon is drawn big and faint in the bottom-right corner, cropped by the tile. Three fit in a row on a phone. */
 .tile {
-  position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 4px;
-  aspect-ratio: 1; padding: 7px; min-width: 0; container-type: inline-size;
-  color: var(--ink); background: var(--bg); border-radius: var(--vv-r-sm);
+  position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
+  aspect-ratio: 1; padding: 11px; min-width: 0; container-type: inline-size;
+  color: var(--ink); background: var(--bg); border-radius: var(--vv-r-md);
 }
-.bgicon { position: absolute; right: -12px; bottom: -14px; display: grid; opacity: .13; transform: rotate(-14deg); pointer-events: none; }
+.bgicon { position: absolute; right: -16px; bottom: -18px; display: grid; opacity: .13; transform: rotate(-14deg); pointer-events: none; }
 .name, .bottom { position: relative; }
-.name { font-size: 10.5px; font-weight: 800; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bottom { display: grid; gap: 4px; }
+.name { font-size: 12.5px; font-weight: 800; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bottom { display: grid; gap: 6px; }
 .left { display: flex; align-items: baseline; gap: 2px; min-width: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
-/* The hero number: one line, sized to the tile (characters x ~0.64em per bold glyph), 13-22px. */
-.left strong { font-size: clamp(13px, calc(100cqi / (var(--len, 6) * 0.64)), 22px); font-weight: 800; line-height: 1; letter-spacing: -.03em; }
-.left small { font-size: 9px; font-weight: 800; opacity: .9; }
-.bar { display: block; height: 3px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 18%, transparent); overflow: hidden; }
+/* The hero number: one line, sized to the tile (characters x ~0.64em per bold glyph), 16-30px. */
+.left strong { font-size: clamp(16px, calc(100cqi / (var(--len, 6) * 0.64)), 30px); font-weight: 800; line-height: 1; letter-spacing: -.03em; }
+.left small { font-size: 11px; font-weight: 800; opacity: .9; }
+.bar { display: block; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 18%, transparent); overflow: hidden; }
 .fill { display: block; height: 100%; border-radius: 999px; background: var(--ink); transition: width .6s cubic-bezier(.22, 1, .36, 1); }
-.of { font-size: 9px; font-weight: 800; line-height: 1.1; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.of { font-size: 11px; font-weight: 800; line-height: 1.1; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 /* How much is left shows as a ring round the tile, so it reads on any category colour. */
 .warn { outline: 2px solid var(--vv-goal); outline-offset: -2px; }
 .over { outline: 2px solid var(--vv-negative); outline-offset: -2px; }
