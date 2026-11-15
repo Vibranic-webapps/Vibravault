@@ -64,8 +64,8 @@ const rows = computed(() =>
     </div>
 
     <ul v-if="rows.length" class="grid">
-      <li v-for="r in rows" :key="r.id" class="tile neu" :class="r.state" :style="{ '--bg': `var(--vv-${r.color})`, '--ink': `var(--vv-${r.color}-fg)`, '--len': r.left.length + 3 }">
-        <span class="bgicon" aria-hidden="true"><CategoryIcon :name="r.icon" :size="60" stroke-width="1.5" /></span>
+      <li v-for="r in rows" :key="r.id" class="tile neu" :class="r.state" :style="{ '--bg': `var(--vv-${r.color})`, '--ink': `var(--vv-${r.color}-fg)`, '--len': r.left.length + 2 }">
+        <span class="bgicon" aria-hidden="true"><CategoryIcon :name="r.icon" :size="64" stroke-width="1.5" /></span>
         <span class="name">{{ r.name }}</span>
         <span class="bottom">
           <span class="left"><strong>{{ r.left }}</strong><small>{{ r.leftWord }}</small></span>
@@ -99,20 +99,20 @@ const rows = computed(() =>
    The category icon is drawn big and faint in the bottom-right corner, cropped by the tile. Four fit in a row on a phone. */
 .tile {
   position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 4px;
-  aspect-ratio: 1; padding: 8px; min-width: 0; container-type: inline-size;
+  aspect-ratio: 1; padding: 7px 8px 8px; min-width: 0; container-type: inline-size;
   color: var(--ink); background: var(--bg); border-radius: var(--vv-r-sm);
 }
 .bgicon { position: absolute; right: -12px; bottom: -14px; display: grid; opacity: .13; transform: rotate(-14deg); pointer-events: none; }
 .name, .bottom { position: relative; }
-.name { font-size: 10px; font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bottom { display: grid; gap: 4px; }
-.left { display: flex; align-items: baseline; gap: 3px; min-width: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
-/* The hero number: one line, sized to the tile (characters x ~0.64em per bold glyph), 13-20px. */
-.left strong { font-size: clamp(13px, calc(100cqi / (var(--len, 6) * 0.64)), 20px); font-weight: 800; line-height: 1; letter-spacing: -.02em; }
-.left small { font-size: 9px; font-weight: 700; opacity: .8; }
-.bar { display: block; height: 3px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 18%, transparent); overflow: hidden; }
+.name { font-size: 12px; font-weight: 800; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bottom { display: grid; gap: 5px; }
+.left { display: flex; align-items: baseline; gap: 2px; min-width: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* The hero number: one line, sized to the tile (characters x ~0.64em per bold glyph), 14-27px. */
+.left strong { font-size: clamp(14px, calc(100cqi / (var(--len, 6) * 0.64)), 27px); font-weight: 800; line-height: 1; letter-spacing: -.03em; }
+.left small { font-size: 10px; font-weight: 800; opacity: .9; }
+.bar { display: block; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 18%, transparent); overflow: hidden; }
 .fill { display: block; height: 100%; border-radius: 999px; background: var(--ink); transition: width .6s cubic-bezier(.22, 1, .36, 1); }
-.of { font-size: 9px; font-weight: 700; line-height: 1.1; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.of { font-size: 10px; font-weight: 800; line-height: 1.1; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 /* How much is left shows as a ring round the tile, so it reads on any category colour. */
 .warn { outline: 2px solid var(--vv-goal); outline-offset: -2px; }
 .over { outline: 2px solid var(--vv-negative); outline-offset: -2px; }
