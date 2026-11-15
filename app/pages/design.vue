@@ -35,6 +35,8 @@ const sheetOpen = ref(false)
 
 const icons = [House, List, Plus, Tag, User, ScanLine, Upload, Pencil, Trash2, CreditCard, ChartColumn, Receipt, Wallet, ArrowLeftRight, Smartphone, Download]
 const tints = Array.from({ length: 12 }, (_, i) => `cat-${i + 1}`)
+// Goal tints (pastel ground + darker ink): the colour a goal card can wear.
+const goalTints = ['mint', 'blush', 'sky', 'lavender', 'butter'].map((n) => `tint-${n}`)
 </script>
 
 <template>
@@ -94,6 +96,9 @@ const tints = Array.from({ length: 12 }, (_, i) => `cat-${i + 1}`)
       </div>
       <div class="icons tints">
         <UiIconTile v-for="(tint, i) in tints" :key="tint" :icon="icons[i % icons.length]!" :tint="tint" />
+      </div>
+      <div class="icons tints">
+        <UiIconTile v-for="(tint, i) in goalTints" :key="tint" :icon="icons[i % icons.length]!" :tint="tint" size="lg" />
       </div>
     </section>
 

@@ -2,7 +2,7 @@ import { prisma } from '~~/server/utils/prisma'
 import { requireUserId } from '~~/server/utils/auth'
 import { findOwnedGoal, goalNotFound, savedByGoal, serializeGoal, validateGoalPatch } from '~~/server/utils/goals'
 
-/** Rename, change the target, or set/clear the due date. Lowering the target below
+/** Rename, change the target, set/clear the due date, tint or picture. Lowering the target below
  *  what is saved is allowed: the goal simply counts as reached. */
 export default defineEventHandler(async (event) => {
   const userId = await requireUserId(event)

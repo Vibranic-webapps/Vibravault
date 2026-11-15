@@ -305,6 +305,11 @@ model Goal {
   name        String
   targetCents Int // positive integer cents (CHECK > 0 added by hand in the migration)
   dueDate     DateTime? // optional; a calendar day stored as UTC midnight
+  // Optional look of the goal. All nullable: existing goals keep working unchanged.
+  imageData   Bytes? // the shrunk picture (browser downsizes to a small JPEG; API caps at 150 KB). Never sent inside JSON.
+  imageMime   String? // 'image/jpeg' | 'image/webp' | 'image/png'; set exactly when imageData is (CHECK added by hand)
+  imageUrl    String? // a pasted https link; at most one of imageData / imageUrl is set (enforced in the API)
+  tint        String? // pastel name: 'mint' | 'blush' | 'sky' | 'lavender' | 'butter' (validated in the API, so a new colour needs no migration)
   deletedAt   DateTime? // soft delete
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
