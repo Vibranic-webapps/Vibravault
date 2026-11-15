@@ -427,6 +427,12 @@
     "imageRemove": "Remove",
     "imageLinkLabel": "Picture link",
     "imageLinkHint": "A link that starts with https://",
+    "frame": {
+      "label": "Picture framing",
+      "hint": "Drag to move, slide to zoom",
+      "zoom": "Zoom",
+      "reset": "Reset"
+    },
     "tint": "Card colour",
     "tints": {
       "mint": "Mint",

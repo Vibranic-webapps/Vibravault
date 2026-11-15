@@ -427,6 +427,12 @@
     "imageRemove": "Verwijderen",
     "imageLinkLabel": "Link naar de foto",
     "imageLinkHint": "Een link die met https:// begint",
+    "frame": {
+      "label": "Uitsnede van de foto",
+      "hint": "Sleep om te verplaatsen, schuif om te zoomen",
+      "zoom": "Zoom",
+      "reset": "Herstel"
+    },
     "tint": "Kaartkleur",
     "tints": {
       "mint": "Munt",

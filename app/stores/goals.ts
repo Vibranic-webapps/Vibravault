@@ -22,6 +22,10 @@ export interface Goal {
   tint: string | null
   /** The goal's picture: our own /api/goals/<id>/image URL (uploaded) or the pasted https link. Null = none. */
   imageSrc: string | null
+  /** Which part of the picture shows: focus point in % from left / top (0-100) and zoom (100-300, 100 = none). */
+  imageFocusX: number
+  imageFocusY: number
+  imageZoom: number
   savedCents: number
   remainingCents: number
   /** Whole percent 0-100 (rounded down). */
@@ -55,6 +59,10 @@ export interface GoalInput {
   /** A small picture as a data URL (see shrinkImage). */
   image?: string
   removeImage?: boolean
+  /** Picture framing; whole numbers only (see GOAL_FRAME in goalLook). */
+  imageFocusX?: number
+  imageFocusY?: number
+  imageZoom?: number
 }
 export type GoalPatch = Partial<GoalInput>
 export interface ContributionInput {

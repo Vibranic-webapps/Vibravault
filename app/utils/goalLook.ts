@@ -52,3 +52,19 @@ export async function shrinkImage(file: File): Promise<string> {
   bmp.close()
   throw new Error('too-big')
 }
+
+/** Picture framing: ranges and defaults (the server enforces the same; server/utils/goals.ts). */
+export const GOAL_FRAME = {
+  focusMin: 0, focusMax: 100, focusDefault: 50,
+  zoomMin: 100, zoomMax: 300, zoomDefault: 100,
+  /** The Home card is 192 x 212: the editor frame uses the same shape so the crop matches. */
+  cardWidth: 192, cardHeight: 212,
+} as const
+
+export interface GoalFraming { focusX: number; focusY: number; zoom: number }
+
+export const DEFAULT_FRAMING: GoalFraming = {
+  focusX: GOAL_FRAME.focusDefault, focusY: GOAL_FRAME.focusDefault, zoom: GOAL_FRAME.zoomDefault,
+}
+
+export const clampFrame = (v: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(v)))
