@@ -161,6 +161,7 @@
     "demoKeysLocked": "Keys can't be made on the demo account, so nobody keeps access after their visit. The steps below show how it works."
   },
   "home": {
+    "loadError": "Couldn’t load your overview.",
     "greeting": "Hey {name}",
     "greetingNoName": "Hey there",
     "balance": "Balance",
@@ -384,6 +385,7 @@
   "goals": {
     "title": "Savings goals",
     "setPrompt": "Set a savings goal",
+    "seeAllN": "See all {n} goals",
     "new": "New goal",
     "edit": "Edit goal",
     "create": "Create goal",
