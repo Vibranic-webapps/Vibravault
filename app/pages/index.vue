@@ -167,6 +167,11 @@ onPullRefresh(async () => {
     <template v-else-if="data">
       <HomeCardCarousel :cards="data.accounts" />
 
+      <!-- Plan vs actual for the month on screen: right under the bank cards, because budgets matter most. -->
+      <div class="month-body" :class="{ refreshing }" :aria-busy="refreshing">
+        <BudgetStrip :budgets="data.budgets ?? []" :month-label="monthName(month)" />
+      </div>
+
       <!-- Savings goals: a bending carousel of small cards. Tap one to open it, tap its + to add money. -->
       <section class="goals" aria-labelledby="goals-h">
         <div class="card-head">
@@ -200,8 +205,6 @@ onPullRefresh(async () => {
           </div>
         </section>
 
-        <!-- Plan vs actual for the month on screen. -->
-        <BudgetStrip :budgets="data.budgets ?? []" />
         </div>
       </div>
 

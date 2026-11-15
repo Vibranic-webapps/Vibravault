@@ -6,8 +6,9 @@ import type { Goal } from '~/stores/goals'
  * Home's goals: small cards in a sideways carousel that bends. The card in the
  * middle faces you; the ones beside it tilt toward the centre, shrink and fade,
  * like a cupped hand. The goal's picture fills the whole card and everything
- * else sits on top of it: a progress ring, the name and saved-of-target on a
- * dark fade, and a round + that adds money without opening the card. A goal
+ * else sits on top of it: progress drawn round the card's edge with a percentage chip
+ * in the corner, the name and saved-of-target on a dark fade, and a round + that adds money
+ * without opening the card. A goal
  * without a picture shows its first letter on its pastel tint.
  *
  * `data-swipe-lock` keeps the screen swipe off this row: sideways here scrolls
@@ -23,6 +24,7 @@ const { money } = useFormat()
 // A link that no longer loads: the card falls back to dark-on-tint text.
 const broken = reactive(new Set<string>())
 const pictured = (g: Goal) => !!g.imageSrc && !broken.has(g.id)
+const pct = (g: Goal) => Math.min(100, Math.max(0, Math.round(g.percent)))
 
 const track = ref<HTMLElement | null>(null)
 const TILT = 24 // degrees of turn per card-width away from the centre
@@ -139,9 +141,15 @@ function onClickCapture(e: MouseEvent) {
           </span>
           <span class="name">{{ g.name }}</span>
         </button>
-        <span class="badge">
-          <GoalRing :percent="g.percent" :size="42" :label="t('goals.progressLabel', { name: g.name })" />
-        </span>
+        <GoalEdge :percent="g.percent" />
+        <span
+          class="pct"
+          role="progressbar"
+          :aria-label="t('goals.progressLabel', { name: g.name })"
+          :aria-valuenow="pct(g)"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >{{ pct(g) }}%</span>
         <div class="foot">
           <span class="amounts">
             <strong>{{ money(g.savedCents) }}</strong>
@@ -179,7 +187,7 @@ function onClickCapture(e: MouseEvent) {
 
 .gcard {
   position: relative; display: flex; flex-direction: column; gap: 8px;
-  --edge: 10px; /* gap between the floating controls and the card's edge */
+  --edge: 14px; /* gap between the floating controls / text and the card's edge: clears the progress line, which hugs the corner */
   width: 100%; height: var(--h); padding: 12px; overflow: hidden;
   font: inherit; color: var(--vv-text); text-align: left; border: none;
 }
@@ -191,23 +199,36 @@ function onClickCapture(e: MouseEvent) {
 .open:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 2px; }
 .name { max-width: 100%; font-size: 15px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* The ring rides in the top-right corner on its own small raised disc. */
-.badge {
-  position: absolute; top: var(--edge); right: var(--edge); z-index: 2; display: grid; place-items: center;
-  width: 50px; height: 50px; border-radius: 50%; pointer-events: none;
+/* Progress: a line round the card's edge (GoalEdge) plus a glass percentage chip in the top-right corner,
+   the same distance from the edge and the same corner radius as the + button. The edge colours are set here so
+   they can't vanish: on a pastel tint the line is the tint's ink; on a photo it is white over a dark hairline. */
+.gcard {
+  --edge-track: color-mix(in srgb, var(--g-ink) 18%, transparent);
+  --edge-arc: var(--g-ink);
+  --edge-halo: transparent;
 }
-/* Glass, not a raised disc: frosted, a hairline edge and no shadow (no glow). */
-.badge, .foot :deep(.ib) {
-  background: var(--vv-glass-tint); border: 1px solid var(--vv-glass-line); box-shadow: none;
+.pictured {
+  --edge-track: rgba(255, 255, 255, .3);
+  --edge-arc: var(--vv-on-scrim);
+  --edge-halo: rgba(0, 0, 0, .38);
+}
+.pct {
+  position: absolute; top: var(--edge); right: var(--edge); z-index: 3;
+  display: inline-flex; align-items: center; height: 30px; padding: 0 11px;
+  font-size: 13px; font-weight: 800; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; /* one line, always */
+  color: var(--g-ink); background: var(--vv-glass-tint); border: 1px solid var(--vv-glass-line);
+  border-radius: calc(var(--vv-r-lg) - var(--edge)); pointer-events: none;
   -webkit-backdrop-filter: var(--vv-glass-blur); backdrop-filter: var(--vv-glass-blur);
 }
-.pictured .badge, .pictured .foot :deep(.ib) { background: var(--vv-glass-photo); color: var(--vv-on-scrim); }
-.pictured .badge { color: var(--vv-on-scrim); }
-.pictured .badge :deep(.groove) { stroke: rgba(255, 255, 255, .28); }
-.pictured .badge :deep(.arc) { stroke: var(--g-bg); } /* the pastel tint keeps the goal's colour on the dark glass */
-.pictured .badge :deep(.pct small) { color: rgba(255, 255, 255, .8); }
-/* The + follows the card's corner: radius = card radius - edge gap, so the curves sit concentric. */
-.foot :deep(.ib) { border-radius: calc(var(--vv-r-lg) - var(--edge)); color: var(--g-ink); }
+.pictured .pct { color: var(--vv-on-scrim); background: var(--vv-glass-photo); }
+/* Glass, not a raised disc: frosted, a hairline edge and no shadow (no glow). */
+.foot :deep(.ib) {
+  background: var(--vv-glass-tint); border: 1px solid var(--vv-glass-line); box-shadow: none;
+  border-radius: calc(var(--vv-r-lg) - var(--edge));
+  -webkit-backdrop-filter: var(--vv-glass-blur); backdrop-filter: var(--vv-glass-blur);
+}
+.pictured .foot :deep(.ib) { background: var(--vv-glass-photo); color: var(--vv-on-scrim); }
+.foot :deep(.ib) { color: var(--g-ink); }
 .foot :deep(.ib:hover) { color: var(--g-ink); }
 .pictured .foot :deep(.ib:hover) { color: var(--vv-on-scrim); }
 .foot :deep(.ib:active) { box-shadow: none; transform: scale(.94); color: var(--g-ink); }
@@ -222,9 +243,9 @@ function onClickCapture(e: MouseEvent) {
 .gcard:not(.newcard) { padding: 0; }
 .gcard:not(.newcard) .open { position: absolute; inset: 0; gap: 0; border-radius: inherit; }
 .stage { position: absolute; inset: 0; background: var(--g-bg); }
-.name { position: absolute; left: 12px; right: 12px; bottom: 56px; z-index: 1; }
+.name { position: absolute; left: var(--edge); right: var(--edge); bottom: 68px; z-index: 1; }
 .newcard .name { position: static; }
-.gcard:not(.newcard) .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 var(--edge) var(--edge) 12px; }
+.gcard:not(.newcard) .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 var(--edge) var(--edge); }
 .pictured .stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 72%; background: var(--vv-scrim); }
 .pictured .name,
 .pictured .amounts strong,
