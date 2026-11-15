@@ -137,10 +137,6 @@ function onClickCapture(e: MouseEvent) {
         <button type="button" class="open" :aria-label="t('goals.openN', { name: g.name })" @click="emit('open', g.id)">
           <span class="stage">
             <GoalPicture :src="g.imageSrc" :name="g.name" fit="cover" :focus-x="g.imageFocusX" :focus-y="g.imageFocusY" :zoom="g.imageZoom" @broken="broken.add(g.id)" />
-            <!-- The same picture in grey on top, wiped away from the left as the goal fills up. -->
-            <span v-if="pictured(g) && pct(g) < 100" class="veil" :style="{ '--p': pct(g) }" aria-hidden="true">
-              <GoalPicture :src="g.imageSrc" :name="g.name" fit="cover" :focus-x="g.imageFocusX" :focus-y="g.imageFocusY" :zoom="g.imageZoom" />
-            </span>
           </span>
           <span class="name">{{ g.name }}</span>
         </button>
@@ -206,9 +202,8 @@ function onClickCapture(e: MouseEvent) {
 .open:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 2px; }
 .name { max-width: 100%; font-size: 15px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Progress: a slim bar above the amounts with the percentage at its end (one line), and on a picture
-   the grey copy of it wipes away from the left. Both read left to right. The bar is white on the dark
-   fade (always readable) and the tint's ink on a pastel ground, so it can't vanish on any picture or colour. */
+/* Progress: a slim bar above the amounts with the percentage at its end (one line). The bar is white on
+   the dark fade (always readable) and the tint's ink on a pastel ground, so it can't vanish on any picture or colour. */
 .meter { position: absolute; left: 12px; right: var(--edge); bottom: 58px; z-index: 1; display: flex; align-items: center; gap: 8px; pointer-events: none; }
 .bar { flex: 1; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--g-ink) 20%, transparent); overflow: hidden; }
 .fill { display: block; height: 100%; border-radius: 999px; background: var(--g-ink); transition: width .6s cubic-bezier(.22, 1, .36, 1); }
@@ -216,11 +211,6 @@ function onClickCapture(e: MouseEvent) {
 .pictured .bar { background: rgba(255, 255, 255, .3); }
 .pictured .fill { background: var(--vv-on-scrim); }
 .pictured .pct { color: var(--vv-on-scrim); text-shadow: 0 1px 3px rgba(0, 0, 0, .55); }
-.veil {
-  position: absolute; inset: 0; filter: grayscale(1) brightness(1.08) contrast(.92);
-  -webkit-mask-image: linear-gradient(to right, transparent calc(var(--p) * 1.12% - 12%), #000 calc(var(--p) * 1.12%));
-  mask-image: linear-gradient(to right, transparent calc(var(--p) * 1.12% - 12%), #000 calc(var(--p) * 1.12%));
-}
 /* Glass, not a raised disc: frosted, a hairline edge and no shadow (no glow). */
 .foot :deep(.ib) {
   background: var(--vv-glass-tint); border: 1px solid var(--vv-glass-line); box-shadow: none;
