@@ -382,6 +382,18 @@
     "3": "Goed",
     "4": "Sterk"
   },
+  "budgets": {
+    "title": "Budgetten",
+    "manage": "Beheren",
+    "of": "{spent} van {limit}",
+    "left": "{amount} over",
+    "over": "{amount} te veel",
+    "barLabel": "{name}: {spent} van {limit}",
+    "empty": "Stel een maandlimiet in op een uitgavencategorie en die verschijnt hier.",
+    "field": "Maandbudget",
+    "fieldHint": "Optioneel. Hoeveel je per maand in deze categorie wilt uitgeven.",
+    "invalid": "Geef een bedrag boven €0 in."
+  },
   "goals": {
     "title": "Spaardoelen",
     "setPrompt": "Stel een spaardoel in",

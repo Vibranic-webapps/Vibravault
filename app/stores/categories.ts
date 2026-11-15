@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { parseEuroToCents, GOAL_LIMITS } from '~/stores/goals'
 
 export type CategoryKind = 'INCOME' | 'EXPENSE' | 'TRANSFER'
 
@@ -9,6 +10,8 @@ export interface Category {
   icon: string
   /** Design-system token name (cat-1..12), NOT a hex - resolves per theme. */
   color: string
+  /** Monthly spending limit in integer cents (expense categories only), or null = no budget. */
+  budgetCents: number | null
   /** Live transactions in it (from the list endpoint; absent right after a create/update). */
   count?: number
 }
@@ -18,6 +21,14 @@ export interface CategoryInput {
   kind: CategoryKind
   icon: string
   color: string
+  /** Positive cents sets the monthly limit, null clears it. Omit to leave it as it is. */
+  budgetCents?: number | null
+}
+
+/** A typed monthly budget ("300", "300,50") -> cents, or null if it isn't a plain amount above 0. Same rules as a goal target. */
+export function parseBudgetToCents(raw: string): number | null {
+  const c = parseEuroToCents(raw)
+  return c !== null && c >= 1 && c <= GOAL_LIMITS.maxCents ? c : null
 }
 
 export const useCategoriesStore = defineStore('categories', () => {

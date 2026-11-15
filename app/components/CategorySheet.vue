@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Trash2 } from 'lucide-vue-next'
-import { useCategoriesStore, type Category, type CategoryKind } from '~/stores/categories'
+import { centsToInput } from '~~/shared/utils/money'
+import { useCategoriesStore, parseBudgetToCents, type Category, type CategoryKind } from '~/stores/categories'
 
 /**
  * Create or edit a category, in a bottom sheet:
@@ -23,6 +24,8 @@ const name = ref('')
 const kind = ref<CategoryKind>('EXPENSE')
 const color = ref('cat-1')
 const icon = ref('package')
+const budget = ref('')
+const budgetError = ref('')
 const error = ref('')
 const saving = ref(false)
 
@@ -34,6 +37,8 @@ watch(() => props.open, (isOpen) => {
   kind.value = c?.kind ?? props.defaultKind ?? 'EXPENSE'
   color.value = c?.color ?? 'cat-1'
   icon.value = c?.icon ?? 'package'
+  budget.value = c?.budgetCents ? centsToInput(c.budgetCents) : ''
+  budgetError.value = ''
   error.value = ''
 })
 
@@ -46,8 +51,15 @@ async function save() {
   if (saving.value) return
   if (!name.value.trim()) { error.value = t('cats.nameRequired'); return }
   error.value = ''
+  budgetError.value = ''
+  // Empty = no budget. Only expense categories can have one.
+  let budgetCents: number | null = null
+  if (kind.value === 'EXPENSE' && budget.value.trim()) {
+    budgetCents = parseBudgetToCents(budget.value)
+    if (budgetCents === null) { budgetError.value = t('budgets.invalid'); return }
+  }
   saving.value = true
-  const input = { name: name.value.trim(), kind: kind.value, icon: icon.value, color: color.value }
+  const input = { name: name.value.trim(), kind: kind.value, icon: icon.value, color: color.value, budgetCents }
   const ok = props.category ? await store.update(props.category.id, input) : await store.create(input)
   saving.value = false
   if (!ok) {
@@ -91,6 +103,18 @@ async function remove() {
           { value: 'INCOME', label: t('cats.INCOME') },
           { value: 'TRANSFER', label: t('cats.TRANSFER') },
         ]"
+      />
+
+      <UiField
+        v-if="kind === 'EXPENSE'"
+        v-model="budget"
+        :label="t('budgets.field')"
+        prefix="€"
+        inputmode="decimal"
+        placeholder="0,00"
+        autocomplete="off"
+        :hint="t('budgets.fieldHint')"
+        :error="budgetError"
       />
 
       <div>
