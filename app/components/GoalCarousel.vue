@@ -139,9 +139,15 @@ function onClickCapture(e: MouseEvent) {
           </span>
           <span class="name">{{ g.name }}</span>
         </button>
-        <span class="badge">
-          <GoalRing :percent="g.percent" :size="42" :label="t('goals.progressLabel', { name: g.name })" />
-        </span>
+        <GoalEdge :percent="g.percent" />
+        <span
+          class="badge"
+          role="progressbar"
+          :aria-label="t('goals.progressLabel', { name: g.name })"
+          :aria-valuenow="Math.min(100, Math.round(g.percent))"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >{{ Math.min(100, Math.round(g.percent)) }}<small>%</small></span>
         <div class="foot">
           <span class="amounts">
             <strong>{{ money(g.savedCents) }}</strong>
@@ -191,27 +197,30 @@ function onClickCapture(e: MouseEvent) {
 .open:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 2px; }
 .name { max-width: 100%; font-size: 15px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* The ring rides in the top-right corner on its own small raised disc. */
+/* The percentage sits in the top-right corner on a small glass chip, the same shape and edge gap as
+   the + (radius = card radius - edge gap, so the curves sit concentric with the card). The progress
+   itself is drawn along the card's edge (GoalEdge). */
 .badge {
-  position: absolute; top: var(--edge); right: var(--edge); z-index: 2; display: grid; place-items: center;
-  width: 50px; height: 50px; border-radius: 50%; pointer-events: none;
+  position: absolute; top: var(--edge); right: var(--edge); z-index: 3;
+  display: grid; place-items: center; min-width: var(--vv-control); height: var(--vv-control); padding: 0 8px;
+  font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; pointer-events: none;
 }
+.badge small { margin-left: 1px; font-size: .78em; font-weight: 700; opacity: .8; }
 /* Glass, not a raised disc: frosted, a hairline edge and no shadow (no glow). */
 .badge, .foot :deep(.ib) {
   background: var(--vv-glass-tint); border: 1px solid var(--vv-glass-line); box-shadow: none;
+  border-radius: calc(var(--vv-r-lg) - var(--edge));
   -webkit-backdrop-filter: var(--vv-glass-blur); backdrop-filter: var(--vv-glass-blur);
 }
 .pictured .badge, .pictured .foot :deep(.ib) { background: var(--vv-glass-photo); color: var(--vv-on-scrim); }
-.pictured .badge { color: var(--vv-on-scrim); }
-.pictured .badge :deep(.groove) { stroke: rgba(255, 255, 255, .28); }
-.pictured .badge :deep(.arc) { stroke: var(--g-bg); } /* the pastel tint keeps the goal's colour on the dark glass */
-.pictured .badge :deep(.pct small) { color: rgba(255, 255, 255, .8); }
-/* The + follows the card's corner: radius = card radius - edge gap, so the curves sit concentric. */
-.foot :deep(.ib) { border-radius: calc(var(--vv-r-lg) - var(--edge)); color: var(--g-ink); }
+.foot :deep(.ib) { color: var(--g-ink); }
 .foot :deep(.ib:hover) { color: var(--g-ink); }
 .pictured .foot :deep(.ib:hover) { color: var(--vv-on-scrim); }
 .foot :deep(.ib:active) { box-shadow: none; transform: scale(.94); color: var(--g-ink); }
 .pictured .foot :deep(.ib:active) { color: var(--vv-on-scrim); }
+/* On a picture the edge line is the pastel tint over a pale track, so it reads on any photo. */
+.pictured :deep(.edge .track) { stroke: rgba(255, 255, 255, .3); }
+.pictured :deep(.edge .arc) { stroke: var(--g-bg); }
 
 .foot { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .amounts { display: flex; flex-direction: column; min-width: 0; font-variant-numeric: tabular-nums; }
