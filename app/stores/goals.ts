@@ -18,6 +18,10 @@ export interface Goal {
   dueDate: string | null
   createdAt: string
   updatedAt: string
+  /** One of GOAL_TINTS, or null = the app picks a stable one (see goalTint). */
+  tint: string | null
+  /** The goal's picture: our own /api/goals/<id>/image URL (uploaded) or the pasted https link. Null = none. */
+  imageSrc: string | null
   savedCents: number
   remainingCents: number
   /** Whole percent 0-100 (rounded down). */
@@ -45,6 +49,12 @@ export interface GoalInput {
   name: string
   targetCents: number
   dueDate?: string | null
+  tint?: string | null
+  /** A pasted https link to a picture. */
+  imageUrl?: string | null
+  /** A small picture as a data URL (see shrinkImage). */
+  image?: string
+  removeImage?: boolean
 }
 export type GoalPatch = Partial<GoalInput>
 export interface ContributionInput {
@@ -59,7 +69,7 @@ export interface GoalFailure {
   status: number | null
   /** Stable machine code from the API (GOAL_NAME_REQUIRED ...), if it sent one. */
   code: string | null
-  /** The form field the error belongs to: name | targetCents | dueDate | amountCents | contributedAt | note. */
+  /** The form field the error belongs to: name | targetCents | dueDate | image | imageUrl | amountCents | contributedAt | note. */
   field: string | null
   savedCents: number | null
   /** The server's English text - only a last-resort fallback. */

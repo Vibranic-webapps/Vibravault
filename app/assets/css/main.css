@@ -111,6 +111,17 @@
   --vv-cat-10: #E8CCEA;  --vv-cat-10-fg: #712277;  /* plum */
   --vv-cat-11: #EACCE0;  --vv-cat-11-fg: #77225B;  /* magenta */
   --vv-cat-12: #EACCD4;  --vv-cat-12-fg: #772237;  /* rose */
+  /* ---- Goal tints (light): the colour a goal (and later tiles) can wear. Pastel ground + a
+     darker same-hue ink for text, ring and bar (fg/bg >= 5:1). IDENTITY only, like the
+     category tints: never on an amount or a primary button. Hues stay clear of teal, coral, indigo. */
+  /* Text on a picture: a dark fade at the bottom keeps white text readable on any photo. */
+  --vv-scrim: linear-gradient(to top, rgba(18, 18, 18, .8), rgba(18, 18, 18, 0) 72%);
+  --vv-on-scrim: #FFFFFF;
+  --vv-tint-mint: #D7EDC8;  --vv-tint-mint-fg: #3F6B1E;
+  --vv-tint-blush: #F6D3D6;  --vv-tint-blush-fg: #8A2F44;
+  --vv-tint-sky: #D1E6F7;  --vv-tint-sky-fg: #1F5A8C;
+  --vv-tint-lavender: #DDD3F4;  --vv-tint-lavender-fg: #5A3E9A;
+  --vv-tint-butter: #F8E8B0;  --vv-tint-butter-fg: #7A5A0A;
 
 
   /* ---- Chart marks -----------------------------------------------------
@@ -172,6 +183,14 @@
     --vv-cat-10: #633267;  --vv-cat-10-fg: #DFA0E3;  /* plum */
     --vv-cat-11: #673255;  --vv-cat-11-fg: #E3A0CD;  /* magenta */
     --vv-cat-12: #67323F;  --vv-cat-12-fg: #E3A0B1;  /* rose */
+    /* ---- Goal tints (dark): the colour a goal (and later tiles) can wear. Pastel ground + a
+       darker same-hue ink for text, ring and bar (fg/bg >= 5:1). IDENTITY only, like the
+       category tints: never on an amount or a primary button. Hues stay clear of teal, coral, indigo. */
+    --vv-tint-mint: #34502A;  --vv-tint-mint-fg: #B7E09A;
+    --vv-tint-blush: #5A2F38;  --vv-tint-blush-fg: #F2A9B8;
+    --vv-tint-sky: #284760;  --vv-tint-sky-fg: #9CCBF0;
+    --vv-tint-lavender: #43377A;  --vv-tint-lavender-fg: #C9B8F2;
+    --vv-tint-butter: #5E4A18;  --vv-tint-butter-fg: #F0D88A;
 
     /* ---- Chart marks (dark). Validated on #1E1E1E: all pass, CVD dE 10.5 */
     --vv-chart-in:  #1FA37F;
@@ -213,6 +232,14 @@
   --vv-cat-10: #633267;  --vv-cat-10-fg: #DFA0E3;  /* plum */
   --vv-cat-11: #673255;  --vv-cat-11-fg: #E3A0CD;  /* magenta */
   --vv-cat-12: #67323F;  --vv-cat-12-fg: #E3A0B1;  /* rose */
+  /* ---- Goal tints (dark): the colour a goal (and later tiles) can wear. Pastel ground + a
+     darker same-hue ink for text, ring and bar (fg/bg >= 5:1). IDENTITY only, like the
+     category tints: never on an amount or a primary button. Hues stay clear of teal, coral, indigo. */
+  --vv-tint-mint: #34502A;  --vv-tint-mint-fg: #B7E09A;
+  --vv-tint-blush: #5A2F38;  --vv-tint-blush-fg: #F2A9B8;
+  --vv-tint-sky: #284760;  --vv-tint-sky-fg: #9CCBF0;
+  --vv-tint-lavender: #43377A;  --vv-tint-lavender-fg: #C9B8F2;
+  --vv-tint-butter: #5E4A18;  --vv-tint-butter-fg: #F0D88A;
 
 
   /* ---- Chart marks (dark). Validated on #1E1E1E: all pass, CVD dE 10.5 */

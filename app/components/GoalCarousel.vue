@@ -5,18 +5,28 @@ import type { Goal } from '~/stores/goals'
 /**
  * Home's goals: small cards in a sideways carousel that bends. The card in the
  * middle faces you; the ones beside it tilt toward the centre, shrink and fade,
- * like a cupped hand. Each card shows a progress ring, saved of target, and a
- * round + that adds money without opening the card.
+ * like a cupped hand. Each card shows the goal's picture on its pastel tint, a
+ * progress ring, saved of target, and a round + that adds money without opening
+ * the card.
+ *
+ * Two looks while Kilian compares them (useGoalCardLook, temporary):
+ *   window - picture whole inside a tinted window on the raised card
+ *   fill   - picture fills the card, text on a dark fade
  *
  * `data-swipe-lock` keeps the screen swipe off this row: sideways here scrolls
- * the cards, not the pages. Only transforms and opacity animate (cheap), and
- * with reduced motion the cards stay flat.
+ * the cards, not the pages. Touch scrolls natively; a mouse drags by hand. Only
+ * transforms and opacity animate (cheap), and with reduced motion the cards stay flat.
  */
 const props = defineProps<{ goals: Goal[] }>()
 const emit = defineEmits<{ open: [id: string]; add: [id: string]; new: [] }>()
 
 const { t } = useI18n()
 const { money } = useFormat()
+const { look } = useGoalCardLook()
+
+// A link that no longer loads: the card falls back to dark-on-tint text.
+const broken = reactive(new Set<string>())
+const pictured = (g: Goal) => !!g.imageSrc && !broken.has(g.id)
 
 const track = ref<HTMLElement | null>(null)
 const TILT = 24 // degrees of turn per card-width away from the centre
@@ -122,11 +132,20 @@ function onClickCapture(e: MouseEvent) {
     @click.capture="onClickCapture"
   >
     <div v-for="g in goals" :key="g.id" class="slide">
-      <div class="neu-3 gcard">
+      <div
+        class="neu-3 gcard"
+        :class="[look, { pictured: pictured(g) }]"
+        :style="goalTintStyle(goalTint(g))"
+      >
         <button type="button" class="open" :aria-label="t('goals.openN', { name: g.name })" @click="emit('open', g.id)">
-          <GoalRing :percent="g.percent" :label="t('goals.progressLabel', { name: g.name })" />
+          <span class="stage">
+            <GoalPicture :src="g.imageSrc" :name="g.name" :fit="look === 'fill' ? 'cover' : 'contain'" @broken="broken.add(g.id)" />
+          </span>
           <span class="name">{{ g.name }}</span>
         </button>
+        <span class="badge">
+          <GoalRing :percent="g.percent" :size="42" :label="t('goals.progressLabel', { name: g.name })" />
+        </span>
         <div class="foot">
           <span class="amounts">
             <strong>{{ money(g.savedCents) }}</strong>
@@ -150,7 +169,7 @@ function onClickCapture(e: MouseEvent) {
 /* Full-bleed past the screen padding, with room for shadows (a scroller clips them).
    The side padding lets the first and last card reach the centre. */
 .track {
-  --w: 176px; --bleed: 24px;
+  --w: 192px; --h: 212px; --bleed: 24px;
   display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none;
   scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
   perspective: 720px; /* one shared vanishing point: the middle of the row */
@@ -163,23 +182,46 @@ function onClickCapture(e: MouseEvent) {
 .slide { flex: 0 0 var(--w); scroll-snap-align: center; will-change: transform, opacity; }
 
 .gcard {
-  display: flex; flex-direction: column; gap: 10px; width: 100%; height: 100%; padding: 14px;
+  position: relative; display: flex; flex-direction: column; gap: 8px;
+  width: 100%; height: var(--h); padding: 12px; overflow: hidden;
   font: inherit; color: var(--vv-text); text-align: left; border: none;
 }
 .open {
-  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 4px 0 0;
-  font: inherit; color: inherit; background: none; border: none; border-radius: var(--vv-r-sm);
+  display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 8px; padding: 0;
+  font: inherit; color: inherit; text-align: left; background: none; border: none; border-radius: var(--vv-r-sm);
   cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .open:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 2px; }
-.name { max-width: 100%; font-size: 15px; font-weight: 800; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name { max-width: 100%; font-size: 15px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* The ring rides in the top-right corner on its own small raised disc. */
+.badge {
+  position: absolute; top: 18px; right: 18px; z-index: 2; display: grid; place-items: center;
+  width: 50px; height: 50px; border-radius: 50%; background: var(--vv-surface); box-shadow: var(--vv-e1);
+  pointer-events: none;
+}
+
+.foot { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .amounts { display: flex; flex-direction: column; min-width: 0; font-variant-numeric: tabular-nums; }
 .amounts strong { font-size: 15px; font-weight: 800; white-space: nowrap; }
 .amounts small { font-size: 12px; color: var(--vv-muted); white-space: nowrap; }
 
-.newcard { align-items: center; justify-content: center; gap: 10px; min-height: 178px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+/* ---- Look A "window": the picture sits whole in a tinted, pressed-in window ---- */
+.window .stage { flex: 1; min-height: 0; background: var(--g-bg); border-radius: var(--vv-r-sm); box-shadow: var(--vv-p1); overflow: hidden; }
+
+/* ---- Look B "fill": the picture is the card; text rides on a dark fade ---- */
+.fill { padding: 0; }
+.fill .open { position: absolute; inset: 0; gap: 0; border-radius: inherit; }
+.fill .stage { position: absolute; inset: 0; background: var(--g-bg); }
+.fill .name { position: absolute; left: 12px; right: 12px; bottom: 56px; z-index: 1; }
+.fill .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 12px 12px; }
+.fill.pictured .stage::after { content: ''; position: absolute; inset: 0; background: var(--vv-scrim); }
+.fill.pictured .name,
+.fill.pictured .amounts strong,
+.fill.pictured .amounts small { color: var(--vv-on-scrim); }
+.fill:not(.pictured) .name { color: var(--g-ink); }
+
+.newcard { align-items: center; justify-content: center; gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .newcard:active { box-shadow: var(--vv-p3); }
 .newcard:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 3px; }
 .plus { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--vv-r-md); box-shadow: var(--vv-p1); color: var(--vv-goal); }

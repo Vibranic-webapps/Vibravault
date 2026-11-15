@@ -24,7 +24,7 @@ defineProps<{ percent: number; label: string }>()
 <style scoped>
 .track { height: 10px; border-radius: 999px; box-shadow: var(--vv-p1); overflow: hidden; }
 .fill {
-  height: 100%; border-radius: 999px; background: var(--vv-goal);
+  height: 100%; border-radius: 999px; background: var(--g-ink, var(--vv-goal));
   transition: width .5s cubic-bezier(.22, 1, .36, 1);
 }
 .fill.empty { visibility: hidden; }
