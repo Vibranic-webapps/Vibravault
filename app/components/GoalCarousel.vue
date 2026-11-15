@@ -179,6 +179,7 @@ function onClickCapture(e: MouseEvent) {
 
 .gcard {
   position: relative; display: flex; flex-direction: column; gap: 8px;
+  --edge: 10px; /* gap between the floating controls and the card's edge */
   width: 100%; height: var(--h); padding: 12px; overflow: hidden;
   font: inherit; color: var(--vv-text); text-align: left; border: none;
 }
@@ -192,10 +193,25 @@ function onClickCapture(e: MouseEvent) {
 
 /* The ring rides in the top-right corner on its own small raised disc. */
 .badge {
-  position: absolute; top: 18px; right: 18px; z-index: 2; display: grid; place-items: center;
-  width: 50px; height: 50px; border-radius: 50%; background: var(--vv-surface); box-shadow: var(--vv-e1);
-  pointer-events: none;
+  position: absolute; top: var(--edge); right: var(--edge); z-index: 2; display: grid; place-items: center;
+  width: 50px; height: 50px; border-radius: 50%; pointer-events: none;
 }
+/* Glass, not a raised disc: frosted, a hairline edge and no shadow (no glow). */
+.badge, .foot :deep(.ib) {
+  background: var(--vv-glass-tint); border: 1px solid var(--vv-glass-line); box-shadow: none;
+  -webkit-backdrop-filter: var(--vv-glass-blur); backdrop-filter: var(--vv-glass-blur);
+}
+.pictured .badge, .pictured .foot :deep(.ib) { background: var(--vv-glass-photo); color: var(--vv-on-scrim); }
+.pictured .badge { color: var(--vv-on-scrim); }
+.pictured .badge :deep(.groove) { stroke: rgba(255, 255, 255, .28); }
+.pictured .badge :deep(.arc) { stroke: var(--g-bg); } /* the pastel tint keeps the goal's colour on the dark glass */
+.pictured .badge :deep(.pct small) { color: rgba(255, 255, 255, .8); }
+/* The + follows the card's corner: radius = card radius - edge gap, so the curves sit concentric. */
+.foot :deep(.ib) { border-radius: calc(var(--vv-r-lg) - var(--edge)); color: var(--g-ink); }
+.foot :deep(.ib:hover) { color: var(--g-ink); }
+.pictured .foot :deep(.ib:hover) { color: var(--vv-on-scrim); }
+.foot :deep(.ib:active) { box-shadow: none; transform: scale(.94); color: var(--g-ink); }
+.pictured .foot :deep(.ib:active) { color: var(--vv-on-scrim); }
 
 .foot { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .amounts { display: flex; flex-direction: column; min-width: 0; font-variant-numeric: tabular-nums; }
@@ -208,7 +224,7 @@ function onClickCapture(e: MouseEvent) {
 .stage { position: absolute; inset: 0; background: var(--g-bg); }
 .name { position: absolute; left: 12px; right: 12px; bottom: 56px; z-index: 1; }
 .newcard .name { position: static; }
-.gcard:not(.newcard) .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 12px 12px; }
+.gcard:not(.newcard) .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 var(--edge) var(--edge) 12px; }
 .pictured .stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 72%; background: var(--vv-scrim); }
 .pictured .name,
 .pictured .amounts strong,

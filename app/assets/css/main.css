@@ -118,6 +118,14 @@
      Near-solid (.9) behind the text so even a white photo gives >= 10:1; it only thins out above. */
   --vv-scrim: linear-gradient(to top, rgba(18, 18, 18, .92) 0%, rgba(18, 18, 18, .88) 45%, rgba(18, 18, 18, .5) 75%, rgba(18, 18, 18, 0) 100%);
   --vv-on-scrim: #FFFFFF;
+  /* Glass controls that float on a goal card (ring, + button): frosted, flat, no glow. A shadow would
+     only smudge a photo, so glass has none: the blur + hairline do the lifting. Same in light and dark
+     because it sits on the picture / tint, not on the page. `photo` = dark glass (white ink) on a picture;
+     `tint` = pale glass (the tint's ink) on a pastel ground. */
+  --vv-glass-photo: rgba(20, 20, 20, .34);
+  --vv-glass-tint: rgba(255, 255, 255, .5);
+  --vv-glass-line: rgba(255, 255, 255, .34);
+  --vv-glass-blur: blur(14px) saturate(1.4);
   --vv-tint-mint: #D7EDC8;  --vv-tint-mint-fg: #3F6B1E;
   --vv-tint-blush: #F6D3D6;  --vv-tint-blush-fg: #8A2F44;
   --vv-tint-sky: #D1E6F7;  --vv-tint-sky-fg: #1F5A8C;
