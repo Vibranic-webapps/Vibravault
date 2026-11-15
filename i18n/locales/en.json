@@ -382,6 +382,18 @@
     "3": "Good",
     "4": "Strong"
   },
+  "budgets": {
+    "title": "Budgets",
+    "manage": "Manage",
+    "of": "{spent} of {limit}",
+    "left": "{amount} left",
+    "over": "{amount} over",
+    "barLabel": "{name}: {spent} of {limit}",
+    "empty": "Set a monthly limit on a spending category and it shows up here.",
+    "field": "Monthly budget",
+    "fieldHint": "Optional. How much you want to spend in this category each month.",
+    "invalid": "Enter an amount above €0."
+  },
   "goals": {
     "title": "Savings goals",
     "setPrompt": "Set a savings goal",

@@ -168,15 +168,19 @@ model Account {
 // lives only in the icon tile; it must never collide with teal (income) or
 // coral (expense), which carry SEMANTICS.
 model Category {
-  id        String       @id @default(cuid())
-  userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  kind      CategoryKind
-  icon      String
-  color     String
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  kind        CategoryKind
+  icon        String
+  color       String
+  // Optional monthly spending limit in integer cents, EXPENSE categories only.
+  // One limit that repeats every month until changed (no per-month rows).
+  // Positive when set - CHECK constraint hand-added in the migration.
+  budgetCents Int?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   transactions        Transaction[]
   merchantRules       MerchantRule[]

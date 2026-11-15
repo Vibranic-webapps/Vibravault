@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Inbox, PenLine, FileUp, ClipboardCheck } from 'lucide-vue-next'
 import type { Week } from '~/components/home/WeekChart.vue'
+import type { BudgetLine } from '~/components/BudgetStrip.vue'
 import type { Transaction } from '~/stores/transactions'
 import { useTransactionsStore, monthKey, dayKey } from '~/stores/transactions'
 import { useCategoriesStore } from '~/stores/categories'
@@ -26,6 +27,8 @@ interface Dashboard {
   totals: { income: number; expense: number; net: number; count: number }
   weeks: Week[]
   topCategories: TopCategory[]
+  /** Expense categories with a monthly limit: spent vs limit for this month. */
+  budgets?: BudgetLine[]
   latest: (Transaction & { label: string })[]
   uncategorised: number
   hasAnyTransactions: boolean
@@ -196,6 +199,9 @@ onPullRefresh(async () => {
             <UiButton variant="ghost" :block="false" @click="shiftMonth(-1)">{{ t('home.seePrevious') }}</UiButton>
           </div>
         </section>
+
+        <!-- Plan vs actual for the month on screen. -->
+        <BudgetStrip :budgets="data.budgets ?? []" />
         </div>
       </div>
 
