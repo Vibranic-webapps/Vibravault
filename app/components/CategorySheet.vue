@@ -26,6 +26,7 @@ const color = ref('cat-1')
 const icon = ref('package')
 const budget = ref('')
 const budgetError = ref('')
+const isSubscription = ref(false)
 const error = ref('')
 const saving = ref(false)
 
@@ -38,6 +39,7 @@ watch(() => props.open, (isOpen) => {
   color.value = c?.color ?? 'cat-1'
   icon.value = c?.icon ?? 'package'
   budget.value = c?.budgetCents ? centsToInput(c.budgetCents) : ''
+  isSubscription.value = c?.isSubscription ?? false
   budgetError.value = ''
   error.value = ''
 })
@@ -59,7 +61,7 @@ async function save() {
     if (budgetCents === null) { budgetError.value = t('budgets.invalid'); return }
   }
   saving.value = true
-  const input = { name: name.value.trim(), kind: kind.value, icon: icon.value, color: color.value, budgetCents }
+  const input = { name: name.value.trim(), kind: kind.value, icon: icon.value, color: color.value, budgetCents, isSubscription: kind.value === 'EXPENSE' && isSubscription.value }
   const ok = props.category ? await store.update(props.category.id, input) : await store.create(input)
   saving.value = false
   if (!ok) {
@@ -116,6 +118,11 @@ async function remove() {
         :hint="t('budgets.fieldHint')"
         :error="budgetError"
       />
+
+      <UiCheckbox v-if="kind === 'EXPENSE'" v-model="isSubscription">
+        {{ t('cats.subscription') }}
+        <small>{{ t('cats.subscriptionHint') }}</small>
+      </UiCheckbox>
 
       <div>
         <p class="label">{{ t('cats.color') }}</p>

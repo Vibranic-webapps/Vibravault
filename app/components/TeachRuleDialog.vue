@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { extractMerchant } from '~~/shared/utils/merchant'
+import { parseAmountToCents, centsToInput } from '~~/shared/utils/money'
 import type { Transaction } from '~/stores/transactions'
 import { useRulesStore } from '~/stores/rules'
 
@@ -9,17 +10,26 @@ import { useRulesStore } from '~/stores/rules'
  * category, and it applies to every future import and (optionally) to past
  * transactions that aren't sorted yet. In a bottom sheet, with category
  * TILES like everywhere else.
+ *
+ * Optionally the rule only applies to ONE exact amount (e.g. Apple at 0,99 is
+ * iCloud, Apple at 9,99 is something else). Off by default; the amount field is
+ * already prefilled with the transaction's amount (absolute value), so ticking is one tap.
+ * Exact amount only for now: the API already takes a min and a max (ranges
+ * come later), here both are sent as the same number.
  */
 const props = defineProps<{ transaction: Transaction | null }>()
 const emit = defineEmits<{ close: []; saved: [categorised: number] }>()
 
 const { t } = useI18n()
+const { money } = useFormat()
 const rules = useRulesStore()
 
 const match = ref('')
 const label = ref('')
 const categoryId = ref<string | null>(null)
 const applyToExisting = ref(true)
+const onlyAmount = ref(false)
+const amountText = ref('')
 const saving = ref(false)
 const error = ref('')
 
@@ -36,6 +46,12 @@ watch(() => props.transaction, (tx) => {
   label.value = ''
   categoryId.value = tx.categoryId
   applyToExisting.value = true
+  // Opened from a transaction: "only this amount" starts OFF (most shops charge a different
+  // amount every time, so a name-only rule stays the default), but the amount is already filled
+  // in, so ticking the box is one tap (typed as text, so no float maths).
+  const abs = Math.abs(tx.amountCents)
+  onlyAmount.value = false
+  amountText.value = abs > 0 ? centsToInput(abs) : ''
   error.value = ''
 }, { immediate: true })
 
@@ -45,10 +61,22 @@ const open = computed({
 })
 
 const matchTooShort = computed(() => match.value.replace(/\s+/g, ' ').trim().length < 3)
+// Integer cents of the typed amount (sign ignored: rules compare on the absolute
+// value), or null when it isn't a number above zero. Only looked at while the toggle is on.
+const amountCents = computed(() => {
+  const cents = parseAmountToCents(amountText.value)
+  return cents === null || cents === 0 ? null : Math.abs(cents)
+})
+const amountInvalid = computed(() => onlyAmount.value && amountCents.value === null)
+const example = computed(() =>
+  onlyAmount.value && amountCents.value !== null
+    ? t('teach.amountExample', { name: match.value.trim() || '…', amount: money(amountCents.value) })
+    : '',
+)
 const nothingToDo = computed(() => !label.value.trim() && !categoryId.value)
 
 async function save() {
-  if (saving.value || matchTooShort.value) return
+  if (saving.value || matchTooShort.value || amountInvalid.value) return
   if (nothingToDo.value) { error.value = t('teach.nothing'); return }
   error.value = ''
   saving.value = true
@@ -57,6 +85,10 @@ async function save() {
     label: label.value.trim() || null,
     categoryId: categoryId.value,
     applyToExisting: applyToExisting.value,
+    // Same number twice = exactly this amount. Left out = any amount.
+    ...(onlyAmount.value && amountCents.value !== null
+      ? { amountMinCents: amountCents.value, amountMaxCents: amountCents.value }
+      : {}),
   })
   saving.value = false
   if (n === null) { error.value = t('drawer.couldNotSave'); return }
@@ -85,6 +117,22 @@ async function save() {
         <CategoryPicker v-model="categoryId" :direction="direction" :none-label="t('teach.keepCategory')" />
       </div>
 
+      <div class="amount">
+        <UiCheckbox v-model="onlyAmount">{{ t('teach.onlyAmount') }}</UiCheckbox>
+        <template v-if="onlyAmount">
+          <UiField
+            v-model="amountText"
+            :label="t('teach.amount')"
+            :error="amountInvalid ? t('teach.amountInvalid') : ''"
+            prefix="€"
+            inputmode="decimal"
+            :maxlength="12"
+            autocomplete="off"
+          />
+          <p v-if="example" class="example">{{ example }}</p>
+        </template>
+      </div>
+
       <UiCheckbox v-if="categoryId" v-model="applyToExisting">
         {{ t('teach.applyPast') }}
         <small>{{ t('teach.applyHint') }}</small>
@@ -92,7 +140,7 @@ async function save() {
 
       <p v-if="error" class="vv-error" role="alert">{{ error }}</p>
 
-      <UiButton type="submit" :loading="saving" :disabled="matchTooShort">{{ t('teach.save') }}</UiButton>
+      <UiButton type="submit" :loading="saving" :disabled="matchTooShort || amountInvalid">{{ t('teach.save') }}</UiButton>
     </form>
   </UiBottomSheet>
 </template>
@@ -100,6 +148,8 @@ async function save() {
 <style scoped>
 .form { display: grid; gap: 20px; }
 .lead { margin: 0; font-size: 14px; line-height: 1.5; color: var(--vv-muted); }
+.amount { display: grid; gap: 14px; }
+.example { margin: 0; font-size: 13px; line-height: 1.45; color: var(--vv-muted); }
 .label { margin: 0 0 10px; font-size: 13px; font-weight: 700; color: var(--vv-muted); }
 
 </style>

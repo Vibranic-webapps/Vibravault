@@ -63,7 +63,7 @@ const fieldError = ref<string | null>(null)
 const editable = computed(() => t.value?.source === 'MANUAL')
 const isIncome = computed(() => (t.value?.amountCents ?? 0) > 0)
 const isTransfer = computed(() => props.category?.kind === 'TRANSFER')
-const label = computed(() => (t.value ? transactionLabel(t.value.counterparty, t.value.description, rules.items) : ''))
+const label = computed(() => (t.value ? transactionLabel(t.value.counterparty, t.value.description, rules.items, t.value.amountCents) : ''))
 
 watch(() => props.transaction?.id, () => {
   menuOpen.value = false

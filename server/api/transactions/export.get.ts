@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
     ...rows.map((r) => [
       r.bookedAt.toISOString().slice(0, 10),
       amount(r.amountCents),
-      text(transactionLabel(r.counterparty, r.description, rules)),
+      text(transactionLabel(r.counterparty, r.description, rules, r.amountCents)),
       text(r.categoryId ? catName.get(r.categoryId) : ''),
       text(r.description),
       r.source,

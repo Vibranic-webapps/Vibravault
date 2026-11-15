@@ -28,8 +28,8 @@ export default defineEventHandler(async (event) => {
     id: r.id,
     amountCents: r.amountCents,
     bookedAt: r.bookedAt.toISOString(),
-    label: transactionLabel(r.counterparty, r.description, rules),
+    label: transactionLabel(r.counterparty, r.description, rules, r.amountCents),
     description: r.description,
-    categoryId: r.categoryId ?? pickRule(categorising, r.description)?.categoryId ?? null,
+    categoryId: r.categoryId ?? pickRule(categorising, r.description, r.amountCents)?.categoryId ?? null,
   }))
 })

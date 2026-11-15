@@ -60,7 +60,7 @@ export async function parkForReview(userId: string, parsed: ParseResult, filenam
         counterpartyIban: r.counterpartyIban,
         description: r.description,
         fingerprint,
-        categoryId: pickRule(categorising, r.description)?.categoryId ?? null,
+        categoryId: pickRule(categorising, r.description, r.amountCents)?.categoryId ?? null,
         filename,
       })),
       skipDuplicates: true,

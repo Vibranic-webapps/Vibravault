@@ -12,6 +12,8 @@ export interface Transaction {
   balanceAfterCents: number | null
   description: string | null
   source: 'MANUAL' | 'CSV' | 'PSD2'
+  /** Which of the user's accounts it belongs to (the list endpoint sends it). */
+  accountId?: string | null
 }
 
 export interface Totals {
@@ -42,6 +44,18 @@ export function dayKey(d: Date): string {
   return `${monthKey(d)}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+/** Rows grouped by calendar day, newest day first - how every list renders. */
+export function groupByDay(items: Transaction[]): [string, Transaction[]][] {
+  const groups = new Map<string, Transaction[]>()
+  for (const t of items) {
+    const day = t.bookedAt.slice(0, 10)
+    const list = groups.get(day)
+    if (list) list.push(t)
+    else groups.set(day, [t])
+  }
+  return [...groups.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1))
+}
+
 export const useTransactionsStore = defineStore('transactions', () => {
   // State
   const items = ref<Transaction[]>([])
@@ -51,19 +65,13 @@ export const useTransactionsStore = defineStore('transactions', () => {
   /** True after the first successful fetch - until then an empty list means "not here yet", not "no transactions". */
   const loaded = ref(false)
   const error = ref<string | null>(null)
+  /** Goes up after every successful (re)fetch, i.e. after every add / edit / delete / import.
+   *  Screens that show the same rows in another shape (Transactions insights) watch it to refresh. */
+  const revision = ref(0)
 
   // Getters
   /** Rows grouped by calendar day, newest first - how the list renders. */
-  const byDay = computed(() => {
-    const groups = new Map<string, Transaction[]>()
-    for (const t of items.value) {
-      const day = t.bookedAt.slice(0, 10)
-      const list = groups.get(day)
-      if (list) list.push(t)
-      else groups.set(day, [t])
-    }
-    return [...groups.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1))
-  })
+  const byDay = computed(() => groupByDay(items.value))
 
   const uncategorisedCount = computed(() => items.value.filter((t) => !t.categoryId).length)
 
@@ -88,6 +96,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
       items.value = res.items
       totals.value = res.totals
       loaded.value = true
+      revision.value++
     } catch (e: unknown) {
       error.value = message(e)
     } finally {
@@ -156,7 +165,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
   }
 
   return {
-    items, totals, month, loading, loaded, error,
+    items, totals, month, loading, loaded, error, revision,
     byDay, uncategorisedCount,
     fetchMonth, shiftMonth, create, update, patch, remove,
   }

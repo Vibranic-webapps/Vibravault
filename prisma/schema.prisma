@@ -129,14 +129,21 @@ model ImportToken {
 // is WRITTEN, because categories drive totals - but only onto rows that are
 // still uncategorised, so a choice made by hand is never overwritten.
 model MerchantRule {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  match      String
-  label      String?
-  categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  createdAt  DateTime  @default(now())
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match          String
+  label          String?
+  categoryId     String?
+  category       Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  // Optional amount condition, in cents, compared on the ABSOLUTE value of the
+  // transaction (a 0.99 charge is stored as -99; the rule says 99). Both null =
+  // any amount (every rule created before this existed). An exact amount X is
+  // min = max = X; a range is min < max, both ends inclusive. Either both are
+  // set or neither - enforced at the API (validateRuleAmount), not in the DB.
+  amountMinCents Int?
+  amountMaxCents Int?
+  createdAt      DateTime  @default(now())
 
   @@index([userId])
 }
@@ -168,19 +175,23 @@ model Account {
 // lives only in the icon tile; it must never collide with teal (income) or
 // coral (expense), which carry SEMANTICS.
 model Category {
-  id          String       @id @default(cuid())
-  userId      String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  kind        CategoryKind
-  icon        String
-  color       String
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  kind           CategoryKind
+  icon           String
+  color          String
   // Optional monthly spending limit in integer cents, EXPENSE categories only.
   // One limit that repeats every month until changed (no per-month rows).
   // Positive when set - CHECK constraint hand-added in the migration.
-  budgetCents Int?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  budgetCents    Int?
+  // Marks a recurring-bill category (Netflix, phone plan...). EXPENSE only, which
+  // the API enforces. Drives the "subscriptions" ring + list in Transactions
+  // insights; a flag on the category so a new one needs no code change.
+  isSubscription Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   transactions        Transaction[]
   merchantRules       MerchantRule[]

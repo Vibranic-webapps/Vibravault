@@ -32,6 +32,21 @@ function parseBudget(body: any): number | null | undefined {
   return raw
 }
 
+/**
+ * The isSubscription flag of a category body.
+ *  - key absent / undefined -> `undefined`: leave the stored flag alone
+ *  - boolean                -> that value
+ * Anything else is rejected.
+ */
+function parseIsSubscription(body: any): boolean | undefined {
+  const raw = body?.isSubscription
+  if (raw === undefined) return undefined
+  if (typeof raw !== 'boolean') {
+    throw categoryError(400, 'isSubscription must be true or false', 'CATEGORY_SUBSCRIPTION_INVALID', 'isSubscription')
+  }
+  return raw
+}
+
 /** Shared validation for create + update, so the two can't drift apart. */
 export function validateCategoryInput(body: any) {
   const name = typeof body?.name === 'string' ? body.name.trim() : ''
@@ -65,5 +80,15 @@ export function validateCategoryInput(body: any) {
     budgetCents = null
   }
 
-  return { name, kind, icon, color, budgetCents } as const
+  // Same rule for the subscription flag: expense only; moving a category away
+  // from expense clears it.
+  let isSubscription = parseIsSubscription(body)
+  if (kind !== 'EXPENSE') {
+    if (isSubscription === true) {
+      throw categoryError(400, 'Only expense categories can be subscriptions', 'CATEGORY_SUBSCRIPTION_NOT_EXPENSE', 'isSubscription')
+    }
+    isSubscription = false
+  }
+
+  return { name, kind, icon, color, budgetCents, isSubscription } as const
 }
