@@ -48,6 +48,8 @@ export const useTransactionsStore = defineStore('transactions', () => {
   const totals = ref<Totals>({ income: 0, expense: 0, net: 0, count: 0 })
   const month = ref<string>(monthKey(new Date()))
   const loading = ref(false)
+  /** True after the first successful fetch - until then an empty list means "not here yet", not "no transactions". */
+  const loaded = ref(false)
   const error = ref<string | null>(null)
 
   // Getters
@@ -85,6 +87,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
       )
       items.value = res.items
       totals.value = res.totals
+      loaded.value = true
     } catch (e: unknown) {
       error.value = message(e)
     } finally {
@@ -153,7 +156,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
   }
 
   return {
-    items, totals, month, loading, error,
+    items, totals, month, loading, loaded, error,
     byDay, uncategorisedCount,
     fetchMonth, shiftMonth, create, update, patch, remove,
   }

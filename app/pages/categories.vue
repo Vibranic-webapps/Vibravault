@@ -9,7 +9,9 @@ import { useCategoriesStore, type Category, type CategoryKind } from '~/stores/c
  */
 const { t } = useI18n()
 const store = useCategoriesStore()
-await store.fetchAll(true) // counts change as transactions move - always fresh here
+// Counts change as transactions move, so refetch every visit - but don't make the
+// swipe wait for it: the list shows at once and the counts update when they land.
+useScreenData(() => store.fetchAll(true))
 
 const GROUPS: CategoryKind[] = ['EXPENSE', 'INCOME', 'TRANSFER']
 
@@ -45,7 +47,7 @@ function tint(c: Category) {
       <UiIconButton :icon="Plus" :label="t('cats.new')" @click="openNew()" />
     </header>
 
-    <section v-for="kind in GROUPS" :key="kind" class="group">
+    <section v-for="kind in GROUPS" :key="kind" class="group" :class="{ waiting: !store.loaded }" :aria-busy="!store.loaded">
       <h2>{{ t(`cats.${kind}`) }}</h2>
       <p v-if="kind === 'TRANSFER'" class="note">{{ t('cats.transferNote') }}</p>
 
@@ -79,7 +81,8 @@ function tint(c: Category) {
 <style scoped>
 .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
 h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.01em; }
-.group { margin-bottom: 22px; }
+.group { margin-bottom: 22px; transition: opacity .15s ease; }
+.group.waiting { opacity: .5; }
 h2 { margin: 0 4px 10px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--vv-muted); }
 .note { margin: -2px 4px 12px; font-size: 13px; line-height: 1.45; color: var(--vv-muted); }
 .card { padding: 2px 16px; }
