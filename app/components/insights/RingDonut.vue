@@ -223,7 +223,9 @@ watch([shownKey, canAct, isActive], place, { flush: 'post' })
 .stage { position: relative; display: flex; justify-content: center; width: 100%; }
 /* 150 viewBox units -> as wide as the card allows, up to 150px. */
 .ring { position: relative; width: min(150px, 86%); aspect-ratio: 1; flex: none; }
-svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+/* Only the ring's own svg. A bare `svg` selector also hit the filter icon inside the
+   pill (a child component's root gets this component's scope), blowing it up to 100% and rotating it. */
+.ring > svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
 .track { stroke: var(--vv-chart-grid); }
 .slice { cursor: pointer; outline: none; transition: opacity .18s ease, stroke-width .18s ease; }
 .ring.has-sel .slice:not(.sel) { opacity: .35; }
