@@ -1,5 +1,6 @@
 import { prismaLive } from '~~/server/utils/transactionQuery'
 import { requireUserId } from '~~/server/utils/auth'
+import { prisma } from '~~/server/utils/prisma'
 import { transferCategoryIds, countsAsFlow } from '~~/server/utils/transfers'
 
 export default defineEventHandler(async (event) => {
@@ -12,8 +13,28 @@ export default defineEventHandler(async (event) => {
     const [y, m] = q.month.split('-').map(Number)
     where.bookedAt = { gte: new Date(Date.UTC(y!, m! - 1, 1)), lt: new Date(Date.UTC(y!, m!, 1)) }
   }
+  // Or an explicit inclusive day range (?from=2026-11-09&to=2026-11-15), used by the
+  // week view - a week can straddle two months, so `month` can't express it.
+  // Same UTC windows as the insights endpoint, so the list and the charts agree.
+  const dayRe = /^\d{4}-\d{2}-\d{2}$/
+  if (typeof q.from === 'string' && typeof q.to === 'string' && dayRe.test(q.from) && dayRe.test(q.to)) {
+    const from = new Date(`${q.from}T00:00:00.000Z`)
+    const to = new Date(`${q.to}T00:00:00.000Z`)
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from > to) {
+      throw createError({ statusCode: 400, statusMessage: 'from and to must be real dates with from <= to', data: { field: 'from' } })
+    }
+    to.setUTCDate(to.getUTCDate() + 1) // inclusive end day -> exclusive bound
+    where.bookedAt = { gte: from, lt: to }
+  }
   if (typeof q.categoryId === 'string' && q.categoryId) where.categoryId = q.categoryId
   if (q.uncategorised === '1') where.categoryId = null
+
+  // Optional account filter. Authorize first: the account must be the user's own.
+  if (typeof q.accountId === 'string' && q.accountId) {
+    const own = await prisma.account.findFirst({ where: { id: q.accountId, userId }, select: { id: true } })
+    if (!own) throw createError({ statusCode: 404, statusMessage: 'Account not found' })
+    where.accountId = own.id
+  }
 
   const items = await prismaLive.transaction.findMany({
     where,

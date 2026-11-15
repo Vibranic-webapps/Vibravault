@@ -30,7 +30,7 @@ const DEFAULT_CATEGORIES = [
   { name: 'Housing',           kind: 'EXPENSE', icon: 'house', color: 'cat-7' },
   { name: 'Utilities',         kind: 'EXPENSE', icon: 'lightbulb', color: 'cat-6' },
   { name: 'Transport',         kind: 'EXPENSE', icon: 'bike', color: 'cat-8' },
-  { name: 'Subscriptions',     kind: 'EXPENSE', icon: 'tv', color: 'cat-9' },
+  { name: 'Subscriptions',     kind: 'EXPENSE', icon: 'tv', color: 'cat-9', isSubscription: true },
   { name: 'Eating out',        kind: 'EXPENSE', icon: 'utensils', color: 'cat-12' },
   { name: 'Shopping',          kind: 'EXPENSE', icon: 'shopping-bag', color: 'cat-10' },
   { name: 'Health',            kind: 'EXPENSE', icon: 'pill', color: 'cat-11' },
