@@ -17,14 +17,30 @@ interface Props {
   transfer?: boolean
   /** Second line. Defaults to the date; lists grouped by day show the category instead. */
   sub?: string | null
+  /**
+   * The account this row belongs to. Pass it only where the account matters
+   * (more than one account). Normal rows get a small tag after the second line;
+   * transfers say which way the money went, from the sign of the amount:
+   * negative = "out of <account>", positive = "into <account>".
+   * (The two legs of one transfer are NOT paired up - that is a backlog item.)
+   */
+  accountName?: string | null
 }
-const props = withDefaults(defineProps<Props>(), { icon: null, color: null, transfer: false, sub: null })
+const props = withDefaults(defineProps<Props>(), { icon: null, color: null, transfer: false, sub: null, accountName: null })
 const emit = defineEmits<{ click: [] }>()
+const { t } = useI18n()
 const { money, date } = useFormat()
 
 const amountClass = computed(() =>
   props.transfer ? 'vv-amount-transfer' : props.amountCents > 0 ? 'vv-amount-in' : 'vv-amount-out',
 )
+const accountTag = computed(() => {
+  if (!props.accountName) return null
+  if (!props.transfer) return props.accountName
+  return props.amountCents < 0
+    ? t('tx.accountOut', { account: props.accountName })
+    : t('tx.accountIn', { account: props.accountName })
+})
 const tile = computed(() =>
   props.color ? { background: `var(--vv-${props.color})`, color: `var(--vv-${props.color}-fg)` } : {},
 )
@@ -38,7 +54,9 @@ const tile = computed(() =>
     </span>
     <span class="main">
       <span class="name">{{ label }}</span>
-      <span class="when">{{ sub ?? date(bookedAt, { weekday: 'short', day: 'numeric', month: 'short' }) }}</span>
+      <span class="when">
+        {{ sub ?? date(bookedAt, { weekday: 'short', day: 'numeric', month: 'short' }) }}<template v-if="accountTag"> · <span class="acct">{{ accountTag }}</span></template>
+      </span>
     </span>
     <span class="amount" :class="amountClass">{{ money(amountCents, { signed: amountCents > 0 }) }}</span>
   </button>
@@ -59,6 +77,7 @@ const tile = computed(() =>
 }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .name { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.when { font-size: 12px; color: var(--vv-muted); }
+.when { font-size: 12px; color: var(--vv-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct { font-weight: 600; }
 .amount { font-size: 15px; font-weight: 700; white-space: nowrap; }
 </style>

@@ -1,30 +1,111 @@
 <script setup lang="ts">
-import { PenLine } from 'lucide-vue-next'
+import { PenLine, X } from 'lucide-vue-next'
 import { transactionLabel } from '~~/shared/utils/merchant'
-import { useTransactionsStore, type Transaction } from '~/stores/transactions'
+import { insightsWindow, parseDayKey, type InsightsPeriodKind } from '~~/shared/utils/insights'
+import { useTransactionsStore, groupByDay, dayKey, type Transaction } from '~/stores/transactions'
+import { useInsightsStore } from '~/stores/insights'
 import { useCategoriesStore } from '~/stores/categories'
 import { useRulesStore } from '~/stores/rules'
+import { UNSORTED_KEY } from '~/utils/ringSlices'
 
 /**
- * Transactions (Redesign v2, Wave 3): month switcher -> In / Out / Net ->
- * filter chips -> the month's rows, grouped by day. Tap a row for the drawer.
- * Adding happens in the shell's New transaction sheet (+ or the empty state).
+ * Transactions: where did the money go?
+ *   Week | Month -> period switcher -> (account chips) -> net verdict + In/Out/Net
+ *   -> subscriptions ring -> in-vs-out chart -> category ring -> filter chips
+ *   -> the period's rows, grouped by day. Tap a row for the drawer.
+ * Picking a category in the ring narrows the list below. Everything follows the
+ * same period + account (one fetch for the numbers, one for the list: see
+ * stores/insights.ts). Adding happens in the shell's New transaction sheet.
  */
 const { t } = useI18n()
 const { money, date, monthName } = useFormat()
 const { toast } = useToast()
 const addTx = useAddTransaction()
 const store = useTransactionsStore()
+const insights = useInsightsStore()
 const categories = useCategoriesStore()
 const rules = useRulesStore()
 
-// Opens at once on what the store already holds, then refreshes (see useScreenData).
-useScreenData(() => Promise.all([store.fetchMonth(), categories.fetchAll(true), rules.fetchAll()]))
+// ---- Period + account ------------------------------------------------------
+// Week | Month is remembered in a cookie (like the theme), so the choice sticks.
+const periodCookie = useCookie<InsightsPeriodKind>('vv-tx-period', {
+  default: () => 'month',
+  maxAge: 60 * 60 * 24 * 365,
+  sameSite: 'lax',
+  path: '/',
+})
+const period = computed<InsightsPeriodKind>(() => (periodCookie.value === 'week' ? 'week' : 'month'))
+const periodOptions = computed(() => [
+  { value: 'week', label: t('insights.week') },
+  { value: 'month', label: t('insights.month') },
+])
+
+// Month mode shares store.month with the rest of the app. Week mode keeps its
+// own anchor: any day inside the shown week.
+const weekAnchor = ref(dayKey(new Date()))
+const week = computed(() => insightsWindow('week', parseDayKey(weekAnchor.value) ?? new Date()))
+// Nothing to see in the future: stop at the week that contains today.
+const canNextWeek = computed(() => week.value.to < dayKey(new Date()))
+/** null = all accounts. */
+const accountId = ref<string | null>(null)
+/** Picked category (its id, or UNSORTED_KEY): narrows the list below the charts. */
+const pickedCategory = ref<string | null>(null)
+
+function load() {
+  return insights.fetch({
+    kind: period.value,
+    anchor: period.value === 'month' ? `${store.month}-01` : weekAnchor.value,
+    accountId: accountId.value,
+  })
+}
+
+// A different period or account has different categories: drop the narrowing.
+function moveTo(change: () => void) {
+  change()
+  pickedCategory.value = null
+  load()
+}
 
 const month = computed({
   get: () => store.month,
-  set: (m: string) => { store.fetchMonth(m) },
+  set: (m: string) => moveTo(() => { store.month = m }),
 })
+function setPeriod(value: string) {
+  moveTo(() => { periodCookie.value = value === 'week' ? 'week' : 'month' })
+}
+function shiftWeek(anchor: string) {
+  moveTo(() => { weekAnchor.value = anchor })
+}
+function setAccount(id: string | null) {
+  moveTo(() => { accountId.value = id })
+}
+
+// Opens at once on what the stores already hold, then refreshes (see useScreenData).
+useScreenData(() => Promise.all([load(), categories.fetchAll(true), rules.fetchAll()]))
+
+// Something was added / edited / deleted / imported: refresh the whole picture.
+watch(() => store.revision, () => { load() })
+
+const data = computed(() => insights.data)
+const accounts = computed(() => data.value?.accounts ?? [])
+const manyAccounts = computed(() => accounts.value.length >= 2)
+
+// A narrowing that no longer exists in the new numbers would hide everything.
+watch(data, (d) => {
+  if (!pickedCategory.value || !d) return
+  if (!d.categories.some((c) => (c.categoryId ?? UNSORTED_KEY) === pickedCategory.value)) pickedCategory.value = null
+})
+const pickedName = computed(() => {
+  const c = data.value?.categories.find((x) => (x.categoryId ?? UNSORTED_KEY) === pickedCategory.value)
+  return c ? (c.name ?? t('insights.unsorted')) : ''
+})
+
+// Charts only appear when they have something to say (no zero-rings).
+const hasMoney = computed(() => {
+  const r = data.value?.ring
+  return !!r && (r.incomeCents > 0 || r.subscriptionsCents + r.otherSpendCents > 0)
+})
+const hasFlow = computed(() => !!data.value?.series.some((b) => b.incomeCents || b.expenseCents))
 
 function categoryOf(id: string | null) {
   return id ? categories.byId.get(id) : undefined
@@ -50,9 +131,17 @@ function matches(tx: Transaction, f: Filter = filter.value) {
   }
 }
 
+// The rows of this period + account, narrowed by the category picked in the
+// ring. That narrowing and the chips below apply together.
+const scoped = computed(() =>
+  pickedCategory.value === null
+    ? insights.items
+    : insights.items.filter((tx) => (tx.categoryId ?? UNSORTED_KEY) === pickedCategory.value),
+)
+
 const counts = computed(() => {
   const c = { all: 0, unsorted: 0, in: 0, out: 0, transfers: 0 }
-  for (const tx of store.items) {
+  for (const tx of scoped.value) {
     for (const f of Object.keys(c) as Filter[]) if (matches(tx, f)) c[f]++
   }
   return c
@@ -68,13 +157,13 @@ const chips = computed(() => ([
   { key: 'transfers', label: t('tx.transfers') },
 ] as { key: Filter; label: string }[]).filter((c) => c.key === 'all' || counts.value[c.key] > 0))
 
-// New month has none of the filtered kind? Fall back to All instead of an
+// New period has none of the filtered kind? Fall back to All instead of an
 // empty screen you didn't ask for.
 watch(counts, (c) => { if (filter.value !== 'all' && !c[filter.value]) filter.value = 'all' })
 
 // ---- The list, grouped by day ---------------------------------------------
 const days = computed(() =>
-  store.byDay
+  groupByDay(scoped.value)
     .map(([day, rows]) => {
       const shown = rows.filter((tx) => matches(tx))
       // Day total counts real money only: transfers stay out, like the tiles.
@@ -86,6 +175,14 @@ const days = computed(() =>
 
 function dayTitle(day: string) {
   return date(day, { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
+/** Account tag for a row: only where it adds something (2+ accounts). */
+function accountNameFor(tx: Transaction): string | null {
+  if (!manyAccounts.value) return null
+  // One account picked: the tag would repeat the obvious, but a transfer still needs its direction.
+  if (kindOf(tx) !== 'transfer' && accountId.value) return null
+  return accounts.value.find((a) => a.id === tx.accountId)?.name ?? null
 }
 
 // ---- Drawer + rules --------------------------------------------------------
@@ -101,14 +198,14 @@ async function onRemove(tx: Transaction) {
 async function onRuleSaved(n: number) {
   teaching.value = null
   toast(t('tx.ruleSaved', n))
-  await Promise.all([store.fetchMonth(), rules.fetchAll()])
+  await Promise.all([load(), rules.fetchAll()])
 }
 
-// Pull to refresh: refetch the month being viewed (not the current one) and what
-// feeds the rows. The stores swallow their errors into `.error`, so check them.
+// Pull to refresh (also the retry for a failed load): refetch the period being
+// viewed and what feeds the rows. The stores swallow their errors into `.error`, so check them.
 onPullRefresh(async () => {
-  await Promise.all([store.fetchMonth(store.month), categories.fetchAll(true), rules.fetchAll()])
-  if (store.error || categories.error || rules.error) throw new Error('refresh failed')
+  await Promise.all([load(), categories.fetchAll(true), rules.fetchAll()])
+  if (insights.error || categories.error || rules.error) throw new Error('refresh failed')
 })
 </script>
 
@@ -116,24 +213,80 @@ onPullRefresh(async () => {
   <div>
     <h1>{{ t('tx.title') }}</h1>
 
-    <UiMonthSwitcher v-model="month" class="months" />
+    <UiSegmented class="period" :model-value="period" :options="periodOptions" :label="t('insights.periodLabel')" @update:model-value="setPeriod" />
 
-    <div class="body" :class="{ refreshing: store.loading }" :aria-busy="store.loading">
-      <MoneyTiles class="tiles" :income="store.totals.income" :expense="store.totals.expense" :net="store.totals.net" />
-      <p v-if="store.totals.transferred" class="moved">{{ t('tx.moved', { amount: money(store.totals.transferred) }) }}</p>
+    <UiMonthSwitcher v-if="period === 'month'" v-model="month" class="months" />
+    <InsightsWeekSwitcher
+      v-else
+      class="months"
+      :from="week.from"
+      :to="week.to"
+      :can-next="canNextWeek"
+      @prev="shiftWeek(week.prevAnchor)"
+      @next="shiftWeek(week.nextAnchor)"
+    />
 
-      <p v-if="store.error" class="vv-error" role="alert">{{ store.error }}</p>
+    <!-- Invisible (renders nothing) until there are two accounts. -->
+    <InsightsAccountSwitch :accounts="accounts" :model-value="accountId" @update:model-value="setAccount" />
 
-      <!-- Empty month -->
-      <section v-if="!store.items.length && store.loaded" class="neu-3 empty">
-        <p>{{ t('home.emptyMonth', { month: monthName(month) }) }}</p>
+    <div class="body" :class="{ refreshing: insights.loading }" :aria-busy="insights.loading">
+      <div v-if="insights.error || store.error" class="vv-error err" role="alert">
+        <p>{{ insights.error || store.error }}</p>
+        <UiButton variant="ghost" :block="false" @click="load()">{{ t('common.retry') }}</UiButton>
+      </div>
+
+      <!-- First load only: placeholders the size of what comes, so nothing jumps. -->
+      <template v-if="!insights.loaded && !insights.error">
+        <div class="neu-3 skeleton verdict-sk" aria-hidden="true" />
+        <div class="neu-3 skeleton ring-sk" aria-hidden="true" />
+      </template>
+
+      <!-- Empty period: no charts, no zero-rings -->
+      <section v-else-if="insights.loaded && !insights.items.length" class="neu-3 empty">
+        <p v-if="period === 'month'">{{ t('home.emptyMonth', { month: monthName(month) }) }}</p>
+        <p v-else>{{ t('insights.emptyWeek') }}</p>
         <UiButton :icon="PenLine" :block="false" @click="addTx.show()">{{ t('tx.addFirst') }}</UiButton>
       </section>
 
-      <template v-else-if="store.items.length">
+      <template v-else-if="data">
+        <InsightsNetVerdict
+          class="block"
+          :income-cents="data.totals.incomeCents"
+          :expense-cents="data.totals.expenseCents"
+          :net-cents="data.totals.netCents"
+        />
+        <MoneyTiles class="tiles" :income="data.totals.incomeCents" :expense="data.totals.expenseCents" :net="data.totals.netCents" />
+        <p v-if="data.totals.transferredCents" class="moved">{{ t('tx.moved', { amount: money(data.totals.transferredCents) }) }}</p>
+
+        <InsightsSpendRing
+          v-if="hasMoney"
+          class="block"
+          :ring="data.ring"
+          :subscriptions="data.subscriptions"
+          :kind="data.period.kind"
+        />
+        <InsightsFlowChart
+          v-if="hasFlow"
+          class="block"
+          :series="data.series"
+          :kind="data.period.kind"
+          :title="t('insights.flowTitle')"
+        />
+        <InsightsCategoryRing
+          v-if="data.categories.length"
+          class="block"
+          :categories="data.categories"
+          :active="pickedCategory"
+          @select="(key) => (pickedCategory = key)"
+        />
+
         <!-- Scrolls sideways when the chips don't fit; the screen swipe leaves
              horizontal scrollers alone, so this never switches tabs. -->
         <div class="chips" role="group" :aria-label="t('tx.filters')">
+          <UiChip v-if="pickedCategory" active class="clear" @click="pickedCategory = null">
+            <X :size="14" aria-hidden="true" />
+            {{ t('insights.onlyCategory', { name: pickedName }) }}
+          </UiChip>
           <UiChip
             v-for="c in chips"
             :key="c.key"
@@ -159,6 +312,7 @@ onPullRefresh(async () => {
               :icon="categoryOf(tx.categoryId)?.icon"
               :color="categoryOf(tx.categoryId)?.color"
               :transfer="kindOf(tx) === 'transfer'"
+              :account-name="accountNameFor(tx)"
               @click="viewing = tx"
             />
           </div>
@@ -166,7 +320,7 @@ onPullRefresh(async () => {
 
         <section v-if="!days.length" class="neu-3 empty">
           <p>{{ t('tx.emptyFilter') }}</p>
-          <UiButton variant="ghost" :block="false" @click="filter = 'all'">{{ t('tx.showAll') }}</UiButton>
+          <UiButton variant="ghost" :block="false" @click="filter = 'all'; pickedCategory = null">{{ t('tx.showAll') }}</UiButton>
         </section>
       </template>
     </div>
@@ -185,12 +339,22 @@ onPullRefresh(async () => {
 
 <style scoped>
 h1 { margin: 0 0 20px; font-size: 28px; font-weight: 800; letter-spacing: -.01em; }
+.period { margin: 0 0 16px; }
 .months { margin: 0 0 18px; }
 .body { transition: opacity .15s ease; }
 .body.refreshing { opacity: .5; }
 
+.block { margin-bottom: 16px; }
 .tiles { margin-bottom: 10px; }
-.moved { margin: 0 0 8px; text-align: center; font-size: 12px; color: var(--vv-muted); }
+.moved { margin: 0 0 16px; text-align: center; font-size: 12px; color: var(--vv-muted); }
+
+.err { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.err p { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+
+/* Placeholder heights ~ the real cards, so the page doesn't jump when data lands. */
+.skeleton { margin-bottom: 16px; opacity: .6; }
+.verdict-sk { height: 150px; }
+.ring-sk { height: 320px; }
 
 /* Padding keeps the chips' shadows inside the scroller (which clips). */
 .chips {
@@ -198,6 +362,7 @@ h1 { margin: 0 0 20px; font-size: 28px; font-weight: 800; letter-spacing: -.01em
   margin: 8px -24px 14px; padding: 8px 24px 12px;
 }
 .chips::-webkit-scrollbar { display: none; }
+.clear { max-width: 70vw; }
 
 .day { margin-bottom: 18px; }
 .day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 4px 10px; }

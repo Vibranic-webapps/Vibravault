@@ -12,6 +12,8 @@ export interface Category {
   color: string
   /** Monthly spending limit in integer cents (expense categories only), or null = no budget. */
   budgetCents: number | null
+  /** Expense categories only: its spending counts toward the subscriptions ring on Transactions. */
+  isSubscription: boolean
   /** Live transactions in it (from the list endpoint; absent right after a create/update). */
   count?: number
 }
@@ -23,6 +25,8 @@ export interface CategoryInput {
   color: string
   /** Positive cents sets the monthly limit, null clears it. Omit to leave it as it is. */
   budgetCents?: number | null
+  /** Expense categories only; the server clears it for other kinds. */
+  isSubscription?: boolean
 }
 
 /** A typed monthly budget ("300", "300,50") -> cents, or null if it isn't a plain amount above 0. Same rules as a goal target. */

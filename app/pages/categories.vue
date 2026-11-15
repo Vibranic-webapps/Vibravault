@@ -63,10 +63,11 @@ function tint(c: Category) {
           <span class="tile neu" :style="tint(c)" aria-hidden="true"><CategoryIcon :name="c.icon" :size="19" /></span>
           <span class="main">
             <span class="name">{{ c.name }}</span>
-            <span v-if="c.count !== undefined || c.budgetCents" class="sub">
+            <span v-if="c.count !== undefined || c.budgetCents || c.isSubscription" class="sub">
               <template v-if="c.count !== undefined">{{ t('home.weekCount', c.count) }}</template>
               <template v-if="c.count !== undefined && c.budgetCents"> · </template>
               <template v-if="c.budgetCents">{{ t('budgets.perMonth', { amount: money(c.budgetCents) }) }}</template>
+              <template v-if="c.isSubscription"><template v-if="c.count !== undefined || c.budgetCents"> · </template>{{ t('cats.subscriptionTag') }}</template>
             </span>
           </span>
           <ChevronRight :size="18" class="chev" aria-hidden="true" />
