@@ -135,7 +135,7 @@ function onClickCapture(e: MouseEvent) {
       >
         <button type="button" class="open" :aria-label="t('goals.openN', { name: g.name })" @click="emit('open', g.id)">
           <span class="stage">
-            <GoalPicture :src="g.imageSrc" :name="g.name" fit="cover" @broken="broken.add(g.id)" />
+            <GoalPicture :src="g.imageSrc" :name="g.name" fit="ambient" @broken="broken.add(g.id)" />
           </span>
           <span class="name">{{ g.name }}</span>
         </button>
@@ -205,14 +205,15 @@ function onClickCapture(e: MouseEvent) {
 /* The picture is the card; text rides on a dark fade at the bottom. */
 .gcard:not(.newcard) { padding: 0; }
 .gcard:not(.newcard) .open { position: absolute; inset: 0; gap: 0; border-radius: inherit; }
-.stage { position: absolute; inset: 0; background: var(--g-bg); }
+.stage { position: absolute; inset: 0; background: var(--g-bg); --pic-pad: 14px 14px 100px; }
 .name { position: absolute; left: 12px; right: 12px; bottom: 56px; z-index: 1; }
 .newcard .name { position: static; }
 .gcard:not(.newcard) .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 12px 12px; }
-.pictured .stage::after { content: ''; position: absolute; inset: 0; background: var(--vv-scrim); }
+.pictured .stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 72%; background: var(--vv-scrim); }
 .pictured .name,
 .pictured .amounts strong,
-.pictured .amounts small { color: var(--vv-on-scrim); }
+.pictured .amounts small { color: var(--vv-on-scrim); text-shadow: 0 1px 3px rgba(0, 0, 0, .55); }
+.pictured .amounts small { opacity: .92; }
 .gcard:not(.pictured):not(.newcard) .name { color: var(--g-ink); }
 
 .newcard { align-items: center; justify-content: center; gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
