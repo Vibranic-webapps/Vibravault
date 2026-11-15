@@ -147,6 +147,20 @@ export default defineEventHandler(async (event) => {
     .sort((a, b) => a.total - b.total) // most negative first
     .slice(0, 5)
 
+  // ---- Budgets: spent vs. limit per expense category ----------------------
+  // Reuses byCat above, so the spend is the SAME number Home shows as spending:
+  // this month's window, transfers and soft-deleted rows already excluded, only
+  // negative amounts counted. spentCents is flipped to a positive integer.
+  // One entry per expense category that HAS a budget (0 spent when untouched);
+  // the limit is a single monthly figure that repeats every month.
+  const budgets = cats
+    .filter((c) => c.kind === 'EXPENSE' && c.budgetCents != null)
+    .map((c) => ({
+      categoryId: c.id,
+      spentCents: 0 - (byCat.get(c.id) ?? 0), // 0 - x, never -0
+      budgetCents: c.budgetCents as number,
+    }))
+
   // ---- Latest this month --------------------------------------------------
   // Full rows (not just labels) so Home can open the same drawer as the list.
   const latest = monthRows.slice(0, LATEST_COUNT).map((t) => ({
@@ -162,6 +176,7 @@ export default defineEventHandler(async (event) => {
     totals: { income, expense, net: income + expense, count: monthRows.length },
     weeks,
     topCategories,
+    budgets,
     latest,
     uncategorised: monthRows.filter((t) => !t.categoryId).length,
     hasAnyTransactions: totalEver > 0,
