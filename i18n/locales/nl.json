@@ -415,7 +415,6 @@
     "imageLinkLabel": "Link naar de foto",
     "imageLinkHint": "Een link die met https:// begint",
     "tint": "Kaartkleur",
-    "lookSwitch": "Kaartlook wisselen",
     "tints": {
       "mint": "Munt",
       "blush": "Roze",

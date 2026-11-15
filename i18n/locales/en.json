@@ -415,7 +415,6 @@
     "imageLinkLabel": "Picture link",
     "imageLinkHint": "A link that starts with https://",
     "tint": "Card colour",
-    "lookSwitch": "Switch card look",
     "tints": {
       "mint": "Mint",
       "blush": "Blush",

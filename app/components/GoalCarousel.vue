@@ -5,13 +5,10 @@ import type { Goal } from '~/stores/goals'
 /**
  * Home's goals: small cards in a sideways carousel that bends. The card in the
  * middle faces you; the ones beside it tilt toward the centre, shrink and fade,
- * like a cupped hand. Each card shows the goal's picture on its pastel tint, a
- * progress ring, saved of target, and a round + that adds money without opening
- * the card.
- *
- * Two looks while Kilian compares them (useGoalCardLook, temporary):
- *   window - picture whole inside a tinted window on the raised card
- *   fill   - picture fills the card, text on a dark fade
+ * like a cupped hand. The goal's picture fills the whole card and everything
+ * else sits on top of it: a progress ring, the name and saved-of-target on a
+ * dark fade, and a round + that adds money without opening the card. A goal
+ * without a picture shows its first letter on its pastel tint.
  *
  * `data-swipe-lock` keeps the screen swipe off this row: sideways here scrolls
  * the cards, not the pages. Touch scrolls natively; a mouse drags by hand. Only
@@ -22,7 +19,6 @@ const emit = defineEmits<{ open: [id: string]; add: [id: string]; new: [] }>()
 
 const { t } = useI18n()
 const { money } = useFormat()
-const { look } = useGoalCardLook()
 
 // A link that no longer loads: the card falls back to dark-on-tint text.
 const broken = reactive(new Set<string>())
@@ -134,12 +130,12 @@ function onClickCapture(e: MouseEvent) {
     <div v-for="g in goals" :key="g.id" class="slide">
       <div
         class="neu-3 gcard"
-        :class="[look, { pictured: pictured(g) }]"
+        :class="{ pictured: pictured(g) }"
         :style="goalTintStyle(goalTint(g))"
       >
         <button type="button" class="open" :aria-label="t('goals.openN', { name: g.name })" @click="emit('open', g.id)">
           <span class="stage">
-            <GoalPicture :src="g.imageSrc" :name="g.name" :fit="look === 'fill' ? 'cover' : 'contain'" @broken="broken.add(g.id)" />
+            <GoalPicture :src="g.imageSrc" :name="g.name" fit="cover" @broken="broken.add(g.id)" />
           </span>
           <span class="name">{{ g.name }}</span>
         </button>
@@ -206,20 +202,18 @@ function onClickCapture(e: MouseEvent) {
 .amounts strong { font-size: 15px; font-weight: 800; white-space: nowrap; }
 .amounts small { font-size: 12px; color: var(--vv-muted); white-space: nowrap; }
 
-/* ---- Look A "window": the picture sits whole in a tinted, pressed-in window ---- */
-.window .stage { flex: 1; min-height: 0; background: var(--g-bg); border-radius: var(--vv-r-sm); box-shadow: var(--vv-p1); overflow: hidden; }
-
-/* ---- Look B "fill": the picture is the card; text rides on a dark fade ---- */
-.fill { padding: 0; }
-.fill .open { position: absolute; inset: 0; gap: 0; border-radius: inherit; }
-.fill .stage { position: absolute; inset: 0; background: var(--g-bg); }
-.fill .name { position: absolute; left: 12px; right: 12px; bottom: 56px; z-index: 1; }
-.fill .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 12px 12px; }
-.fill.pictured .stage::after { content: ''; position: absolute; inset: 0; background: var(--vv-scrim); }
-.fill.pictured .name,
-.fill.pictured .amounts strong,
-.fill.pictured .amounts small { color: var(--vv-on-scrim); }
-.fill:not(.pictured) .name { color: var(--g-ink); }
+/* The picture is the card; text rides on a dark fade at the bottom. */
+.gcard:not(.newcard) { padding: 0; }
+.gcard:not(.newcard) .open { position: absolute; inset: 0; gap: 0; border-radius: inherit; }
+.stage { position: absolute; inset: 0; background: var(--g-bg); }
+.name { position: absolute; left: 12px; right: 12px; bottom: 56px; z-index: 1; }
+.newcard .name { position: static; }
+.gcard:not(.newcard) .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 12px 12px; }
+.pictured .stage::after { content: ''; position: absolute; inset: 0; background: var(--vv-scrim); }
+.pictured .name,
+.pictured .amounts strong,
+.pictured .amounts small { color: var(--vv-on-scrim); }
+.gcard:not(.pictured):not(.newcard) .name { color: var(--g-ink); }
 
 .newcard { align-items: center; justify-content: center; gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .newcard:active { box-shadow: var(--vv-p3); }

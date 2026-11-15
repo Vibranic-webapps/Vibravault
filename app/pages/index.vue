@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Inbox, PenLine, FileUp, ClipboardCheck, Shuffle } from 'lucide-vue-next'
+import { Inbox, PenLine, FileUp, ClipboardCheck } from 'lucide-vue-next'
 import type { Week } from '~/components/home/WeekChart.vue'
 import type { Transaction } from '~/stores/transactions'
 import { useTransactionsStore, monthKey, dayKey } from '~/stores/transactions'
@@ -41,7 +41,6 @@ const txStore = useTransactionsStore()
 const categories = useCategoriesStore()
 const rules = useRulesStore()
 const goals = useGoalsStore()
-const { look: cardLook, toggle: toggleCardLook } = useGoalCardLook() // TEMPORARY A/B switch
 
 // "Hey Kilian" - or a friendly fallback until a name is set in You.
 const greeting = computed(() =>
@@ -169,11 +168,7 @@ onPullRefresh(async () => {
       <section class="goals" aria-labelledby="goals-h">
         <div class="card-head">
           <h2 id="goals-h">{{ t('goals.title') }}</h2>
-          <span class="head-actions">
-            <!-- TEMPORARY: compare the two goal card looks, then delete this (useGoalCardLook). -->
-            <UiIconButton v-if="goals.items.length" :icon="Shuffle" size="sm" :label="t('goals.lookSwitch')" :active="cardLook === 'fill'" @click="toggleCardLook" />
-            <NuxtLink v-if="goals.items.length" class="vv-link see-all" to="/goals">{{ t('home.seeAll') }}</NuxtLink>
-          </span>
+          <NuxtLink v-if="goals.items.length" class="vv-link see-all" to="/goals">{{ t('home.seeAll') }}</NuxtLink>
         </div>
         <GoalsPanel compact />
       </section>
@@ -294,7 +289,6 @@ h2 { margin: 0 0 14px; font-size: 16px; font-weight: 800; }
 .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
 .card-head h2 { margin: 0; }
 .see-all { font-size: 14px; }
-.head-actions { display: flex; align-items: center; gap: 12px; }
 
 .tiles { margin-bottom: 18px; }
 

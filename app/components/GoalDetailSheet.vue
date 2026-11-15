@@ -90,7 +90,7 @@ async function runPending() {
       <section class="hero" :style="goalTintStyle(goalTint(goal))">
         <!-- What I'm saving for: the picture on the goal's tint, or its first letter. -->
         <div class="picture">
-          <GoalPicture :src="goal.imageSrc" :name="goal.name" fit="contain" />
+          <GoalPicture :src="goal.imageSrc" :name="goal.name" fit="cover" />
         </div>
         <p class="saved">{{ money(goal.savedCents) }}</p>
         <p class="of">{{ t('goals.of', { target: money(goal.targetCents) }) }} · {{ goal.percent }}%</p>
@@ -176,7 +176,7 @@ async function runPending() {
 .body { display: grid; gap: 24px; }
 
 .hero { display: grid; gap: 10px; }
-.picture { height: 168px; margin-bottom: 6px; background: var(--g-bg); border-radius: var(--vv-r-md); box-shadow: var(--vv-p1); overflow: hidden; }
+.picture { height: 200px; margin-bottom: 6px; background: var(--g-bg); border-radius: var(--vv-r-md); box-shadow: var(--vv-p1); overflow: hidden; }
 .saved { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
 .of { margin: 0; font-size: 14px; color: var(--vv-muted); font-variant-numeric: tabular-nums; }
 .hero :deep(.track) { margin-top: 4px; }
