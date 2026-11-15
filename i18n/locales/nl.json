@@ -161,6 +161,7 @@
     "demoKeysLocked": "Op het demo-account kan je geen sleutel maken, zodat niemand na zijn bezoek nog toegang houdt. De stappen hieronder tonen hoe het werkt."
   },
   "home": {
+    "loadError": "Je overzicht kon niet geladen worden.",
     "greeting": "Hey {name}",
     "greetingNoName": "Hey daar",
     "balance": "Saldo",
@@ -384,6 +385,7 @@
   "goals": {
     "title": "Spaardoelen",
     "setPrompt": "Stel een spaardoel in",
+    "seeAllN": "Alle {n} doelen bekijken",
     "new": "Nieuw doel",
     "edit": "Doel bewerken",
     "create": "Doel maken",

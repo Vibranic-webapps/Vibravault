@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Inbox, PenLine, FileUp, ClipboardCheck, Target } from 'lucide-vue-next'
+import { Inbox, PenLine, FileUp, ClipboardCheck, Plus } from 'lucide-vue-next'
 import type { Week } from '~/components/home/WeekChart.vue'
 import type { Transaction } from '~/stores/transactions'
 import { useTransactionsStore, monthKey, dayKey } from '~/stores/transactions'
@@ -10,8 +10,10 @@ import { useGoalsStore } from '~/stores/goals'
 /**
  * Home (Redesign v2, Wave 3). Top to bottom, the order you'd ask the questions:
  *   how much do I have?  -> bank card(s)            (all time)
+ *   what am I saving for?-> every goal, tap to open it right here
  *   how's this month?    -> In / Out / Net          (month switcher scopes
  *   which week?          -> chart, tap for detail    everything below it)
+ *                           (swipe sideways over this part = previous / next month)
  *   on what?             -> where it went
  *   what just happened?  -> latest 5, tap for the drawer
  */
@@ -47,17 +49,22 @@ const greeting = computed(() =>
 
 const month = ref(monthKey(new Date()))
 
+// Nothing here blocks the swipe into Home: it opens at once on what is already
+// cached and fills in as the data lands (useScreenData / lazy). The server
+// render still waits, so a hard refresh arrives complete.
+const { data: fresh, refresh, status, error } = useAsyncData<Dashboard>(
+  'dashboard',
+  () => useRequestFetch()('/api/dashboard', { query: { month: month.value } }),
+  { watch: [month], lazy: true },
+)
+// Nuxt drops a page's async data when you leave it. Keep the last dashboard (browser only,
+// never in the server payload) so coming back to Home shows it at once, dimmed, while the
+// fresh one loads. Cleared on sign-out (You).
+const last = useState<Dashboard | null>('dashboard-last', () => null)
+watch(fresh, (v) => { if (v && import.meta.client) last.value = v }, { immediate: true })
+const data = computed(() => fresh.value ?? last.value)
 // Categories + rules feed the drawer (names, tiles, rule labels).
-const [{ data, refresh, status, error }] = await Promise.all([
-  useAsyncData<Dashboard>(
-    'dashboard',
-    () => useRequestFetch()('/api/dashboard', { query: { month: month.value } }),
-    { watch: [month] },
-  ),
-  categories.fetchAll(),
-  rules.fetchAll(),
-  goals.fetchAll(true), // errors land in goals.error; the card just stays hidden
-])
+useScreenData(() => Promise.all([categories.fetchAll(), rules.fetchAll(), goals.fetchAll(true)]))
 
 // Refetch keeps the frame: while the next month loads, the current one stays
 // on screen, dimmed - no blank flash, no layout jump.
@@ -68,6 +75,14 @@ function shiftMonth(delta: number) {
   const [y, m] = month.value.split('-').map(Number)
   month.value = monthKey(new Date(y!, m! - 1 + delta, 1))
 }
+
+// Swipe sideways over the month section = previous / next month. The section
+// is marked data-swipe-lock, so the screen swipe leaves it alone; everywhere
+// else on Home a swipe still changes page.
+const monthZone = ref<HTMLElement | null>(null)
+useSwipeZone(monthZone, (dir) => shiftMonth(dir === 'next' ? 1 : -1))
+
+const goalsPanel = ref<{ openNew: () => void } | null>(null)
 
 // ---- Chart: which week is picked ------------------------------------------
 // Viewing the current month? Start on this week. Another month? Nothing
@@ -150,15 +165,20 @@ onPullRefresh(async () => {
     <template v-else-if="data">
       <HomeCardCarousel :cards="data.accounts" />
 
-      <!-- Savings goal: the most pressing one. No goals yet = one quiet row, no banner. -->
-      <GoalCard v-if="goals.featured" class="goal-card" :goal="goals.featured" to="/goals" compact />
-      <section v-else-if="goals.loaded && !goals.error" class="neu-3 card rows goal-prompt">
-        <UiListRow :icon="Target" :label="t('goals.setPrompt')" to="/goals" />
+      <!-- Savings goals: all of them, right here. Tap one to open it. -->
+      <section class="goals" aria-labelledby="goals-h">
+        <div class="card-head">
+          <h2 id="goals-h">{{ t('goals.title') }}</h2>
+          <UiIconButton v-if="goals.items.length" :icon="Plus" :label="t('goals.new')" @click="goalsPanel?.openNew()" />
+        </div>
+        <GoalsPanel ref="goalsPanel" compact :limit="3" />
       </section>
 
-      <UiMonthSwitcher v-model="month" class="months" />
+      <!-- The month section: switcher, In / Out / Net, the weeks chart. Sideways swipes here move between months. -->
+      <div ref="monthZone" class="month-zone" data-swipe-lock>
+        <UiMonthSwitcher v-model="month" class="months" />
 
-      <div class="month-body" :class="{ refreshing }" :aria-busy="refreshing">
+        <div class="month-body" :class="{ refreshing }" :aria-busy="refreshing">
         <MoneyTiles class="tiles" :income="data.totals.income" :expense="data.totals.expense" :net="data.totals.net" />
 
         <section v-if="data.uncategorised" class="neu-3 card rows">
@@ -177,7 +197,10 @@ onPullRefresh(async () => {
             <UiButton variant="ghost" :block="false" @click="shiftMonth(-1)">{{ t('home.seePrevious') }}</UiButton>
           </div>
         </section>
+        </div>
+      </div>
 
+      <div class="month-body" :class="{ refreshing }" :aria-busy="refreshing">
         <section v-if="data.topCategories.length" class="neu-3 card">
           <h2>{{ t('home.whereItWent') }}</h2>
           <ul class="cats">
@@ -222,6 +245,15 @@ onPullRefresh(async () => {
       </div>
     </template>
 
+    <!-- Nothing cached yet (first visit): a placeholder the size of the bank card, or a retry if it failed. -->
+    <section v-else-if="error" class="neu-3 card load-error">
+      <p class="vv-error" role="alert">{{ t('home.loadError') }}</p>
+      <UiButton variant="ghost" :block="false" @click="refresh()">{{ t('common.retry') }}</UiButton>
+    </section>
+    <div v-else class="load" aria-busy="true" :aria-label="t('common.loading')">
+      <span class="neu-3 skel" /><span class="neu-3 skel short" />
+    </div>
+
     <TransactionDrawer
       :transaction="viewing"
       :category="categoryOf(viewing?.categoryId ?? null)"
@@ -239,13 +271,22 @@ onPullRefresh(async () => {
 h2 { margin: 0 0 14px; font-size: 16px; font-weight: 800; }
 
 .months { margin: 0 0 18px; }
+.goals { margin-bottom: 18px; }
+.goals .card-head { margin-bottom: 12px; }
+.month-zone { touch-action: pan-y pinch-zoom; } /* vertical scroll stays native; sideways is ours */
+
+.load { display: grid; gap: 18px; }
+.skel { display: block; height: 176px; animation: pulse 1.4s ease-in-out infinite; }
+.skel.short { height: 128px; }
+.load-error { display: grid; justify-items: start; gap: 12px; }
+.load-error .vv-error { margin: 0; }
+@keyframes pulse { 50% { opacity: .6; } }
 .month-body { transition: opacity .15s ease; }
 .month-body.refreshing { opacity: .5; }
 
 .card { padding: 20px; margin-bottom: 18px; }
 .rows { padding: 4px 16px; }
 .review { margin-bottom: 18px; }
-.goal-card, .goal-prompt { margin-bottom: 18px; }
 .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
 .card-head h2 { margin: 0; }
 .see-all { font-size: 14px; }
@@ -272,5 +313,5 @@ h2 { margin: 0 0 14px; font-size: 16px; font-weight: 800; }
 .w-body { margin: 0 auto 24px; max-width: 38ch; font-size: 15px; color: var(--vv-muted); }
 .w-actions { display: grid; gap: 12px; max-width: 320px; margin: 0 auto; }
 
-@media (prefers-reduced-motion: reduce) { .month-body { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .month-body { transition: none; } .skel { animation: none; } }
 </style>

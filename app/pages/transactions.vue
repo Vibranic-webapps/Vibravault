@@ -18,7 +18,8 @@ const store = useTransactionsStore()
 const categories = useCategoriesStore()
 const rules = useRulesStore()
 
-await Promise.all([store.fetchMonth(), categories.fetchAll(true), rules.fetchAll()])
+// Opens at once on what the store already holds, then refreshes (see useScreenData).
+useScreenData(() => Promise.all([store.fetchMonth(), categories.fetchAll(true), rules.fetchAll()]))
 
 const month = computed({
   get: () => store.month,
@@ -124,12 +125,12 @@ onPullRefresh(async () => {
       <p v-if="store.error" class="vv-error" role="alert">{{ store.error }}</p>
 
       <!-- Empty month -->
-      <section v-if="!store.items.length" class="neu-3 empty">
+      <section v-if="!store.items.length && store.loaded" class="neu-3 empty">
         <p>{{ t('home.emptyMonth', { month: monthName(month) }) }}</p>
         <UiButton :icon="PenLine" :block="false" @click="addTx.show()">{{ t('tx.addFirst') }}</UiButton>
       </section>
 
-      <template v-else>
+      <template v-else-if="store.items.length">
         <!-- Scrolls sideways when the chips don't fit; the screen swipe leaves
              horizontal scrollers alone, so this never switches tabs. -->
         <div class="chips" role="group" :aria-label="t('tx.filters')">

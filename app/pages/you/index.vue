@@ -22,10 +22,13 @@ const theme = useTheme()
 const { toast } = useToast()
 const rules = useRulesStore()
 
-const [, { data: tokens, refresh: refreshTokens, error: tokensError }] = await Promise.all([
-  rules.fetchAll(),
-  useAsyncData<ImportToken[]>('import-tokens', () => useRequestFetch()('/api/import-tokens')),
-])
+// Opens at once; the rules count and phone-link state fill in as they arrive.
+const { data: tokens, refresh: refreshTokens, error: tokensError } = useAsyncData<ImportToken[]>(
+  'import-tokens',
+  () => useRequestFetch()('/api/import-tokens'),
+  { lazy: true },
+)
+useScreenData(() => rules.fetchAll())
 const phoneOn = computed(() => (tokens.value ?? []).some((tk) => !tk.revokedAt))
 
 // Pull to refresh: refetch the rules count and the phone-link state. Never touches
@@ -85,6 +88,7 @@ function exportAll() {
 async function signOut() {
   await $fetch('/api/auth/logout', { method: 'POST' })
   user.value = null
+  clearNuxtState('dashboard-last') // the next person must not see this dashboard
   await navigateTo('/login')
 }
 </script>
