@@ -5,6 +5,9 @@ export interface MerchantRule {
   match: string
   label: string | null
   categoryId: string | null
+  /** Integer cents (absolute value), or null = no amount condition. Equal = exact amount. */
+  amountMinCents: number | null
+  amountMaxCents: number | null
   createdAt: string
 }
 
@@ -13,6 +16,9 @@ export interface RuleInput {
   label: string | null
   categoryId: string | null
   applyToExisting: boolean
+  /** Both integer cents, positive. Omit both for "any amount". */
+  amountMinCents?: number
+  amountMaxCents?: number
 }
 
 export const useRulesStore = defineStore('rules', () => {

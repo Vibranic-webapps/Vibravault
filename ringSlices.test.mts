@@ -2,7 +2,7 @@
  * Tests for the ring maths. Run:  npx tsx ringSlices.test.mts
  * Fake round numbers only - no personal data in a public repo.
  */
-import { ringSlices, percentOfTotal, groupSmallest, MIN_VISIBLE_ARC } from './app/utils/ringSlices'
+import { ringSlices, percentOfTotal, groupSmallest, ringGeometry, pointOnRing, placePopup, MIN_VISIBLE_ARC, RING_RADIUS, RING_STROKE, RING_GAP } from './app/utils/ringSlices'
 
 const checks: { name: string; ok: boolean; detail?: unknown }[] = []
 const eq = (name: string, got: unknown, want: unknown) => {
@@ -63,6 +63,57 @@ eq('negative and NaN are dropped', ringSlices([{ key: 'a', cents: -5 }, { key: '
   const many = Array.from({ length: 100 }, (_, i) => ({ key: `k${i}`, cents: 1 }))
   const s = ringSlices(many)
   eq('too many tiny slices: still sums to 1', near(sum(s.map((x) => x.arc)), 1), true)
+}
+
+// ---- minimum arc: 7.5%, and shrinking never pushes another slice under it ------
+{
+  eq('min arc is 7.5%', MIN_VISIBLE_ARC, 0.075)
+  // Two slices just above the minimum before shrinking, just under it after.
+  const s = ringSlices([{ key: 'big', cents: 90_000 }, { key: 'edge', cents: 8_000 }, { key: 'dust', cents: 100 }, { key: 'zero', cents: 0 }])
+  eq('min arc: zero slice is not drawn', s.some((x) => x.key === 'zero'), false)
+  eq('min arc: every drawn slice is at least the minimum', s.every((x) => x.arc >= MIN_VISIBLE_ARC - 1e-12), true)
+  eq('min arc: still adds up to the circle', near(sum(s.map((x) => x.arc)), 1), true)
+  eq('min arc: percent text stays exact', s.map((x) => x.percent), [92, 8, 0])
+}
+{
+  // A slice that only falls under the minimum AFTER the others were shrunk.
+  const s = ringSlices([{ key: 'a', cents: 80 }, { key: 'b', cents: 7 }, { key: 'c', cents: 1 }, { key: 'd', cents: 7 }])
+  eq('min arc (cascade): all slices >= minimum', s.every((x) => x.arc >= MIN_VISIBLE_ARC - 1e-12), true)
+  eq('min arc (cascade): sums to 1', near(sum(s.map((x) => x.arc)), 1), true)
+}
+
+// ---- geometry: caps, gaps, one slice ----------------------------------------
+{
+  const circ = 2 * Math.PI * RING_RADIUS
+  const s = ringSlices([{ key: 'a', cents: 500 }, { key: 'b', cents: 500 }])
+  const g = ringGeometry(s)
+  eq('geometry: dash = arc minus stroke and gap', near(g[0]!.dash, 0.5 * circ - RING_STROKE - RING_GAP), true)
+  eq('geometry: slices do not overlap (caps + gap fit)', near(g[1]!.offset, -(0.5 * circ + (RING_STROKE + RING_GAP) / 2)), true)
+  eq('geometry: mid points', g.map((x) => x.mid), [0.25, 0.75])
+  const one = ringGeometry(ringSlices([{ key: 'only', cents: 1 }]))
+  eq('geometry: a single slice is a full circle, no gap', [one[0]!.full, near(one[0]!.dash, circ), one[0]!.offset], [true, true, 0])
+  const tiny = ringGeometry(ringSlices([{ key: 'big', cents: 1_000_000 }, { key: 'dust', cents: 1 }]))
+  eq('geometry: the tiny slice still has a positive dash', tiny[1]!.dash > 1, true)
+  const p = pointOnRing(0.25, 75, 75, 50)
+  eq('pointOnRing: 25% is 3 o-clock', [Math.round(p.x), Math.round(p.y)], [125, 75])
+}
+
+// ---- popup placement never leaves the box ------------------------------------
+{
+  const base = { cx: 66, cy: 66, outerRadius: 45, innerRadius: 30, width: 120, height: 48, boxWidth: 132, boxHeight: 132 }
+  let inside = true
+  for (let i = 0; i < 100; i++) {
+    const { left, top } = placePopup({ ...base, mid: i / 100 })
+    if (left < 0 || top < 0 || left + base.width > base.boxWidth + 1e-9 || top + base.height > base.boxHeight + 1e-9) inside = false
+  }
+  eq('popup: stays inside the half-width card at every angle', inside, true)
+  // A popup wider than the box is pinned to the left edge instead of overflowing to a negative position.
+  eq('popup: wider than the box pins to 0', placePopup({ ...base, width: 200, mid: 0.5 }).left, 0)
+  // Room above and below: top-half slice goes above, bottom-half below.
+  const roomy = { ...base, cy: 100, boxHeight: 200 }
+  const up = placePopup({ ...roomy, mid: 0 })
+  const down = placePopup({ ...roomy, mid: 0.5 })
+  eq('popup: top slice puts it above, bottom slice below', up.top + roomy.height <= roomy.cy - roomy.outerRadius && down.top >= roomy.cy + roomy.outerRadius, true)
 }
 
 // ---- overspend (caller passes sub + other only; the ring is full) -------------

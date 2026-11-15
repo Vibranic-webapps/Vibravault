@@ -125,8 +125,8 @@ function spoken(b: FlowBucket) {
 </template>
 
 <style scoped>
-.card { padding: 18px 14px 16px; --chart-h: 170px; }
-.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 4px 14px; }
+.card { padding: 14px 14px 10px; --chart-h: 110px; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 4px 8px; }
 .head h2 { margin: 0; font-size: 16px; font-weight: 800; }
 .legend { display: flex; gap: 14px; font-size: 12px; color: var(--vv-muted); }
 .legend span { display: flex; align-items: center; gap: 6px; }
@@ -136,8 +136,8 @@ function spoken(b: FlowBucket) {
 
 .chart { display: flex; gap: 4px; height: var(--chart-h); }
 .col {
-  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 6px;
-  padding: 8px 2px 6px; font: inherit; color: inherit;
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+  padding: 4px 2px 4px; font: inherit; color: inherit;
   background: none; border: none; border-radius: var(--vv-r-badge); cursor: pointer;
   -webkit-tap-highlight-color: transparent; transition: box-shadow .14s ease;
 }
@@ -158,16 +158,16 @@ function spoken(b: FlowBucket) {
 .wd { font-size: 10px; text-transform: capitalize; }
 .col.on .label { color: var(--vv-text); font-weight: 700; }
 
-.detail { min-height: 96px; margin-top: 14px; padding: 14px 16px; border-radius: var(--vv-r-sm); box-shadow: var(--vv-p2); }
-.d-range { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--vv-muted); }
-.d-values { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.detail { min-height: 68px; margin-top: 8px; padding: 8px 14px; border-radius: var(--vv-r-sm); box-shadow: var(--vv-p2); }
+.d-range { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: var(--vv-muted); }
+.d-values { display: flex; flex-wrap: wrap; gap: 4px 22px; }
 .d-values p { margin: 0; display: flex; flex-direction: column; min-width: 0; }
-.d-values strong { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.d-values small { font-size: 12px; color: var(--vv-muted); }
-.hint { margin: 0; display: grid; place-items: center; min-height: 68px; font-size: 13px; color: var(--vv-muted); text-align: center; }
+.d-values strong { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.d-values small { font-size: 11px; color: var(--vv-muted); }
+.hint { margin: 0; display: grid; place-items: center; min-height: 50px; font-size: 13px; color: var(--vv-muted); text-align: center; }
 
 .table-toggle {
-  margin-top: 14px; padding: 0 14px; min-height: 44px; font: inherit; font-size: 12px; font-weight: 600;
+  margin-top: 4px; padding: 0 14px; min-height: 44px; font: inherit; font-size: 12px; font-weight: 600;
   color: var(--vv-muted); background: var(--vv-surface);
   border: none; border-radius: var(--vv-r-badge); box-shadow: var(--vv-e1); cursor: pointer;
 }

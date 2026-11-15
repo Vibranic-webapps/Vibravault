@@ -10,10 +10,12 @@ import { UNSORTED_KEY } from '~/utils/ringSlices'
 
 /**
  * Transactions: where did the money go?
- *   Week | Month -> period switcher -> (account chips) -> net verdict + In/Out/Net
- *   -> subscriptions ring -> in-vs-out chart -> category ring -> filter chips
+ *   Week | Month -> period switcher -> (account chips) -> net verdict -> In/Out/Net
+ *   tiles -> two small rings side by side (subscriptions share, spending by
+ *   category) -> subscription lines -> a small in-vs-out chart -> filter chips
  *   -> the period's rows, grouped by day. Tap a row for the drawer.
- * Picking a category in the ring narrows the list below. Everything follows the
+ * A pinned category slice offers "Show these transactions": that narrows the
+ * list below (the "Only <name>" chip clears it). Everything follows the
  * same period + account (one fetch for the numbers, one for the list: see
  * stores/insights.ts). Adding happens in the shell's New transaction sheet.
  */
@@ -238,7 +240,12 @@ onPullRefresh(async () => {
       <!-- First load only: placeholders the size of what comes, so nothing jumps. -->
       <template v-if="!insights.loaded && !insights.error">
         <div class="neu-3 skeleton verdict-sk" aria-hidden="true" />
-        <div class="neu-3 skeleton ring-sk" aria-hidden="true" />
+        <div class="sk-tiles" aria-hidden="true">
+          <div v-for="n in 3" :key="n" class="neu-2 skeleton tile-sk" />
+        </div>
+        <div class="rings" aria-hidden="true">
+          <div v-for="n in 2" :key="n" class="neu-3 skeleton ring-sk" />
+        </div>
       </template>
 
       <!-- Empty period: no charts, no zero-rings -->
@@ -255,29 +262,33 @@ onPullRefresh(async () => {
           :expense-cents="data.totals.expenseCents"
           :net-cents="data.totals.netCents"
         />
-        <MoneyTiles class="tiles" :income="data.totals.incomeCents" :expense="data.totals.expenseCents" :net="data.totals.netCents" />
+        <InsightsFlowTiles
+          class="tiles"
+          :income-cents="data.totals.incomeCents"
+          :expense-cents="data.totals.expenseCents"
+          :net-cents="data.totals.netCents"
+        />
         <p v-if="data.totals.transferredCents" class="moved">{{ t('tx.moved', { amount: money(data.totals.transferredCents) }) }}</p>
 
-        <InsightsSpendRing
-          v-if="hasMoney"
-          class="block"
-          :ring="data.ring"
-          :subscriptions="data.subscriptions"
-          :kind="data.period.kind"
-        />
+        <!-- Two across (one column below ~340px). A lone ring takes the full row. -->
+        <div v-if="hasMoney || data.categories.length" class="rings" :class="{ solo: !(hasMoney && data.categories.length) }">
+          <InsightsSpendRing v-if="hasMoney" :ring="data.ring" />
+          <InsightsCategoryRing
+            v-if="data.categories.length"
+            :categories="data.categories"
+            :active="pickedCategory"
+            @select="(key) => (pickedCategory = key)"
+          />
+        </div>
+
+        <InsightsSubsList v-if="hasMoney" class="block" :subscriptions="data.subscriptions" />
+
         <InsightsFlowChart
           v-if="hasFlow"
           class="block"
           :series="data.series"
           :kind="data.period.kind"
           :title="t('insights.flowTitle')"
-        />
-        <InsightsCategoryRing
-          v-if="data.categories.length"
-          class="block"
-          :categories="data.categories"
-          :active="pickedCategory"
-          @select="(key) => (pickedCategory = key)"
         />
 
         <!-- Scrolls sideways when the chips don't fit; the screen swipe leaves
@@ -305,7 +316,7 @@ onPullRefresh(async () => {
             <TxRow
               v-for="tx in d.rows"
               :key="tx.id"
-              :label="transactionLabel(tx.counterparty, tx.description, rules.items)"
+              :label="transactionLabel(tx.counterparty, tx.description, rules.items, tx.amountCents)"
               :sub="categoryOf(tx.categoryId)?.name ?? t('home.unsorted')"
               :booked-at="tx.bookedAt"
               :amount-cents="tx.amountCents"
@@ -346,6 +357,8 @@ h1 { margin: 0 0 20px; font-size: 28px; font-weight: 800; letter-spacing: -.01em
 
 .block { margin-bottom: 16px; }
 .tiles { margin-bottom: 10px; }
+.rings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.rings.solo { grid-template-columns: minmax(0, 1fr); }
 .moved { margin: 0 0 16px; text-align: center; font-size: 12px; color: var(--vv-muted); }
 
 .err { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -354,7 +367,10 @@ h1 { margin: 0 0 20px; font-size: 28px; font-weight: 800; letter-spacing: -.01em
 /* Placeholder heights ~ the real cards, so the page doesn't jump when data lands. */
 .skeleton { margin-bottom: 16px; opacity: .6; }
 .verdict-sk { height: 150px; }
-.ring-sk { height: 320px; }
+.sk-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.sk-tiles .skeleton { margin-bottom: 0; }
+.tile-sk { height: 92px; }
+.rings .ring-sk { height: 216px; margin-bottom: 0; }
 
 /* Padding keeps the chips' shadows inside the scroller (which clips). */
 .chips {
@@ -374,6 +390,8 @@ h1 { margin: 0 0 20px; font-size: 28px; font-weight: 800; letter-spacing: -.01em
 .empty { padding: 30px 22px; text-align: center; }
 .empty p { margin: 0 0 16px; color: var(--vv-muted); font-size: 15px; }
 
+/* Too narrow for two rings side by side. */
+@media (max-width: 339px) { .rings { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 560px) { .chips { margin: 8px -18px 14px; padding: 8px 18px 12px; } }
 @media (prefers-reduced-motion: reduce) { .body { transition: none; } }
 </style>
