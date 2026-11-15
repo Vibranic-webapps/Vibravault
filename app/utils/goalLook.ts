@@ -56,7 +56,9 @@ export async function shrinkImage(file: File): Promise<string> {
 /** Picture framing: ranges and defaults (the server enforces the same; server/utils/goals.ts). */
 export const GOAL_FRAME = {
   focusMin: 0, focusMax: 100, focusDefault: 50,
-  zoomMin: 100, zoomMax: 300, zoomDefault: 100,
+  zoomMin: 50, zoomMax: 400, zoomDefault: 100,
+  /** The zoom slider runs 0..100 top to bottom (top = zoom in). This spot is the default (100%). */
+  sliderDefault: 75,
   /** The Home card is 192 x 212: the editor frame uses the same shape so the crop matches. */
   cardWidth: 192, cardHeight: 212,
 } as const
@@ -65,6 +67,20 @@ export interface GoalFraming { focusX: number; focusY: number; zoom: number }
 
 export const DEFAULT_FRAMING: GoalFraming = {
   focusX: GOAL_FRAME.focusDefault, focusY: GOAL_FRAME.focusDefault, zoom: GOAL_FRAME.zoomDefault,
+}
+
+/**
+ * Zoom slider <-> zoom %. Piecewise so the default sits at 75 on the bar:
+ *   0 (top) = 400% .. 75 = 100% (no zoom) .. 100 (bottom) = 50% (zoomed out).
+ * More room above the default than below it, as zooming in is the common move.
+ */
+export function sliderToZoom(t: number): number {
+  const s = Math.min(100, Math.max(0, t))
+  return Math.round(s <= GOAL_FRAME.sliderDefault ? 400 - 4 * s : 250 - 2 * s)
+}
+export function zoomToSlider(zoom: number): number {
+  const z = Math.min(GOAL_FRAME.zoomMax, Math.max(GOAL_FRAME.zoomMin, zoom))
+  return z >= 100 ? (400 - z) / 4 : (250 - z) / 2
 }
 
 export const clampFrame = (v: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(v)))

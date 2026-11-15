@@ -423,15 +423,13 @@
     "look": "Picture and colour",
     "imageAdd": "Add a picture",
     "imageChange": "Change picture",
-    "imageLink": "Paste a link",
     "imageRemove": "Remove",
-    "imageLinkLabel": "Picture link",
-    "imageLinkHint": "A link that starts with https://",
     "frame": {
       "label": "Picture framing",
-      "hint": "Drag to move, slide to zoom",
+      "hint": "Drag the picture to move it. Slide to zoom.",
       "zoom": "Zoom",
-      "reset": "Reset"
+      "reset": "Reset",
+      "empty": "Add a picture"
     },
     "tint": "Card colour",
     "tints": {

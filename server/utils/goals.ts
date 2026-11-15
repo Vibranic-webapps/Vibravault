@@ -22,8 +22,8 @@ type GoalImageMime = (typeof GOAL_IMAGE_MIMES)[number]
 // How the picture is framed in the card (CSS object-position + scale). Same ranges as the DB CHECKs.
 export const GOAL_IMAGE_FOCUS_MIN = 0
 export const GOAL_IMAGE_FOCUS_MAX = 100
-export const GOAL_IMAGE_ZOOM_MIN = 100 // 100 = no zoom
-export const GOAL_IMAGE_ZOOM_MAX = 300 // 300 = 3x
+export const GOAL_IMAGE_ZOOM_MIN = 50 // 50 = zoomed out to half; 100 = no zoom
+export const GOAL_IMAGE_ZOOM_MAX = 400 // 400 = 4x
 export const GOAL_IMAGE_FRAMING_DEFAULT = { imageFocusX: 50, imageFocusY: 50, imageZoom: 100 } as const
 
 /**
@@ -135,7 +135,7 @@ const validFocus = (raw: unknown, field: 'imageFocusX' | 'imageFocusY') =>
   validFramingInt(raw, GOAL_IMAGE_FOCUS_MIN, GOAL_IMAGE_FOCUS_MAX, 'Focus must be a whole number from 0 to 100', 'GOAL_IMAGE_FOCUS_INVALID', field)
 
 const validZoom = (raw: unknown) =>
-  validFramingInt(raw, GOAL_IMAGE_ZOOM_MIN, GOAL_IMAGE_ZOOM_MAX, 'Zoom must be a whole number from 100 to 300', 'GOAL_IMAGE_ZOOM_INVALID', 'imageZoom')
+  validFramingInt(raw, GOAL_IMAGE_ZOOM_MIN, GOAL_IMAGE_ZOOM_MAX, 'Zoom must be a whole number from 50 to 400', 'GOAL_IMAGE_ZOOM_INVALID', 'imageZoom')
 
 /** A pasted picture link: https only, no embedded credentials, reasonable length. */
 function validImageUrl(raw: unknown): string | null {
@@ -205,7 +205,7 @@ interface GoalLookData {
  *  - `image` + `imageUrl` (both set), or `removeImage: true` + either -> 400 (ambiguous).
  *  - `removeImage: true` clears upload and link.
  *  - `imageUrl: null` clears only the link; `image: null` is treated as "not sent".
- *  - Framing (`imageFocusX/Y` 0..100, `imageZoom` 100..300): whole numbers only. An omitted key keeps
+ *  - Framing (`imageFocusX/Y` 0..100, `imageZoom` 50..400): whole numbers only. An omitted key keeps
  *    its value, EXCEPT when the picture is replaced or removed: then every framing key the request
  *    does not send is reset to 50/50/100 (a new picture must not inherit the old crop).
  */
@@ -334,7 +334,7 @@ export function serializeGoal(goal: GoalRow, savedCents: number, now = new Date(
     imageSrc: goalImageSrc(goal), // URL for <img src>, or null
     imageFocusX: goal.imageFocusX, // 0..100, % from the left (object-position)
     imageFocusY: goal.imageFocusY, // 0..100, % from the top
-    imageZoom: goal.imageZoom, // 100..300, percent (100 = no zoom)
+    imageZoom: goal.imageZoom, // 50..400, percent (100 = no zoom)
     createdAt: goal.createdAt,
     updatedAt: goal.updatedAt,
     ...goalProgress({ targetCents: goal.targetCents, savedCents, dueDate: goal.dueDate, now }),

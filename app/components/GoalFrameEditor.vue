@@ -1,26 +1,33 @@
 <script setup lang="ts">
-import { RotateCcw } from 'lucide-vue-next'
-import { GOAL_FRAME, DEFAULT_FRAMING, clampFrame, type GoalFraming } from '~/utils/goalLook'
+import { ImagePlus, Trash2, RotateCcw, Plus, Minus } from 'lucide-vue-next'
+import {
+  GOAL_FRAME, DEFAULT_FRAMING, clampFrame, sliderToZoom, zoomToSlider, type GoalFraming,
+} from '~/utils/goalLook'
 
 /**
- * Choose which part of a goal's picture shows on its card.
- * A frame in the card's own shape shows the picture exactly as the card will
- * (GoalPicture, `cover`). Drag the frame to move the picture, slide to zoom.
- * Keyboard: arrow keys move, + / - zoom. Reset puts it back to the middle, no zoom.
+ * The goal's picture, big, exactly as the Home card will crop it. This is the only picture
+ * control in the goal form:
+ *   - drag the picture to move it (pointer events, so mouse, finger and pen all work)
+ *   - the vertical bar on the right zooms: top = zoom in, bottom = zoom out, and the default
+ *     (no zoom) sits at 75 on the bar. Zoom runs 50% to 400%.
+ *   - round buttons on the picture: change it (top left) and remove it (top right)
+ * Keyboard: arrows move, + / - zoom (on the picture), arrows / Home / End on the bar.
  *
  * The v-model is the three numbers the server stores (focus % + zoom %).
- * The page's sideways swipe and the sheet's drag-to-close are kept off the frame.
+ * The page's sideways swipe and the sheet's drag-to-close are kept off the picture and the bar.
  */
 const props = defineProps<{ src: string | null; name: string; modelValue: GoalFraming }>()
-const emit = defineEmits<{ 'update:modelValue': [value: GoalFraming] }>()
+const emit = defineEmits<{ 'update:modelValue': [value: GoalFraming]; pick: []; remove: [] }>()
 const { t } = useI18n()
 
 const frameEl = ref<HTMLElement | null>(null)
 const broken = ref(false)
 watch(() => props.src, () => { broken.value = false })
+const hasPicture = computed(() => !!props.src && !broken.value)
 
 const KEY_STEP = 2 // % per arrow key press
 const ZOOM_KEY_STEP = 10
+const SNAP = 2 // the bar snaps to "no zoom" when released this close to it
 
 function set(next: Partial<GoalFraming>) {
   const m = props.modelValue
@@ -36,16 +43,18 @@ const isDefault = computed(() => {
   return m.focusX === DEFAULT_FRAMING.focusX && m.focusY === DEFAULT_FRAMING.focusY && m.zoom === DEFAULT_FRAMING.zoom
 })
 
-// ---- Drag to move ----------------------------------------------------------------
+// ---- Drag the picture ------------------------------------------------------------
 /**
- * How far the picture slides per focus unit: with `cover` the image overflows the frame by
- * (rendered size * zoom - frame size), and one focus point moves it 1/100 of that. Dividing the
- * finger's travel by it makes the picture follow the finger 1:1. An axis with no overflow stays put.
+ * Where the picture's edge sits along one axis is  focus% * (frame - rendered * zoom)  (a `cover`
+ * picture, scaled from the focus point). So one focus point moves it (frame - rendered * zoom) / 100
+ * px: negative when the picture is bigger than the frame, positive when zoomed out. Dividing the
+ * finger's travel by that makes the picture follow the finger 1:1. An axis with no room to move
+ * (the picture exactly fits it) stays put.
  */
 function pxPerFocusUnit(frame: number, natural: number, naturalOther: number, frameOther: number, zoom: number) {
-  if (!natural || !naturalOther) return Math.max(frame * zoom, 1) / 100 // image size unknown: a sane guess
-  const rendered = natural * Math.max(frame / natural, frameOther / naturalOther)
-  return Math.max(rendered * zoom - frame, 0) / 100
+  // Image size unknown (not decoded yet): assume it overflows a little, so a drag still does something.
+  const rendered = natural && naturalOther ? natural * Math.max(frame / natural, frameOther / naturalOther) : frame * 1.25
+  return (frame - rendered * zoom) / 100
 }
 
 let drag: { id: number; x: number; y: number; fx: number; fy: number; sx: number; sy: number } | null = null
@@ -53,9 +62,9 @@ const dragging = ref(false)
 
 function onPointerDown(e: PointerEvent) {
   const el = frameEl.value
-  if (!el || (e.pointerType === 'mouse' && e.button !== 0)) return
+  if (!el || !hasPicture.value || (e.pointerType === 'mouse' && e.button !== 0)) return
   const rect = el.getBoundingClientRect()
-  const img = el.querySelector('img')
+  const img = el.querySelector<HTMLImageElement>('img:not(.back)')
   const nw = img?.naturalWidth ?? 0
   const nh = img?.naturalHeight ?? 0
   const z = props.modelValue.zoom / 100
@@ -65,7 +74,7 @@ function onPointerDown(e: PointerEvent) {
     sx: pxPerFocusUnit(rect.width, nw, nh, rect.height, z),
     sy: pxPerFocusUnit(rect.height, nh, nw, rect.width, z),
   }
-  el.setPointerCapture(e.pointerId)
+  try { el.setPointerCapture(e.pointerId) } catch { /* the pointer is already gone */ }
   dragging.value = true
 }
 
@@ -73,10 +82,9 @@ function onPointerMove(e: PointerEvent) {
   if (!drag || e.pointerId !== drag.id) return
   const dx = e.clientX - drag.x
   const dy = e.clientY - drag.y
-  // Dragging right pulls the picture right, so we see more of its left: the focus point goes down.
   set({
-    focusX: drag.sx >= 0.5 ? drag.fx - dx / drag.sx : drag.fx,
-    focusY: drag.sy >= 0.5 ? drag.fy - dy / drag.sy : drag.fy,
+    focusX: Math.abs(drag.sx) >= 0.3 ? drag.fx + dx / drag.sx : drag.fx,
+    focusY: Math.abs(drag.sy) >= 0.3 ? drag.fy + dy / drag.sy : drag.fy,
   })
 }
 
@@ -86,8 +94,9 @@ function onPointerEnd(e: PointerEvent) {
   dragging.value = false
 }
 
-// ---- Keyboard ----------------------------------------------------------------------
+// ---- Keyboard on the picture ---------------------------------------------------------
 function onKey(e: KeyboardEvent) {
+  if (!hasPicture.value) return
   const m = props.modelValue
   const moves: Record<string, Partial<GoalFraming>> = {
     ArrowLeft: { focusX: m.focusX - KEY_STEP },
@@ -104,78 +113,168 @@ function onKey(e: KeyboardEvent) {
   set(next)
 }
 
-function onZoomInput(e: Event) {
-  set({ zoom: Number((e.target as HTMLInputElement).value) })
+// ---- The vertical zoom bar ---------------------------------------------------------
+// A custom bar, not <input type=range>: a vertical native range is not reliable across phones.
+const barEl = ref<HTMLElement | null>(null)
+const THUMB = 28
+const pos = computed(() => zoomToSlider(props.modelValue.zoom)) // 0 (top) .. 100 (bottom)
+let sliding = -1
+
+function setFromPointer(e: PointerEvent, release = false) {
+  const el = barEl.value
+  if (!el) return
+  const r = el.getBoundingClientRect()
+  const travel = Math.max(r.height - THUMB, 1)
+  let v = ((e.clientY - r.top - THUMB / 2) / travel) * 100
+  v = Math.min(100, Math.max(0, v))
+  if (release && Math.abs(v - GOAL_FRAME.sliderDefault) <= SNAP) v = GOAL_FRAME.sliderDefault
+  set({ zoom: sliderToZoom(v) })
 }
+function onBarDown(e: PointerEvent) {
+  if (!hasPicture.value || (e.pointerType === 'mouse' && e.button !== 0)) return
+  sliding = e.pointerId
+  try { barEl.value?.setPointerCapture(e.pointerId) } catch { /* gone */ }
+  setFromPointer(e)
+}
+function onBarMove(e: PointerEvent) {
+  if (e.pointerId === sliding) setFromPointer(e)
+}
+function onBarUp(e: PointerEvent) {
+  if (e.pointerId !== sliding) return
+  setFromPointer(e, true)
+  sliding = -1
+}
+function onBarKey(e: KeyboardEvent) {
+  const v = pos.value
+  const to: Record<string, number> = {
+    ArrowUp: v - 5, ArrowLeft: v - 5, ArrowDown: v + 5, ArrowRight: v + 5,
+    PageUp: v - 20, PageDown: v + 20, Home: 0, End: 100,
+  }
+  if (!(e.key in to)) return
+  e.preventDefault()
+  set({ zoom: sliderToZoom(to[e.key]!) })
+}
+
+const zoomLabel = computed(() => `${(props.modelValue.zoom / 100).toFixed(1)}×`)
+const thumbTop = computed(() => `calc((100% - ${THUMB}px) * ${pos.value / 100})`)
+const defaultTop = computed(() => `calc((100% - ${THUMB}px) * ${GOAL_FRAME.sliderDefault / 100} + ${THUMB / 2}px)`)
 
 // Same shape as the Home card (constants in goalLook), so the crop you see is the crop you get.
-const frameStyle = {
-  maxWidth: `${GOAL_FRAME.cardWidth}px`,
-  aspectRatio: `${GOAL_FRAME.cardWidth} / ${GOAL_FRAME.cardHeight}`,
-}
-
-const sliderId = useId()
+const frameStyle = { aspectRatio: `${GOAL_FRAME.cardWidth} / ${GOAL_FRAME.cardHeight}` }
 const hintId = useId()
 </script>
 
 <template>
-  <div v-if="src && !broken" class="editor">
-    <!-- touch-action: none + data-swipe-lock + stopped touch events: the finger moves the picture,
-         not the page (screen swipe) or the sheet (drag to close). -->
-    <div
-      ref="frameEl"
-      class="frame"
-      :class="{ dragging }"
-      :style="frameStyle"
-      role="group"
-      tabindex="0"
-      data-swipe-lock
-      :aria-label="t('goals.frame.label')"
-      :aria-describedby="hintId"
-      @pointerdown="onPointerDown"
-      @pointermove="onPointerMove"
-      @pointerup="onPointerEnd"
-      @pointercancel="onPointerEnd"
-      @touchstart.stop
-      @touchmove.stop
-      @keydown="onKey"
-    >
-      <GoalPicture
-        :src="src"
-        :name="name"
-        fit="cover"
-        :focus-x="modelValue.focusX"
-        :focus-y="modelValue.focusY"
-        :zoom="modelValue.zoom"
-        @broken="broken = true"
-      />
-    </div>
-    <p :id="hintId" class="hint">{{ t('goals.frame.hint') }}</p>
-
-    <div class="zoom">
-      <label :for="sliderId" class="zoom-label">{{ t('goals.frame.zoom') }}</label>
-      <input
-        :id="sliderId"
-        class="range"
-        type="range"
-        :min="GOAL_FRAME.zoomMin"
-        :max="GOAL_FRAME.zoomMax"
-        step="1"
-        :value="modelValue.zoom"
-        :aria-valuetext="`${modelValue.zoom}%`"
-        @input="onZoomInput"
+  <div class="editor">
+    <div class="stage">
+      <!-- touch-action: none + data-swipe-lock + stopped touch events: the finger moves the picture,
+           not the page (screen swipe) or the sheet (drag to close). -->
+      <div
+        ref="frameEl"
+        class="frame"
+        :class="{ dragging, empty: !hasPicture }"
+        :style="frameStyle"
+        role="group"
+        :tabindex="hasPicture ? 0 : -1"
+        data-swipe-lock
+        :aria-label="t('goals.frame.label')"
+        :aria-describedby="hintId"
+        @pointerdown="onPointerDown"
+        @pointermove="onPointerMove"
+        @pointerup="onPointerEnd"
+        @pointercancel="onPointerEnd"
+        @lostpointercapture="onPointerEnd"
+        @touchstart.stop
+        @touchmove.stop
+        @dragstart.prevent
+        @keydown="onKey"
       >
-      <span class="zoom-value" aria-hidden="true">{{ modelValue.zoom }}%</span>
-    </div>
+        <GoalPicture
+          :src="src"
+          :name="name"
+          fit="cover"
+          :focus-x="modelValue.focusX"
+          :focus-y="modelValue.focusY"
+          :zoom="modelValue.zoom"
+          @broken="broken = true"
+        />
 
-    <UiButton variant="ghost" :block="false" :icon="RotateCcw" :disabled="isDefault" @click="set({ ...DEFAULT_FRAMING })">
-      {{ t('goals.frame.reset') }}
-    </UiButton>
+        <!-- Round buttons ride on the picture: change top left, remove top right. They must not start a drag. -->
+        <button
+          v-if="hasPicture"
+          type="button"
+          class="fab left"
+          :aria-label="t('goals.imageChange')"
+          @pointerdown.stop
+          @click="emit('pick')"
+        >
+          <ImagePlus :size="20" aria-hidden="true" />
+        </button>
+        <button
+          v-if="src"
+          type="button"
+          class="fab right"
+          :aria-label="t('goals.imageRemove')"
+          @pointerdown.stop
+          @click="emit('remove')"
+        >
+          <Trash2 :size="20" aria-hidden="true" />
+        </button>
+        <button v-if="!hasPicture" type="button" class="add" @pointerdown.stop @click="emit('pick')">
+          <ImagePlus :size="20" aria-hidden="true" />
+          <span>{{ t('goals.frame.empty') }}</span>
+        </button>
+      </div>
+
+      <div class="side">
+        <span class="value" aria-hidden="true">{{ zoomLabel }}</span>
+        <Plus :size="16" class="end" aria-hidden="true" />
+        <div
+          ref="barEl"
+          class="bar"
+          :class="{ off: !hasPicture }"
+          role="slider"
+          :tabindex="hasPicture ? 0 : -1"
+          data-swipe-lock
+          aria-orientation="vertical"
+          :aria-label="t('goals.frame.zoom')"
+          :aria-valuemin="0"
+          :aria-valuemax="100"
+          :aria-valuenow="Math.round(pos)"
+          :aria-valuetext="zoomLabel"
+          :aria-disabled="!hasPicture"
+          @pointerdown="onBarDown"
+          @pointermove="onBarMove"
+          @pointerup="onBarUp"
+          @pointercancel="onBarUp"
+          @touchstart.stop
+          @touchmove.stop
+          @keydown="onBarKey"
+        >
+          <span class="rail" />
+          <span class="tick" :style="{ top: defaultTop }" />
+          <span class="thumb" :style="{ top: thumbTop }" />
+        </div>
+        <Minus :size="16" class="end" aria-hidden="true" />
+        <button
+          type="button"
+          class="reset"
+          :aria-label="t('goals.frame.reset')"
+          :disabled="isDefault || !hasPicture"
+          @click="set({ ...DEFAULT_FRAMING })"
+        >
+          <RotateCcw :size="16" aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+    <p v-if="hasPicture" :id="hintId" class="hint">{{ t('goals.frame.hint') }}</p>
+    <span v-else :id="hintId" class="sr-only">{{ t('goals.frame.empty') }}</span>
   </div>
 </template>
 
 <style scoped>
-.editor { display: grid; gap: 12px; justify-items: start; min-width: 0; max-width: 100%; }
+.editor { display: grid; gap: 10px; min-width: 0; }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 12px; justify-content: center; max-width: 380px; width: 100%; margin: 0 auto; }
 
 .frame {
   position: relative;
@@ -188,16 +287,63 @@ const hintId = useId()
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 }
+.frame.empty { cursor: default; }
 .frame.dragging { cursor: grabbing; }
 .frame:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 3px; }
+/* The finger always lands on the frame itself, never on the image (which would start a native drag). */
+.frame :deep(img) { pointer-events: none; }
 
-.hint { margin: 0; font-size: 13px; color: var(--vv-muted); }
+/* Round buttons on the picture: raised discs, the same family as the goal card's ring badge. */
+.fab {
+  position: absolute; top: 10px; z-index: 2;
+  display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  color: var(--vv-text); background: var(--vv-surface); border: none; border-radius: 50%;
+  box-shadow: var(--vv-e1); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.fab.left { left: 10px; }
+.fab.right { right: 10px; }
+.fab:active { box-shadow: var(--vv-p2); }
+.fab:focus-visible, .add:focus-visible, .reset:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 2px; }
 
-.zoom { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; }
-.zoom-label { flex: none; font-size: 14px; font-weight: 700; color: var(--vv-text); }
-.zoom-value { flex: none; min-width: 3.5ch; text-align: right; font-size: 14px; color: var(--vv-muted); font-variant-numeric: tabular-nums; }
-.range { flex: 1; min-width: 0; height: 44px; margin: 0; accent-color: var(--vv-accent); cursor: pointer; }
-.range:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 2px; border-radius: var(--vv-r-sm); }
+.add {
+  position: absolute; left: 50%; bottom: 14%; z-index: 2; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px;
+  font: inherit; font-size: 14px; font-weight: 700; white-space: nowrap;
+  color: var(--vv-text); background: var(--vv-surface); border: none; border-radius: 999px;
+  box-shadow: var(--vv-e1); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.add:active { box-shadow: var(--vv-p2); }
+
+/* Zoom bar: + at the top (zoom in), - at the bottom (zoom out), a tick where "no zoom" is. */
+.side { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 0; color: var(--vv-muted); }
+.value { font-size: 13px; font-weight: 700; color: var(--vv-text); font-variant-numeric: tabular-nums; }
+.end { flex: none; }
+.bar {
+  position: relative; flex: 1; width: 44px; min-height: 120px;
+  touch-action: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.bar.off { opacity: .45; cursor: default; }
+.bar:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 2px; border-radius: var(--vv-r-sm); }
+.rail {
+  position: absolute; top: 14px; bottom: 14px; left: 50%; width: 8px; transform: translateX(-50%);
+  border-radius: 999px; box-shadow: var(--vv-p1);
+}
+.tick { position: absolute; left: 50%; width: 18px; height: 2px; margin-top: -1px; transform: translateX(-50%); border-radius: 1px; background: var(--vv-muted); opacity: .6; pointer-events: none; }
+.thumb {
+  position: absolute; left: 50%; width: 28px; height: 28px; margin-left: -14px;
+  border-radius: 50%; background: var(--vv-surface); box-shadow: var(--vv-e1); pointer-events: none;
+}
+.bar:active .thumb { box-shadow: var(--vv-p2); }
+.reset {
+  display: grid; place-items: center; flex: none; width: 36px; height: 36px; padding: 0;
+  color: var(--vv-text); background: var(--vv-surface); border: none; border-radius: 50%;
+  box-shadow: var(--vv-e1); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.reset:disabled { opacity: .45; cursor: default; box-shadow: none; }
+
+.hint { margin: 0; font-size: 13px; text-align: center; color: var(--vv-muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>
