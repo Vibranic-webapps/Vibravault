@@ -423,15 +423,13 @@
     "look": "Foto en kleur",
     "imageAdd": "Foto toevoegen",
     "imageChange": "Foto wijzigen",
-    "imageLink": "Link plakken",
     "imageRemove": "Verwijderen",
-    "imageLinkLabel": "Link naar de foto",
-    "imageLinkHint": "Een link die met https:// begint",
     "frame": {
       "label": "Uitsnede van de foto",
-      "hint": "Sleep om te verplaatsen, schuif om te zoomen",
+      "hint": "Sleep de foto om te verplaatsen. Schuif om te zoomen.",
       "zoom": "Zoom",
-      "reset": "Herstel"
+      "reset": "Herstel",
+      "empty": "Foto toevoegen"
     },
     "tint": "Kaartkleur",
     "tints": {

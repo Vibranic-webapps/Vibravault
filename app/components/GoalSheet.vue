@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { goalProgress } from '~~/shared/goals'
 import { centsToInput } from '~~/shared/utils/money'
-import { ImagePlus, Link2, Trash2 } from 'lucide-vue-next'
 import { DEFAULT_FRAMING, type GoalFraming } from '~/utils/goalLook'
 import {
   useGoalsStore, parseEuroToCents, goalErrorMessage, GOAL_LIMITS, type Goal, type GoalInput,
@@ -30,22 +29,20 @@ const due = ref('')
 const saving = ref(false)
 const formEl = ref<HTMLFormElement | null>(null)
 
-// The look: a pastel tint and an optional picture (a small upload, or a pasted https link).
+// The look: a pastel tint and an optional picture (a small upload).
 const tint = ref<string | null>(null)
 const pendingImage = ref<string | null>(null) // a freshly picked photo, already shrunk (data URL)
-const linkOpen = ref(false)
-const link = ref('')
 const removed = ref(false) // the user took the current picture away
 const fileEl = ref<HTMLInputElement | null>(null)
 // Which part of the picture shows (the server resets it with a new or removed picture, so do we).
 const framing = ref<GoalFraming>({ ...DEFAULT_FRAMING })
 
-type FieldKey = 'name' | 'targetCents' | 'dueDate' | 'image' | 'imageUrl'
-const errors = reactive<Record<FieldKey, string>>({ name: '', targetCents: '', dueDate: '', image: '', imageUrl: '' })
+type FieldKey = 'name' | 'targetCents' | 'dueDate' | 'image'
+const errors = reactive<Record<FieldKey, string>>({ name: '', targetCents: '', dueDate: '', image: '' })
 const formError = ref('')
 
 function clearErrors() {
-  errors.name = errors.targetCents = errors.dueDate = errors.image = errors.imageUrl = ''
+  errors.name = errors.targetCents = errors.dueDate = errors.image = ''
   formError.value = ''
 }
 
@@ -59,8 +56,6 @@ watch(() => props.open, (isOpen) => {
   // A new goal starts on the next tint in turn, so a row of goals is not one colour.
   tint.value = g ? g.tint : GOAL_TINTS[store.items.length % GOAL_TINTS.length]!
   pendingImage.value = null
-  link.value = ''
-  linkOpen.value = false
   removed.value = false
   framing.value = g
     ? { focusX: g.imageFocusX, focusY: g.imageFocusY, zoom: g.imageZoom }
@@ -75,18 +70,10 @@ const open = computed({
 
 // ---- Picture ---------------------------------------------------------------------
 const shownTint = computed(() => goalTint({ id: props.goal?.id ?? '', tint: tint.value }))
-const linkOk = computed(() => /^https:\/\/\S+$/i.test(link.value.trim()))
 const previewSrc = computed(() => {
   if (pendingImage.value) return pendingImage.value
-  if (linkOpen.value && linkOk.value) return link.value.trim()
   return removed.value ? null : (props.goal?.imageSrc ?? null)
 })
-// A pasted link is a different picture: start it centred. (linkOpen is false whenever the sheet re-opens, so this never fires then.)
-watch(link, () => {
-  if (linkOpen.value && linkOk.value && link.value.trim() !== props.goal?.imageSrc) framing.value = { ...DEFAULT_FRAMING }
-})
-const hasPicture = computed(() => !!previewSrc.value)
-
 async function onPick(e: Event) {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
@@ -95,8 +82,6 @@ async function onPick(e: Event) {
   errors.image = ''
   try {
     pendingImage.value = await shrinkImage(file)
-    link.value = ''
-    linkOpen.value = false
     removed.value = false
     framing.value = { ...DEFAULT_FRAMING }
   } catch (err) {
@@ -105,11 +90,9 @@ async function onPick(e: Event) {
 }
 function removePicture() {
   pendingImage.value = null
-  link.value = ''
-  linkOpen.value = false
   removed.value = true
   framing.value = { ...DEFAULT_FRAMING }
-  errors.image = errors.imageUrl = ''
+  errors.image = ''
 }
 
 // ---- Live preview ------------------------------------------------------------
@@ -142,8 +125,7 @@ function validate(): boolean {
   else if (name.value.trim().length > GOAL_LIMITS.nameMax) errors.name = t('goals.err.GOAL_NAME_TOO_LONG', { nameMax: GOAL_LIMITS.nameMax })
   if (targetCents.value === null || targetCents.value < 1) errors.targetCents = t('goals.err.GOAL_TARGET_INVALID')
   else if (targetCents.value > GOAL_LIMITS.maxCents) errors.targetCents = t('goals.err.GOAL_TARGET_TOO_LARGE')
-  if (linkOpen.value && link.value.trim() && !linkOk.value) errors.imageUrl = t('goals.err.GOAL_IMAGE_URL_INVALID')
-  const ok = !errors.name && !errors.targetCents && !errors.imageUrl
+  const ok = !errors.name && !errors.targetCents
   if (!ok) focusFirstInvalid()
   return ok
 }
@@ -155,10 +137,9 @@ async function save() {
   const nextTarget = targetCents.value!
   const nextDue = due.value || null
 
-  // At most one picture instruction per save: a new upload, a new link, or "remove".
-  const look: { image?: string; imageUrl?: string; removeImage?: boolean } = {}
+  // At most one picture instruction per save: a new upload or "remove".
+  const look: { image?: string; removeImage?: boolean } = {}
   if (pendingImage.value) look.image = pendingImage.value
-  else if (linkOpen.value && linkOk.value && link.value.trim() !== g?.imageSrc) look.imageUrl = link.value.trim()
   else if (removed.value && g?.imageSrc) look.removeImage = true
 
   // Framing: all three numbers together when any changed (or on create, when it is not the default).
@@ -250,38 +231,17 @@ async function save() {
       <!-- What you are saving for: a picture on a pastel tint. -->
       <fieldset class="look">
         <legend>{{ t('goals.look') }}</legend>
-        <div class="pic-row">
-          <div class="pic" :style="goalTintStyle(shownTint)">
-            <GoalPicture
-              :src="previewSrc"
-              :name="name || '?'"
-              fit="cover"
-              :focus-x="framing.focusX"
-              :focus-y="framing.focusY"
-              :zoom="framing.zoom"
-            />
-          </div>
-          <div class="pic-actions">
-            <UiButton variant="ghost" :block="false" :icon="ImagePlus" @click="fileEl?.click()">
-              {{ hasPicture ? t('goals.imageChange') : t('goals.imageAdd') }}
-            </UiButton>
-            <UiButton v-if="!linkOpen" variant="ghost" :block="false" :icon="Link2" @click="linkOpen = true">{{ t('goals.imageLink') }}</UiButton>
-            <UiButton v-if="hasPicture" variant="ghost" :block="false" :icon="Trash2" @click="removePicture">{{ t('goals.imageRemove') }}</UiButton>
-          </div>
-        </div>
-        <!-- Which part of the picture shows on the card. Hidden without a picture (or when its link is broken). -->
-        <GoalFrameEditor v-if="previewSrc" v-model="framing" :src="previewSrc" :name="name || '?'" :style="goalTintStyle(shownTint)" />
+        <!-- The big picture frame is the whole picture control: change/remove buttons, drag to move, zoom bar. -->
+        <GoalFrameEditor
+          v-model="framing"
+          :src="previewSrc"
+          :name="name || '?'"
+          :style="goalTintStyle(shownTint)"
+          @pick="fileEl?.click()"
+          @remove="removePicture"
+        />
         <input ref="fileEl" class="file" type="file" accept="image/*" tabindex="-1" aria-hidden="true" @change="onPick">
         <p v-if="errors.image" class="vv-error" role="alert">{{ errors.image }}</p>
-        <UiField
-          v-if="linkOpen"
-          v-model="link"
-          :label="t('goals.imageLinkLabel')"
-          placeholder="https://…"
-          autocomplete="off"
-          :hint="t('goals.imageLinkHint')"
-          :error="errors.imageUrl"
-        />
         <div class="swatches" role="radiogroup" :aria-label="t('goals.tint')">
           <button
             v-for="c in GOAL_TINTS"
@@ -309,9 +269,6 @@ async function save() {
 .due :deep(.field) { justify-self: stretch; width: 100%; }
 .look { display: grid; gap: 14px; margin: 0; padding: 0; border: none; min-width: 0; }
 .look legend { padding: 0; margin-bottom: 10px; font-size: 14px; font-weight: 700; color: var(--vv-text); }
-.pic-row { display: flex; align-items: center; gap: 14px; }
-.pic { flex: none; width: 96px; height: 96px; background: var(--g-bg); border-radius: var(--vv-r-md); box-shadow: var(--vv-p1); overflow: hidden; }
-.pic-actions { display: flex; flex-wrap: wrap; gap: 4px 6px; min-width: 0; }
 .file { display: none; }
 .swatches { display: flex; gap: 14px; }
 .swatch { width: 40px; height: 40px; padding: 0; border: none; border-radius: 50%; background: var(--g-bg); box-shadow: var(--vv-e1); cursor: pointer; -webkit-tap-highlight-color: transparent; }

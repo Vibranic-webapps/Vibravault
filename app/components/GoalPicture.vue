@@ -30,11 +30,14 @@ const imgStyle = computed(() => {
   const z = (props.zoom ?? 100) / 100
   return { objectPosition: `${x}% ${y}%`, transformOrigin: `${x}% ${y}%`, transform: z === 1 ? undefined : `scale(${z})` }
 })
+// Zoomed out, the picture is smaller than the card: a soft blurred copy fills the rest, so no raw empty space.
+const zoomedOut = computed(() => props.fit === 'cover' && (props.zoom ?? 100) < 100)
 const initial = computed(() => (props.name.trim()[0] ?? '?').toUpperCase())
 </script>
 
 <template>
   <span class="pic" :class="fit ?? 'contain'">
+    <img v-if="src && !failed && zoomedOut" class="back" :src="src" alt="" aria-hidden="true" decoding="async" draggable="false" referrerpolicy="no-referrer">
     <img
       v-if="src && !failed"
       :src="src"
@@ -51,9 +54,10 @@ const initial = computed(() => (props.name.trim()[0] ?? '?').toUpperCase())
 </template>
 
 <style scoped>
-.pic { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; }
+.pic { position: relative; display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; }
 img { width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
 .contain img { object-fit: contain; padding: 8px; }
 .cover img { object-fit: cover; }
+.pic .back { position: absolute; inset: 0; object-fit: cover; transform: scale(1.25); filter: blur(14px) saturate(1.1); opacity: .85; pointer-events: none; }
 .ph { font-size: 44px; font-weight: 800; color: var(--g-ink, var(--vv-goal)); opacity: .9; }
 </style>
