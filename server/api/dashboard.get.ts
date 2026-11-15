@@ -55,8 +55,8 @@ export default defineEventHandler(async (event) => {
   ])
 
   // Readable name for a row - the same four layers the transaction list uses.
-  const labelOf = (t: { counterparty: string | null; description: string | null }) =>
-    transactionLabel(t.counterparty, t.description, rules)
+  const labelOf = (t: { counterparty: string | null; description: string | null; amountCents: number }) =>
+    transactionLabel(t.counterparty, t.description, rules, t.amountCents)
 
   // ---- Bank cards ---------------------------------------------------------
   const accountCards = accounts.map((a) => {

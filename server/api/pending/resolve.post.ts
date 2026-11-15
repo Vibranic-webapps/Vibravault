@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
           description: r.description,
           source: 'CSV',
           fingerprint: r.fingerprint,
-          categoryId: r.categoryId ?? pickRule(categorising, r.description)?.categoryId ?? null,
+          categoryId: r.categoryId ?? pickRule(categorising, r.description, r.amountCents)?.categoryId ?? null,
         })),
         // Already live meanwhile (e.g. imported in the app)? Then it's skipped.
         skipDuplicates: true,

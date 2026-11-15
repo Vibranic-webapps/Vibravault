@@ -1,11 +1,13 @@
 import { prisma } from '~~/server/utils/prisma'
 import { requireUserId } from '~~/server/utils/auth'
 import { applyRuleToExisting } from '~~/server/utils/merchantRules'
+import { validateRuleAmount } from '~~/shared/utils/rules'
 
 export default defineEventHandler(async (event) => {
   const userId = await requireUserId(event)
   const body = await readBody<{
     match?: unknown; label?: unknown; categoryId?: unknown; applyToExisting?: unknown
+    amountMinCents?: unknown; amountMaxCents?: unknown
   }>(event)
 
   const match = typeof body?.match === 'string' ? body.match.replace(/\s+/g, ' ').trim() : ''
@@ -29,10 +31,19 @@ export default defineEventHandler(async (event) => {
     if (!owned) throw createError({ statusCode: 400, statusMessage: 'Unknown category' })
   }
 
-  const rule = await prisma.merchantRule.create({ data: { userId, match, label, categoryId } })
+  // Optional amount condition: both or neither, cents >= 1, min <= max.
+  const amount = validateRuleAmount(body?.amountMinCents, body?.amountMaxCents)
+  if (!amount.ok) {
+    throw createError({ statusCode: 400, statusMessage: amount.message, data: { field: amount.field } })
+  }
+  const { amountMinCents, amountMaxCents } = amount
+
+  const rule = await prisma.merchantRule.create({
+    data: { userId, match, label, categoryId, amountMinCents, amountMaxCents },
+  })
 
   const categorised = categoryId && body?.applyToExisting !== false
-    ? await applyRuleToExisting(userId, match, categoryId)
+    ? await applyRuleToExisting(userId, match, categoryId, { amountMinCents, amountMaxCents })
     : 0
 
   setResponseStatus(event, 201)

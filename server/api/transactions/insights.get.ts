@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
       amountCents: t.amountCents,
       bookedAt: t.bookedAt,
       categoryId: t.categoryId,
-      label: transactionLabel(t.counterparty, t.description, rules),
+      label: transactionLabel(t.counterparty, t.description, rules, t.amountCents),
     })),
     cats,
   )

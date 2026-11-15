@@ -1,5 +1,5 @@
 import { prisma } from './prisma'
-import { ruleMatches } from '~~/shared/utils/rules'
+import { ruleMatches, type RuleAmount } from '~~/shared/utils/rules'
 
 export function loadRules(userId: string) {
   return prisma.merchantRule.findMany({
@@ -16,13 +16,22 @@ export function loadRules(userId: string) {
  * LIKE, deliberately: SQL would treat the bank's runs of spaces differently
  * from ruleMatches, and the two definitions of "matches" would quietly drift
  * apart. One definition, used everywhere.
+ *
+ * A rule with an amount condition only touches rows whose amount fits it.
  */
-export async function applyRuleToExisting(userId: string, match: string, categoryId: string) {
+export async function applyRuleToExisting(
+  userId: string,
+  match: string,
+  categoryId: string,
+  amount: RuleAmount = {},
+) {
   const candidates = await prisma.transaction.findMany({
     where: { userId, deletedAt: null, categoryId: null },
-    select: { id: true, description: true },
+    select: { id: true, description: true, amountCents: true },
   })
-  const ids = candidates.filter((t) => ruleMatches(match, t.description)).map((t) => t.id)
+  const ids = candidates
+    .filter((t) => ruleMatches(match, t.description, t.amountCents, amount))
+    .map((t) => t.id)
   if (!ids.length) return 0
 
   const res = await prisma.transaction.updateMany({

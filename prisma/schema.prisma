@@ -129,14 +129,21 @@ model ImportToken {
 // is WRITTEN, because categories drive totals - but only onto rows that are
 // still uncategorised, so a choice made by hand is never overwritten.
 model MerchantRule {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  match      String
-  label      String?
-  categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  createdAt  DateTime  @default(now())
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match          String
+  label          String?
+  categoryId     String?
+  category       Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  // Optional amount condition, in cents, compared on the ABSOLUTE value of the
+  // transaction (a 0.99 charge is stored as -99; the rule says 99). Both null =
+  // any amount (every rule created before this existed). An exact amount X is
+  // min = max = X; a range is min < max, both ends inclusive. Either both are
+  // set or neither - enforced at the API (validateRuleAmount), not in the DB.
+  amountMinCents Int?
+  amountMaxCents Int?
+  createdAt      DateTime  @default(now())
 
   @@index([userId])
 }
