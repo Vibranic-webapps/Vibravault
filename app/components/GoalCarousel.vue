@@ -23,6 +23,7 @@ const { money } = useFormat()
 // A link that no longer loads: the card falls back to dark-on-tint text.
 const broken = reactive(new Set<string>())
 const pictured = (g: Goal) => !!g.imageSrc && !broken.has(g.id)
+const pct = (g: Goal) => Math.min(100, Math.max(0, Math.round(g.percent)))
 
 const track = ref<HTMLElement | null>(null)
 const TILT = 24 // degrees of turn per card-width away from the centre
@@ -136,18 +137,26 @@ function onClickCapture(e: MouseEvent) {
         <button type="button" class="open" :aria-label="t('goals.openN', { name: g.name })" @click="emit('open', g.id)">
           <span class="stage">
             <GoalPicture :src="g.imageSrc" :name="g.name" fit="cover" :focus-x="g.imageFocusX" :focus-y="g.imageFocusY" :zoom="g.imageZoom" @broken="broken.add(g.id)" />
+            <!-- The same picture in grey on top, wiped away from the left as the goal fills up. -->
+            <span v-if="pictured(g) && pct(g) < 100" class="veil" :style="{ '--p': pct(g) }" aria-hidden="true">
+              <GoalPicture :src="g.imageSrc" :name="g.name" fit="cover" :focus-x="g.imageFocusX" :focus-y="g.imageFocusY" :zoom="g.imageZoom" />
+            </span>
           </span>
           <span class="name">{{ g.name }}</span>
         </button>
-        <GoalEdge :percent="g.percent" />
-        <span
-          class="badge"
-          role="progressbar"
-          :aria-label="t('goals.progressLabel', { name: g.name })"
-          :aria-valuenow="Math.min(100, Math.round(g.percent))"
-          aria-valuemin="0"
-          aria-valuemax="100"
-        >{{ Math.min(100, Math.round(g.percent)) }}<small>%</small></span>
+        <div class="meter">
+          <span
+            class="bar"
+            role="progressbar"
+            :aria-label="t('goals.progressLabel', { name: g.name })"
+            :aria-valuenow="pct(g)"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            <span class="fill" :style="{ width: `${pct(g)}%` }" />
+          </span>
+          <span class="pct" aria-hidden="true">{{ pct(g) }}%</span>
+        </div>
         <div class="foot">
           <span class="amounts">
             <strong>{{ money(g.savedCents) }}</strong>
@@ -197,30 +206,33 @@ function onClickCapture(e: MouseEvent) {
 .open:focus-visible { outline: 2px solid var(--vv-accent-ring); outline-offset: 2px; }
 .name { max-width: 100%; font-size: 15px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* The percentage sits in the top-right corner on a small glass chip, the same shape and edge gap as
-   the + (radius = card radius - edge gap, so the curves sit concentric with the card). The progress
-   itself is drawn along the card's edge (GoalEdge). */
-.badge {
-  position: absolute; top: var(--edge); right: var(--edge); z-index: 3;
-  display: grid; place-items: center; min-width: var(--vv-control); height: var(--vv-control); padding: 0 8px;
-  font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; pointer-events: none;
+/* Progress: a slim bar above the amounts with the percentage at its end (one line), and on a picture
+   the grey copy of it wipes away from the left. Both read left to right. The bar is white on the dark
+   fade (always readable) and the tint's ink on a pastel ground, so it can't vanish on any picture or colour. */
+.meter { position: absolute; left: 12px; right: var(--edge); bottom: 58px; z-index: 1; display: flex; align-items: center; gap: 8px; pointer-events: none; }
+.bar { flex: 1; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--g-ink) 20%, transparent); overflow: hidden; }
+.fill { display: block; height: 100%; border-radius: 999px; background: var(--g-ink); transition: width .6s cubic-bezier(.22, 1, .36, 1); }
+.pct { flex: none; font-size: 12px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--g-ink); }
+.pictured .bar { background: rgba(255, 255, 255, .3); }
+.pictured .fill { background: var(--vv-on-scrim); }
+.pictured .pct { color: var(--vv-on-scrim); text-shadow: 0 1px 3px rgba(0, 0, 0, .55); }
+.veil {
+  position: absolute; inset: 0; filter: grayscale(1) brightness(1.08) contrast(.92);
+  -webkit-mask-image: linear-gradient(to right, transparent calc(var(--p) * 1.12% - 12%), #000 calc(var(--p) * 1.12%));
+  mask-image: linear-gradient(to right, transparent calc(var(--p) * 1.12% - 12%), #000 calc(var(--p) * 1.12%));
 }
-.badge small { margin-left: 1px; font-size: .78em; font-weight: 700; opacity: .8; }
 /* Glass, not a raised disc: frosted, a hairline edge and no shadow (no glow). */
-.badge, .foot :deep(.ib) {
+.foot :deep(.ib) {
   background: var(--vv-glass-tint); border: 1px solid var(--vv-glass-line); box-shadow: none;
   border-radius: calc(var(--vv-r-lg) - var(--edge));
   -webkit-backdrop-filter: var(--vv-glass-blur); backdrop-filter: var(--vv-glass-blur);
 }
-.pictured .badge, .pictured .foot :deep(.ib) { background: var(--vv-glass-photo); color: var(--vv-on-scrim); }
+.pictured .foot :deep(.ib) { background: var(--vv-glass-photo); color: var(--vv-on-scrim); }
 .foot :deep(.ib) { color: var(--g-ink); }
 .foot :deep(.ib:hover) { color: var(--g-ink); }
 .pictured .foot :deep(.ib:hover) { color: var(--vv-on-scrim); }
 .foot :deep(.ib:active) { box-shadow: none; transform: scale(.94); color: var(--g-ink); }
 .pictured .foot :deep(.ib:active) { color: var(--vv-on-scrim); }
-/* On a picture the edge line is the pastel tint over a pale track, so it reads on any photo. */
-.pictured :deep(.edge .track) { stroke: rgba(255, 255, 255, .3); }
-.pictured :deep(.edge .arc) { stroke: var(--g-bg); }
 
 .foot { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .amounts { display: flex; flex-direction: column; min-width: 0; font-variant-numeric: tabular-nums; }
@@ -231,7 +243,7 @@ function onClickCapture(e: MouseEvent) {
 .gcard:not(.newcard) { padding: 0; }
 .gcard:not(.newcard) .open { position: absolute; inset: 0; gap: 0; border-radius: inherit; }
 .stage { position: absolute; inset: 0; background: var(--g-bg); }
-.name { position: absolute; left: 12px; right: 12px; bottom: 56px; z-index: 1; }
+.name { position: absolute; left: 12px; right: 12px; bottom: 82px; z-index: 1; }
 .newcard .name { position: static; }
 .gcard:not(.newcard) .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 var(--edge) var(--edge) 12px; }
 .pictured .stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 72%; background: var(--vv-scrim); }
@@ -247,5 +259,5 @@ function onClickCapture(e: MouseEvent) {
 .plus { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--vv-r-md); box-shadow: var(--vv-p1); color: var(--vv-goal); }
 
 @media (max-width: 560px) { .track { --bleed: 18px; } }
-@media (prefers-reduced-motion: reduce) { .slide { will-change: auto; } }
+@media (prefers-reduced-motion: reduce) { .slide { will-change: auto; } .fill { transition: none; } }
 </style>
