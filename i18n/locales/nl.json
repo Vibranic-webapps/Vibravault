@@ -392,7 +392,8 @@
     "empty": "Stel een maandlimiet in op een uitgavencategorie en die verschijnt hier.",
     "field": "Maandbudget",
     "fieldHint": "Optioneel. Hoeveel je per maand in deze categorie wilt uitgeven.",
-    "invalid": "Geef een bedrag boven €0 in."
+    "invalid": "Geef een bedrag boven €0 in.",
+    "perMonth": "{amount} / maand"
   },
   "goals": {
     "title": "Spaardoelen",

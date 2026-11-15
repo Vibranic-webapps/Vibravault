@@ -8,6 +8,7 @@ import { useCategoriesStore, type Category, type CategoryKind } from '~/stores/c
  * holds. Tap a row to edit it; "New category" opens the same sheet empty.
  */
 const { t } = useI18n()
+const { money } = useFormat()
 const store = useCategoriesStore()
 // Counts change as transactions move, so refetch every visit - but don't make the
 // swipe wait for it: the list shows at once and the counts update when they land.
@@ -62,7 +63,11 @@ function tint(c: Category) {
           <span class="tile neu" :style="tint(c)" aria-hidden="true"><CategoryIcon :name="c.icon" :size="19" /></span>
           <span class="main">
             <span class="name">{{ c.name }}</span>
-            <span v-if="c.count !== undefined" class="sub">{{ t('home.weekCount', c.count) }}</span>
+            <span v-if="c.count !== undefined || c.budgetCents" class="sub">
+              <template v-if="c.count !== undefined">{{ t('home.weekCount', c.count) }}</template>
+              <template v-if="c.count !== undefined && c.budgetCents"> · </template>
+              <template v-if="c.budgetCents">{{ t('budgets.perMonth', { amount: money(c.budgetCents) }) }}</template>
+            </span>
           </span>
           <ChevronRight :size="18" class="chev" aria-hidden="true" />
         </button>

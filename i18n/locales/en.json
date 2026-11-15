@@ -392,7 +392,8 @@
     "empty": "Set a monthly limit on a spending category and it shows up here.",
     "field": "Monthly budget",
     "fieldHint": "Optional. How much you want to spend in this category each month.",
-    "invalid": "Enter an amount above €0."
+    "invalid": "Enter an amount above €0.",
+    "perMonth": "{amount} / month"
   },
   "goals": {
     "title": "Savings goals",

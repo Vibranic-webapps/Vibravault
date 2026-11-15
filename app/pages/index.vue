@@ -223,7 +223,7 @@ onPullRefresh(async () => {
                   <span class="vv-amount-out c-amount">{{ money(c.total) }}</span>
                 </span>
                 <span class="c-bar" :aria-label="t('home.ofSpending', { pct: pct.format(share(c.total)) })">
-                  <span :style="{ width: `${Math.max(2, share(c.total) * 100)}%` }" />
+                  <span :style="{ width: `${Math.max(2, share(c.total) * 100)}%`, ...(c.color ? { background: `var(--vv-${c.color}-fg)` } : {}) }" />
                 </span>
               </span>
             </li>
