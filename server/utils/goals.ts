@@ -11,6 +11,23 @@ export const GOAL_NOTE_MAX = 200
 export const GOAL_TARGET_MAX_CENTS = 99_999_999
 export const GOAL_AMOUNT_MAX_CENTS = 99_999_999
 
+// The look of a goal (all optional). Limits live here, in one place.
+export const GOAL_TINTS = ['mint', 'blush', 'sky', 'lavender', 'butter'] as const
+export type GoalTint = (typeof GOAL_TINTS)[number]
+export const GOAL_IMAGE_MAX_BYTES = 150 * 1024 // decoded picture; the browser already shrinks to far less
+export const GOAL_IMAGE_URL_MAX = 2000
+export const GOAL_IMAGE_MIMES = ['image/jpeg', 'image/webp', 'image/png'] as const
+type GoalImageMime = (typeof GOAL_IMAGE_MIMES)[number]
+
+/**
+ * A goal row WITHOUT the picture bytes. Every query except the image route uses
+ * `omit: goalOmitImage`, so the bytes (up to 150 KB per goal) never ride along
+ * with list/get/patch. `imageMime` is set exactly when bytes are stored (DB CHECK),
+ * so it doubles as the "has an uploaded picture" flag.
+ */
+export type GoalRow = Omit<Goal, 'imageData'>
+export const goalOmitImage = { imageData: true } as const
+
 /**
  * Error with a stable machine-readable `code` (+ the offending `field`) next to
  * the English `statusMessage`. The existing screens show statusMessage as-is;
@@ -89,7 +106,117 @@ function validDueDate(raw: unknown): Date {
   return d
 }
 
-export interface GoalCreateInput { name: string; targetCents: number; dueDate: Date | null }
+// ---- Look of a goal: tint + picture ------------------------------------------
+
+function validTint(raw: unknown): GoalTint | null {
+  if (raw === null || raw === '') return null
+  if (typeof raw !== 'string' || !(GOAL_TINTS as readonly string[]).includes(raw)) {
+    throw goalError(400, `Tint must be one of: ${GOAL_TINTS.join(', ')}`, 'GOAL_TINT_INVALID', 'tint')
+  }
+  return raw as GoalTint
+}
+
+/** A pasted picture link: https only, no embedded credentials, reasonable length. */
+function validImageUrl(raw: unknown): string | null {
+  if (raw === null || raw === '') return null
+  if (typeof raw !== 'string') throw goalError(400, 'Image link must be text', 'GOAL_IMAGE_URL_INVALID', 'imageUrl')
+  const v = raw.trim()
+  if (!v) return null
+  if (v.length > GOAL_IMAGE_URL_MAX) throw goalError(400, 'Image link is too long', 'GOAL_IMAGE_URL_TOO_LONG', 'imageUrl')
+  let u: URL
+  try {
+    u = new URL(v)
+  } catch {
+    throw goalError(400, 'Enter a valid image link (https://...)', 'GOAL_IMAGE_URL_INVALID', 'imageUrl')
+  }
+  // Only https: rejects http:, javascript:, data:, file: and the rest.
+  if (u.protocol !== 'https:' || !u.hostname || u.username || u.password) {
+    throw goalError(400, 'The image link must start with https://', 'GOAL_IMAGE_URL_INVALID', 'imageUrl')
+  }
+  return u.href
+}
+
+const DATA_URL_RE = /^data:image\/(jpeg|webp|png);base64,([A-Za-z0-9+/]+={0,2})$/
+// Longest legal base64 string for the byte cap: an oversized body is refused before it is decoded.
+const IMAGE_BASE64_MAX_CHARS = Math.ceil(GOAL_IMAGE_MAX_BYTES / 3) * 4
+
+/** The file's real type from its first bytes (a client-declared type alone proves nothing). */
+function sniffImageMime(b: Buffer): GoalImageMime | null {
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg'
+  if (b.length >= 8 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png'
+  if (b.length >= 12 && b.toString('latin1', 0, 4) === 'RIFF' && b.toString('latin1', 8, 12) === 'WEBP') return 'image/webp'
+  return null
+}
+
+/** 'data:image/jpeg;base64,...' -> bytes + mime. Size and magic bytes are checked here. */
+function validImageDataUrl(raw: unknown): { data: Buffer; mime: GoalImageMime } {
+  const invalid = () => goalError(400, 'Image must be a JPEG, WebP or PNG picture', 'GOAL_IMAGE_INVALID', 'image')
+  const tooLarge = () => goalError(400, 'Image is too large (max 150 KB)', 'GOAL_IMAGE_TOO_LARGE', 'image')
+  if (typeof raw !== 'string') throw invalid()
+  // Cheap length check (prefix is at most 23 chars) before the regex/decoder sees an oversized string.
+  if (raw.length > IMAGE_BASE64_MAX_CHARS + 32) throw tooLarge()
+  const m = DATA_URL_RE.exec(raw)
+  if (!m) throw invalid()
+  const declared = `image/${m[1]}` as GoalImageMime
+  const b64 = m[2]!
+  if (b64.length % 4 !== 0) throw invalid()
+  const data = Buffer.from(b64, 'base64')
+  if (data.length === 0) throw invalid()
+  if (data.length > GOAL_IMAGE_MAX_BYTES) throw tooLarge()
+  if (sniffImageMime(data) !== declared) throw invalid()
+  return { data, mime: declared }
+}
+
+/** The Prisma-ready look fields. Only keys that must change are present. */
+interface GoalLookData {
+  tint?: GoalTint | null
+  imageUrl?: string | null
+  imageData?: Buffer | null
+  imageMime?: GoalImageMime | null
+}
+
+/**
+ * Reads tint / imageUrl / image / removeImage from a body. ONE picture source at
+ * a time: a new upload clears the link and a new link clears the upload.
+ *  - `image` + `imageUrl` (both set), or `removeImage: true` + either -> 400 (ambiguous).
+ *  - `removeImage: true` clears upload and link.
+ *  - `imageUrl: null` clears only the link; `image: null` is treated as "not sent".
+ */
+function parseGoalLook(b: Record<string, unknown>): GoalLookData {
+  const out: GoalLookData = {}
+  if (b.tint !== undefined) out.tint = validTint(b.tint)
+
+  if (b.removeImage !== undefined && typeof b.removeImage !== 'boolean') {
+    throw goalError(400, 'removeImage must be true or false', 'GOAL_IMAGE_REMOVE_INVALID', 'removeImage')
+  }
+  const remove = b.removeImage === true
+  const hasUpload = b.image !== undefined && b.image !== null
+  const url = b.imageUrl === undefined ? undefined : validImageUrl(b.imageUrl)
+
+  if ((hasUpload && url) || (remove && (hasUpload || url))) {
+    throw goalError(400, 'Send one picture source at a time: a new image, a link, or removeImage', 'GOAL_IMAGE_CONFLICT', 'image')
+  }
+
+  if (hasUpload) {
+    const { data, mime } = validImageDataUrl(b.image)
+    out.imageData = data
+    out.imageMime = mime
+    out.imageUrl = null
+  } else if (url) {
+    out.imageUrl = url
+    out.imageData = null
+    out.imageMime = null
+  } else if (remove) {
+    out.imageUrl = null
+    out.imageData = null
+    out.imageMime = null
+  } else if (url === null) {
+    out.imageUrl = null // clear the link only
+  }
+  return out
+}
+
+export interface GoalCreateInput extends GoalLookData { name: string; targetCents: number; dueDate: Date | null }
 
 export function validateGoalCreate(body: unknown): GoalCreateInput {
   const b = asObject(body)
@@ -97,6 +224,7 @@ export function validateGoalCreate(body: unknown): GoalCreateInput {
     name: validName(b.name),
     targetCents: validTarget(b.targetCents),
     dueDate: b.dueDate === undefined || b.dueDate === null || b.dueDate === '' ? null : validDueDate(b.dueDate),
+    ...parseGoalLook(b),
   }
 }
 
@@ -107,6 +235,7 @@ export function validateGoalPatch(body: unknown): Partial<GoalCreateInput> {
   if (b.name !== undefined) data.name = validName(b.name)
   if (b.targetCents !== undefined) data.targetCents = validTarget(b.targetCents)
   if (b.dueDate !== undefined) data.dueDate = b.dueDate === null || b.dueDate === '' ? null : validDueDate(b.dueDate)
+  Object.assign(data, parseGoalLook(b))
   if (Object.keys(data).length === 0) {
     throw goalError(400, 'Nothing to update', 'GOAL_NOTHING_TO_UPDATE')
   }
@@ -146,13 +275,25 @@ export function validateContributionInput(body: unknown): ContributionInput {
 
 const dayOf = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null)
 
+/**
+ * Where the picture loads from: our own image route for an upload (cache-busted
+ * by updatedAt, so a replaced picture shows at once), else the pasted https link,
+ * else null. Never the bytes.
+ */
+export function goalImageSrc(goal: Pick<GoalRow, 'id' | 'imageMime' | 'imageUrl' | 'updatedAt'>): string | null {
+  if (goal.imageMime) return `/api/goals/${goal.id}/image?v=${goal.updatedAt.getTime()}`
+  return goal.imageUrl
+}
+
 /** The goal as the API returns it: stored fields + progress, all from the one pure function. */
-export function serializeGoal(goal: Goal, savedCents: number, now = new Date()) {
+export function serializeGoal(goal: GoalRow, savedCents: number, now = new Date()) {
   return {
     id: goal.id,
     name: goal.name,
     targetCents: goal.targetCents,
     dueDate: dayOf(goal.dueDate), // 'YYYY-MM-DD' calendar day, or null
+    tint: goal.tint, // 'mint' | 'blush' | 'sky' | 'lavender' | 'butter' | null
+    imageSrc: goalImageSrc(goal), // URL for <img src>, or null
     createdAt: goal.createdAt,
     updatedAt: goal.updatedAt,
     ...goalProgress({ targetCents: goal.targetCents, savedCents, dueDate: goal.dueDate, now }),
@@ -186,8 +327,8 @@ export async function savedByGoal(userId: string, goalIds: string[], db: Db = pr
 }
 
 /** The user's live goal, or a 404. Someone else's goal and a deleted goal look identical. */
-export async function findOwnedGoal(userId: string, id: string, db: Db = prisma): Promise<Goal> {
-  const goal = await db.goal.findFirst({ where: { id, userId, deletedAt: null } })
+export async function findOwnedGoal(userId: string, id: string, db: Db = prisma): Promise<GoalRow> {
+  const goal = await db.goal.findFirst({ where: { id, userId, deletedAt: null }, omit: goalOmitImage })
   if (!goal) throw goalNotFound()
   return goal
 }
@@ -204,7 +345,7 @@ export async function findOwnedGoal(userId: string, id: string, db: Db = prisma)
 export async function withLockedGoal<T>(
   userId: string,
   goalId: string,
-  fn: (tx: Prisma.TransactionClient, goal: Goal) => Promise<T>,
+  fn: (tx: Prisma.TransactionClient, goal: GoalRow) => Promise<T>,
 ): Promise<T> {
   return prisma.$transaction(async (tx) => {
     const locked = await tx.$queryRaw<Array<{ id: string }>>`
@@ -212,7 +353,17 @@ export async function withLockedGoal<T>(
       WHERE "id" = ${goalId} AND "userId" = ${userId} AND "deletedAt" IS NULL
       FOR UPDATE`
     if (locked.length === 0) throw goalNotFound()
-    const goal = await tx.goal.findUniqueOrThrow({ where: { id: goalId } })
+    const goal = await tx.goal.findUniqueOrThrow({ where: { id: goalId }, omit: goalOmitImage })
     return fn(tx, goal)
   })
+}
+
+/** The stored picture of the user's live goal, or a 404 (also when the goal has no uploaded picture). */
+export async function findOwnedGoalImage(userId: string, id: string): Promise<{ data: Buffer; mime: string }> {
+  const g = await prisma.goal.findFirst({
+    where: { id, userId, deletedAt: null },
+    select: { imageData: true, imageMime: true },
+  })
+  if (!g?.imageData || !g.imageMime) throw goalNotFound()
+  return { data: Buffer.from(g.imageData), mime: g.imageMime }
 }
