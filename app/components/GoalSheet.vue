@@ -231,7 +231,7 @@ async function save() {
         <legend>{{ t('goals.look') }}</legend>
         <div class="pic-row">
           <div class="pic" :style="goalTintStyle(shownTint)">
-            <GoalPicture :src="previewSrc" :name="name || '?'" fit="ambient" />
+            <GoalPicture :src="previewSrc" :name="name || '?'" fit="cover" />
           </div>
           <div class="pic-actions">
             <UiButton variant="ghost" :block="false" :icon="ImagePlus" @click="fileEl?.click()">

@@ -90,7 +90,7 @@ async function runPending() {
       <section class="hero" :style="goalTintStyle(goalTint(goal))">
         <!-- What I'm saving for: the picture on the goal's tint, or its first letter. -->
         <div class="picture">
-          <GoalPicture :src="goal.imageSrc" :name="goal.name" fit="ambient" />
+          <GoalPicture :src="goal.imageSrc" :name="goal.name" fit="cover" />
         </div>
         <p class="saved">{{ money(goal.savedCents) }}</p>
         <p class="of">{{ t('goals.of', { target: money(goal.targetCents) }) }} · {{ goal.percent }}%</p>
