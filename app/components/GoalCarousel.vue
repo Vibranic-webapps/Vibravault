@@ -209,10 +209,11 @@ function onClickCapture(e: MouseEvent) {
 .name { position: absolute; left: 12px; right: 12px; bottom: 56px; z-index: 1; }
 .newcard .name { position: static; }
 .gcard:not(.newcard) .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 12px 12px; }
-.pictured .stage::after { content: ''; position: absolute; inset: 0; background: var(--vv-scrim); }
+.pictured .stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 72%; background: var(--vv-scrim); }
 .pictured .name,
 .pictured .amounts strong,
-.pictured .amounts small { color: var(--vv-on-scrim); }
+.pictured .amounts small { color: var(--vv-on-scrim); text-shadow: 0 1px 3px rgba(0, 0, 0, .55); }
+.pictured .amounts small { opacity: .92; }
 .gcard:not(.pictured):not(.newcard) .name { color: var(--g-ink); }
 
 .newcard { align-items: center; justify-content: center; gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
