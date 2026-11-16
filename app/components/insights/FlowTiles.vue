@@ -3,13 +3,12 @@ import { ArrowDownLeft, ArrowUpRight, Scale } from 'lucide-vue-next'
 import { moneyCompact } from '~/utils/moneyCompact'
 
 /**
- * In / Out / Net as three small cards side by side (Transactions only; Home keeps
- * MoneyTiles). Each: pastel icon disc + label, the amount, and a thin pressed bar
+ * In / Out / Net as three small cards side by side (Home and Transactions). Each: pastel icon disc + label, the amount, and a thin pressed bar
  * showing the size against income (In = full, Out = out/in, Net = |net|/in).
  *
  * The cards are ~100px wide on a 360px phone, so the amount can never wrap or
  * clip: it is one line, from 1.000 euro the cents are dropped, and the font
- * follows the card's width (container units, like MoneyTiles).
+ * follows the card's width (container units).
  *
  * Props are the insights totals: income >= 0, expense <= 0 (negative cents).
  */

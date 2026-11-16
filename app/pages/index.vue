@@ -186,7 +186,7 @@ onPullRefresh(async () => {
         <UiMonthSwitcher v-model="month" class="months" />
 
         <div class="month-body" :class="{ refreshing }" :aria-busy="refreshing">
-        <MoneyTiles class="tiles" :income="data.totals.income" :expense="data.totals.expense" :net="data.totals.net" />
+        <InsightsFlowTiles class="tiles" :income-cents="data.totals.income" :expense-cents="data.totals.expense" :net-cents="data.totals.net" />
 
         <section v-if="data.uncategorised" class="neu-3 card rows">
           <UiListRow

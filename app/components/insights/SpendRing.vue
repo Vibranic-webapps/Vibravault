@@ -3,8 +3,8 @@ import { percentOfTotal } from '~/utils/ringSlices'
 import type { DonutItem } from './RingDonut.vue'
 
 /**
- * "Where does my income go?" - the period's income is 100% of the ring, split
- * into subscriptions / other spending / left over. Half-width card: the ring,
+ * "How big is the subscriptions share of my income?" - the period's income is
+ * 100% of the ring, split into subscriptions / other spending / left over. Half-width card: the ring,
  * ONE number in the centre (the subscriptions share) and a popup per slice.
  * The per-subscription lines live in SubsList, not here.
  *
@@ -50,7 +50,7 @@ const overspent = computed(() => props.ring.overCents > 0)
 
     <InsightsRingDonut :items="items" :label="title" :show-label="t('insights.ringShow')" :clear-label="t('insights.ringClear')">
       <strong class="num">{{ percentText(ring.subscriptionsCents) }}</strong>
-      <span class="cap">{{ t('insights.puckSubs') }}</span>
+      <span class="cap">{{ t(hasIncome ? 'insights.puckSubs' : 'insights.puckSubsNoIncome') }}</span>
     </InsightsRingDonut>
 
     <p v-if="overspent" class="over vv-amount-neg">{{ t('insights.overBy', { amount: money(ring.overCents) }) }}</p>
