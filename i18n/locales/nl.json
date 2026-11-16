@@ -676,6 +676,20 @@
       "RECURRING_DUE_NOT_A_DUE_DATE": "Die datum is geen vervaldatum van dit item.",
       "RECURRING_KIND_INVALID": "Die actie is niet geldig.",
       "RECURRING_REF_INVALID": "Dit item werd niet gevonden."
+    },
+    "suggest": {
+      "heading": "Lijkt terug te komen",
+      "titleOut": "{name} {amount} lijkt {cadence} terug te komen. Toevoegen?",
+      "titleIn": "{name} {amount} komt {cadence} binnen. Toevoegen als inkomen?",
+      "seen1": "Gezien op {a}",
+      "seen2": "Gezien op {a} en {b}",
+      "seen3": "Gezien op {a}, {b} en {c}",
+      "add": "Toevoegen",
+      "later": "Nu niet",
+      "added": "{name} toegevoegd. Volgende: {date}.",
+      "addedNoDate": "{name} toegevoegd.",
+      "askAgain": "Oke, we vragen het over een maand opnieuw.",
+      "laterError": "Kon dat niet verbergen. Probeer opnieuw."
     }
   }
 }

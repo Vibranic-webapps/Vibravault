@@ -87,6 +87,7 @@ model User {
   goalContributions     GoalContribution[]
   recurringItems        RecurringItem[]
   recurringSettlements  RecurringSettlement[]
+  recurringSuggestionDismissals RecurringSuggestionDismissal[]
 }
 
 model Session {
@@ -429,4 +430,18 @@ model RecurringSettlement {
 
   @@unique([recurringItemId, dueOn])
   @@index([userId])
+}
+
+// "Not now" on a suggested recurring item (phase 1b): the suggestion stays hidden
+// for 30 days, then may come back. `key` = direction|merchant|typicalAmountCents
+// (built by shared/utils/recurringSuggestions.ts). Nothing else is stored about a
+// suggestion: they are derived from bank history on every request.
+model RecurringSuggestionDismissal {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key         String
+  dismissedAt DateTime // set again on every "Not now", so the 30 days restart
+
+  @@unique([userId, key])
 }

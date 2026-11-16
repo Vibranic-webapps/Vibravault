@@ -676,6 +676,20 @@
       "RECURRING_DUE_NOT_A_DUE_DATE": "That date is not one of its due dates.",
       "RECURRING_KIND_INVALID": "That action is not valid.",
       "RECURRING_REF_INVALID": "This item could not be found."
+    },
+    "suggest": {
+      "heading": "Looks recurring",
+      "titleOut": "{name} {amount} looks {cadence}. Add it?",
+      "titleIn": "{name} {amount} comes in {cadence}. Add it as income?",
+      "seen1": "Seen on {a}",
+      "seen2": "Seen on {a} and {b}",
+      "seen3": "Seen on {a}, {b} and {c}",
+      "add": "Add",
+      "later": "Not now",
+      "added": "{name} added. Next: {date}.",
+      "addedNoDate": "{name} added.",
+      "askAgain": "Okay, we will ask again in a month.",
+      "laterError": "Could not hide that one. Try again."
     }
   }
 }
