@@ -35,6 +35,27 @@ enum CategoryKind {
   TRANSFER
 }
 
+// How often a recurring item comes due (see RecurringItem).
+enum RecurringCadence {
+  WEEKLY
+  BIWEEKLY // every 2 weeks
+  MONTHLY
+  QUARTERLY // every 3 months
+  YEARLY
+}
+
+// Money out (a bill) or money in (pay). Keeps the SIGN out of the min/max amounts.
+enum RecurringDirection {
+  IN
+  OUT
+}
+
+// A manual override for ONE due date of a recurring item.
+enum RecurringSettlementKind {
+  SKIPPED // "skip this time": nothing is expected for that date
+  MARKED_PAID // "mark paid" / "received": settled by hand, no bank row needed
+}
+
 enum TransactionSource {
   MANUAL
   CSV
@@ -64,6 +85,8 @@ model User {
   discardedFingerprints DiscardedFingerprint[]
   goals                 Goal[]
   goalContributions     GoalContribution[]
+  recurringItems        RecurringItem[]
+  recurringSettlements  RecurringSettlement[]
 }
 
 model Session {
@@ -167,6 +190,7 @@ model Account {
 
   transactions        Transaction[]
   pendingTransactions PendingTransaction[]
+  recurringItems      RecurringItem[]
 
   @@index([userId])
 }
@@ -196,6 +220,7 @@ model Category {
   transactions        Transaction[]
   merchantRules       MerchantRule[]
   pendingTransactions PendingTransaction[]
+  recurringItems      RecurringItem[]
 
   @@unique([userId, name])
   @@index([userId])
@@ -350,5 +375,58 @@ model GoalContribution {
   createdAt     DateTime @default(now())
 
   @@index([goalId, contributedAt])
+  @@index([userId])
+}
+
+// ---- Recurring payments + bills (decided 2026-11-16) -------------------------
+// A RecurringItem is the RULE ("Netflix, 13.99, monthly on the 14th"). A bill is
+// one due occurrence of it. Nothing about an occurrence is stored: due dates are
+// computed from anchorOn + cadence (shared/utils/recurring.ts) and "paid" is
+// derived by matching bank rows. Only a manual override is stored.
+model RecurringItem {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name  String // what you see ("Netflix"), max 40 chars (API)
+  match String // bank text to find it: same "contains" semantics as MerchantRule (min 3 chars, never regex)
+
+  // Cents on the ABSOLUTE value, like MerchantRule (a 0.99 charge = 99). A fixed
+  // bill has min = max. CHECK constraints (both > 0, min <= max) hand-added in the migration.
+  amountMinCents Int
+  amountMaxCents Int
+  direction      RecurringDirection
+  cadence        RecurringCadence
+
+  // A known due date (date-only). Every other due date is computed FROM it each
+  // time (never from the previous one), so month-end clamping cannot drift.
+  // No due date is generated before the anchor.
+  anchorOn DateTime @db.Date
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  accountId  String? // which account it is paid from (hidden in the UI until 2+ accounts)
+  account    Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  active    Boolean  @default(true) // pause without deleting
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  settlements RecurringSettlement[]
+
+  @@index([userId])
+}
+
+model RecurringSettlement {
+  id              String                  @id @default(cuid())
+  userId          String // redundant with the item's owner on purpose: every query can be scoped by userId directly
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recurringItemId String
+  item            RecurringItem           @relation(fields: [recurringItemId], references: [id], onDelete: Cascade)
+  dueOn           DateTime                @db.Date
+  kind            RecurringSettlementKind
+  createdAt       DateTime                @default(now())
+
+  @@unique([recurringItemId, dueOn])
   @@index([userId])
 }

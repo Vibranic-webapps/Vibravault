@@ -7,6 +7,8 @@ import { useTransactionsStore, monthKey, dayKey } from '~/stores/transactions'
 import { useCategoriesStore } from '~/stores/categories'
 import { useRulesStore } from '~/stores/rules'
 import { useGoalsStore } from '~/stores/goals'
+import { useRecurringStore, type Occ } from '~/stores/recurring'
+import type { ComingUpItem } from '~/components/recurring/ComingUpCard.vue'
 
 /**
  * Home (Redesign v2, Wave 3). Top to bottom, the order you'd ask the questions:
@@ -32,6 +34,8 @@ interface Dashboard {
   latest: (Transaction & { label: string })[]
   uncategorised: number
   hasAnyTransactions: boolean
+  /** The next few bills (never income), today-based; max 5. */
+  comingUp?: ComingUpItem[]
 }
 
 const { t } = useI18n()
@@ -44,6 +48,7 @@ const txStore = useTransactionsStore()
 const categories = useCategoriesStore()
 const rules = useRulesStore()
 const goals = useGoalsStore()
+const recurring = useRecurringStore()
 
 // "Hey Kilian" - or a friendly fallback until a name is set in You.
 const greeting = computed(() =>
@@ -67,7 +72,7 @@ const last = useState<Dashboard | null>('dashboard-last', () => null)
 watch(fresh, (v) => { if (v && import.meta.client) last.value = v }, { immediate: true })
 const data = computed(() => fresh.value ?? last.value)
 // Categories + rules feed the drawer (names, tiles, rule labels).
-useScreenData(() => Promise.all([categories.fetchAll(), rules.fetchAll(), goals.fetchAll(true)]))
+useScreenData(() => Promise.all([categories.fetchAll(), rules.fetchAll(), goals.fetchAll(true), recurring.fetchAll(true)]))
 
 // Refetch keeps the frame: while the next month loads, the current one stays
 // on screen, dimmed - no blank flash, no layout jump.
@@ -106,6 +111,16 @@ function share(total: number) {
   return all ? total / all : 0
 }
 
+// ---- Coming up (bills) ---------------------------------------------------
+const billOpen = ref(false)
+const billId = ref<string | null>(null)
+const billOcc = ref<Occ | null>(null)
+function openBill(itemId: string, occ: Occ) {
+  billId.value = itemId
+  billOcc.value = occ
+  billOpen.value = true
+}
+
 // ---- Latest + the drawer -------------------------------------------------
 const viewing = ref<Transaction | null>(null)
 const teaching = ref<Transaction | null>(null)
@@ -133,8 +148,8 @@ async function onRuleSaved(n: number) {
 // useAsyncData swallow their errors into `.error`, so check them to tell
 // "up to date" from "couldn't refresh".
 onPullRefresh(async () => {
-  await Promise.all([refresh(), categories.fetchAll(true), rules.fetchAll(), pending.refresh(), goals.fetchAll(true)])
-  if (error.value || categories.error || rules.error || goals.error) throw new Error('refresh failed')
+  await Promise.all([refresh(), categories.fetchAll(true), rules.fetchAll(), pending.refresh(), goals.fetchAll(true), recurring.fetchAll(true)])
+  if (error.value || categories.error || rules.error || goals.error || recurring.error) throw new Error('refresh failed')
 })
 </script>
 
@@ -180,6 +195,9 @@ onPullRefresh(async () => {
         </div>
         <GoalsPanel compact />
       </section>
+
+      <!-- Bills due soon. Today-based, so it sits outside the month wrapper that dims while a month loads. -->
+      <RecurringComingUpCard :items="data.comingUp ?? []" @open="openBill" />
 
       <!-- The month section: switcher, In / Out / Net, the weeks chart. Sideways swipes here move between months. -->
       <div ref="monthZone" class="month-zone" data-swipe-lock>
@@ -271,6 +289,7 @@ onPullRefresh(async () => {
       @teach="(tx) => { viewing = null; teaching = tx }"
     />
     <TeachRuleDialog :transaction="teaching" @close="teaching = null" @saved="onRuleSaved" />
+    <RecurringDetailSheet v-model="billOpen" :item-id="billId" :occ="billOcc" />
   </div>
 </template>
 

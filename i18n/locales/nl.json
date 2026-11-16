@@ -221,7 +221,8 @@
     "groupSpending": "Uitgaven",
     "groupIncome": "Inkomen",
     "groupTransfer": "Tussen je rekeningen",
-    "change": "{field} wijzigen"
+    "change": "{field} wijzigen",
+    "repeats": "Terugkerend maken…"
   },
   "tx": {
     "title": "Transacties",
@@ -540,6 +541,141 @@
       "CONTRIBUTION_NOT_FOUND": "Die invoer bestaat niet meer.",
       "GOAL_WITHDRAWAL_EXCEEDS_SAVED": "Je kunt niet meer opnemen dan de {saved} die gespaard is.",
       "GOAL_REMOVAL_MAKES_NEGATIVE": "Als je deze invoer verwijdert, komt het totaal onder nul (nu {saved}). Verwijder eerst de latere opname."
+    }
+  },
+  "recurring": {
+    "title": "Terugkerend",
+    "intro": "Rekeningen en inkomsten die volgens een schema terugkomen. We herkennen ze in je bankrijen en tonen wat eraan komt.",
+    "count": "nog geen | 1 item | {n} items",
+    "add": "Terugkerend item toevoegen",
+    "empty": "Voeg de rekeningen en inkomsten toe die terugkomen (huur, gsm, loon) en Vibravault zegt je wat er vervalt en herkent het als je bank betaalt.",
+    "loadError": "Je terugkerende items konden niet geladen worden.",
+    "refreshError": "Vernieuwen lukte niet. We tonen wat we hadden.",
+    "comingUp": "Binnenkort",
+    "nothingDue": "Binnenkort niets te betalen",
+    "nextUp": "Volgende: {name} op {date}",
+    "dueOn": "vervalt {date}",
+    "approx": "~",
+    "kindIn": "Inkomst",
+    "kindOut": "Rekening",
+    "state": {
+      "overdueOut": "1 dag te laat | {n} dagen te laat",
+      "overdueIn": "1 dag over tijd | {n} dagen over tijd",
+      "today": "Vervalt vandaag",
+      "tomorrow": "Morgen",
+      "inDays": "Over {n} dagen",
+      "paid": "Betaald {date}",
+      "received": "Ontvangen {date}",
+      "skipped": "Overgeslagen",
+      "paused": "Gepauzeerd"
+    },
+    "cadence": {
+      "WEEKLY": "Elke week",
+      "BIWEEKLY": "Om de 2 weken",
+      "MONTHLY": "Elke maand",
+      "QUARTERLY": "Elke 3 maanden",
+      "YEARLY": "Elk jaar"
+    },
+    "cadenceShort": {
+      "WEEKLY": "wekelijks",
+      "BIWEEKLY": "om de 2 weken",
+      "MONTHLY": "maandelijks",
+      "QUARTERLY": "driemaandelijks",
+      "YEARLY": "jaarlijks"
+    },
+    "group": {
+      "attention": "Aandacht nodig",
+      "comingUp": "Binnenkort",
+      "income": "Inkomsten",
+      "paused": "Gepauzeerd"
+    },
+    "detail": {
+      "amount": "Bedrag",
+      "expectedIncome": "Verwacht bedrag",
+      "repeats": "Herhaalt",
+      "due": "Vervaldatum",
+      "paidOn": "Betaald op",
+      "receivedOn": "Ontvangen op",
+      "category": "Categorie",
+      "match": "Banktekst waarop we zoeken",
+      "matched": "Automatisch gekoppeld aan een bankrij.",
+      "byHand": "Je hebt dit zelf aangeduid."
+    },
+    "action": {
+      "markPaid": "Markeer als betaald",
+      "received": "Ontvangen",
+      "skip": "Deze keer overslaan",
+      "undo": "Ongedaan maken",
+      "pause": "Pauzeren",
+      "resume": "Hervatten"
+    },
+    "confirm": {
+      "title": "{name} verwijderen?",
+      "body": "Het verdwijnt hier en op Home. Je bankrijen blijven ongemoeid."
+    },
+    "toast": {
+      "added": "{name} toegevoegd",
+      "saved": "Wijzigingen opgeslagen",
+      "paid": "Aangeduid als betaald",
+      "received": "Aangeduid als ontvangen",
+      "skipped": "Deze keer overgeslagen",
+      "undone": "Ongedaan gemaakt",
+      "paused": "Gepauzeerd",
+      "resumed": "Hervat",
+      "deleted": "Verwijderd"
+    },
+    "form": {
+      "addTitle": "Nieuw terugkerend item",
+      "editTitle": "Terugkerend item aanpassen",
+      "kind": "Wat is het?",
+      "name": "Naam",
+      "namePh": "bv. Netflix",
+      "amount": "Bedrag",
+      "min": "Van",
+      "max": "Tot",
+      "varies": "Het bedrag verandert",
+      "variesHint": "Zoals energie of gsm: vul het laagste en hoogste in dat je verwacht.",
+      "match": "Banktekst om op te zoeken",
+      "matchHint": "We koppelen een bankrij hieraan als de tekst dit bevat.",
+      "cadence": "Hoe vaak",
+      "due": "Eerste vervaldatum",
+      "dueEdit": "Volgende vervaldatum",
+      "dueHint": "De volgende data rekenen we vanaf deze uit.",
+      "category": "Categorie",
+      "noCategory": "Geen categorie",
+      "paused": "Gepauzeerd",
+      "pausedHint": "Een gepauzeerd item verschijnt niet meer als te betalen.",
+      "add": "Toevoegen",
+      "errName": "Geef het een naam.",
+      "errNameLong": "Hou de naam onder {max} tekens.",
+      "errMatch": "Gebruik minstens {min} tekens, zodat we niet te veel koppelen.",
+      "errMatchLong": "Hou dit onder {max} tekens.",
+      "errAmount": "Vul een bedrag groter dan 0 in.",
+      "errRange": "Het hoogste bedrag mag niet lager zijn dan het laagste.",
+      "errDate": "Kies een datum."
+    },
+    "error": {
+      "generic": "Dat lukte niet. Probeer opnieuw.",
+      "RECURRING_NAME_INVALID": "Geef het een naam.",
+      "RECURRING_NAME_MAX": "Die naam is te lang.",
+      "RECURRING_MATCH_INVALID": "Vul de banktekst in om op te zoeken.",
+      "RECURRING_MATCH_MIN": "De banktekst is te kort.",
+      "RECURRING_MATCH_MAX": "De banktekst is te lang.",
+      "RECURRING_AMOUNT_INVALID": "Controleer het bedrag.",
+      "RECURRING_ANCHOR_INVALID": "Controleer de vervaldatum.",
+      "RECURRING_CADENCE_INVALID": "Kies hoe vaak het terugkomt.",
+      "RECURRING_DIRECTION_INVALID": "Kies rekening of inkomst.",
+      "RECURRING_CATEGORY_KIND": "Die categorie past hier niet bij een rekening of inkomst.",
+      "RECURRING_CATEGORY_UNKNOWN": "Die categorie bestaat niet meer.",
+      "RECURRING_ACCOUNT_UNKNOWN": "Die rekening bestaat niet meer.",
+      "RECURRING_ACTIVE_INVALID": "Pauzeren of hervatten lukte niet.",
+      "RECURRING_LIMIT": "Je hebt de limiet van 200 terugkerende items bereikt.",
+      "RECURRING_MAX_ITEMS": "Je hebt de limiet van 200 terugkerende items bereikt.",
+      "RECURRING_NOT_FOUND": "Dit item bestaat niet meer. Trek naar beneden om te vernieuwen.",
+      "RECURRING_DUE_INVALID": "Die vervaldatum is niet geldig.",
+      "RECURRING_DUE_NOT_A_DUE_DATE": "Die datum is geen vervaldatum van dit item.",
+      "RECURRING_KIND_INVALID": "Die actie is niet geldig.",
+      "RECURRING_REF_INVALID": "Dit item werd niet gevonden."
     }
   }
 }
