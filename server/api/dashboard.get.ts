@@ -5,6 +5,7 @@ import { transferCategoryIds, countsAsFlow } from '~~/server/utils/transfers'
 import { loadRules } from '~~/server/utils/merchantRules'
 import { transactionLabel } from '~~/shared/utils/merchant'
 import { accountBalance } from '~~/shared/utils/balance'
+import { loadComingUp, todayKey } from '~~/server/utils/recurring'
 
 /** Monday-start week index for a date, used to bucket a month into weeks. */
 function mondayOf(d: Date): Date {
@@ -29,7 +30,11 @@ export default defineEventHandler(async (event) => {
   const start = new Date(Date.UTC(y!, m! - 1, 1))
   const end = new Date(Date.UTC(y!, m!, 1))
 
-  const [monthRows, perAccount, accounts, totalEver, transfers, rules, cats] = await Promise.all([
+  // Shared with the "Coming up" lookup below so neither is queried twice.
+  const transfersP = transferCategoryIds(userId)
+  const catsP = prisma.category.findMany({ where: { userId } })
+
+  const [monthRows, perAccount, accounts, totalEver, transfers, rules, cats, comingUp] = await Promise.all([
     prismaLive.transaction.findMany({
       where: { userId, bookedAt: { gte: start, lt: end } },
       orderBy: [{ bookedAt: 'desc' }, { createdAt: 'desc' }],
@@ -49,9 +54,14 @@ export default defineEventHandler(async (event) => {
     }),
     prisma.account.findMany({ where: { userId }, orderBy: { createdAt: 'asc' }, select: { id: true, name: true } }),
     prismaLive.transaction.count({ where: { userId } }),
-    transferCategoryIds(userId),
+    transfersP,
     loadRules(userId),
-    prisma.category.findMany({ where: { userId } }),
+    catsP,
+    // Today-based, not month-based. A failure here must never take Home down.
+    loadComingUp(userId, todayKey(), { categories: catsP, transfers: transfersP }).catch((e) => {
+      console.error('comingUp failed', e)
+      return []
+    }),
   ])
 
   // Readable name for a row - the same four layers the transaction list uses.
@@ -177,6 +187,7 @@ export default defineEventHandler(async (event) => {
     weeks,
     topCategories,
     budgets,
+    comingUp,
     latest,
     uncategorised: monthRows.filter((t) => !t.categoryId).length,
     hasAnyTransactions: totalEver > 0,
