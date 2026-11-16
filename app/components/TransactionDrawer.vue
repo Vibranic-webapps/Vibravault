@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { EllipsisVertical, Sparkles, Trash2, Check, X, ChevronRight, ChevronLeft } from 'lucide-vue-next'
+import { EllipsisVertical, Sparkles, Repeat, Trash2, Check, X, ChevronRight, ChevronLeft } from 'lucide-vue-next'
 import { centsToInput } from '~~/shared/utils/money'
-import { transactionLabel } from '~~/shared/utils/merchant'
+import { extractMerchant, transactionLabel } from '~~/shared/utils/merchant'
+import type { RecurringPrefill } from '~/components/recurring/RecurringFormSheet.vue'
 import { useTransactionsStore, type Transaction } from '~/stores/transactions'
 import type { Category } from '~/stores/categories'
 import { useRulesStore } from '~/stores/rules'
@@ -85,6 +86,29 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 function onSheet(isOpen: boolean) {
   if (!isOpen) emit('close')
+}
+
+// ---- "Repeats..." : start a recurring bill / income from this row ---------------
+// The form sheet lives here (not on each page), so Home and Transactions both get it.
+const repeatOpen = ref(false)
+const repeatPrefill = ref<RecurringPrefill | null>(null)
+
+function startRepeat() {
+  if (!t.value) return
+  const tx = t.value
+  repeatPrefill.value = {
+    name: label.value.slice(0, 40),
+    // The bank's own wording is what future rows will be matched on.
+    match: extractMerchant(tx.description ?? '') ?? tx.counterparty ?? label.value,
+    amountCents: Math.abs(tx.amountCents),
+    direction: tx.amountCents > 0 ? 'IN' : 'OUT',
+    anchorOn: tx.bookedAt.slice(0, 10),
+    cadence: 'MONTHLY',
+    categoryId: tx.categoryId,
+  }
+  menuOpen.value = false
+  emit('close')
+  repeatOpen.value = true
 }
 
 // ---- Inline editing ------------------------------------------------------
@@ -225,6 +249,9 @@ const sourceLabel = computed(() => ({
               <button class="menu-item" type="button" role="menuitem" @click="emit('teach', t)">
                 <Sparkles :size="16" aria-hidden="true" /> {{ tr('drawer.teach') }}
               </button>
+              <button class="menu-item" type="button" role="menuitem" @click="startRepeat">
+                <Repeat :size="16" aria-hidden="true" /> {{ tr('drawer.repeats') }}
+              </button>
               <button class="menu-item danger" type="button" role="menuitem" @click="emit('remove', t)">
                 <Trash2 :size="16" aria-hidden="true" /> {{ tr('drawer.delete') }}
               </button>
@@ -332,6 +359,8 @@ const sourceLabel = computed(() => ({
       </div>
     </template>
   </UiBottomSheet>
+
+  <RecurringFormSheet v-model="repeatOpen" :prefill="repeatPrefill" />
 </template>
 
 <style scoped>

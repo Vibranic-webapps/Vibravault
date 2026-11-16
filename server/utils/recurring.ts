@@ -395,4 +395,3 @@ export async function loadComingUp(
     .map((p) => p.entry)
 }
 
-export type { SettlementKind }

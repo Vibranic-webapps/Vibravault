@@ -60,6 +60,8 @@
   --vv-accent-ring:   rgba(15,110,86,.45);
   --vv-negative-ring: rgba(216,90,48,.5);
   --vv-negative-bg:   rgba(216,90,48,.09);
+  /* Coral as TEXT (overdue words): the plain coral is only 3.6:1 on cream. Use for text only, never fills. */
+  --vv-negative-ink:  #A8401C;
 
   /* ---- Radii ---- */
   --vv-r-sm: 14px;
@@ -177,6 +179,8 @@
     --vv-accent-ring:   rgba(31,163,127,.5);
     --vv-negative-ring: rgba(240,119,75,.55);
     --vv-negative-bg:   rgba(240,119,75,.14);
+    /* Coral as TEXT (overdue words): the plain coral is only 3.6:1 on cream. Use for text only, never fills. */
+    --vv-negative-ink:  #F0774B;
     /* ---- Category tints: ICON TILES ONLY. Never on an amount, a button or a
        chart series. Category colour is IDENTITY; teal/coral carry MEANING.
        Hues avoid the reserved ones: coral ~18deg, teal ~165deg, indigo ~248deg. */
@@ -226,6 +230,8 @@
   --vv-accent-ring:   rgba(31,163,127,.5);
   --vv-negative-ring: rgba(240,119,75,.55);
   --vv-negative-bg:   rgba(240,119,75,.14);
+  /* Coral as TEXT (overdue words): the plain coral is only 3.6:1 on cream. Use for text only, never fills. */
+  --vv-negative-ink:  #F0774B;
   /* ---- Category tints: ICON TILES ONLY. Never on an amount, a button or a
      chart series. Category colour is IDENTITY; teal/coral carry MEANING.
      Hues avoid the reserved ones: coral ~18deg, teal ~165deg, indigo ~248deg. */

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Target, Sparkles, Smartphone, Download, KeyRound, LogOut, Lock } from 'lucide-vue-next'
+import { Target, Sparkles, Repeat, Smartphone, Download, KeyRound, LogOut, Lock } from 'lucide-vue-next'
 import { useRulesStore } from '~/stores/rules'
+import { useRecurringStore } from '~/stores/recurring'
 
 /**
  * "You" - settings and profile in ONE place (#1, #2), as grouped rows:
@@ -21,6 +22,7 @@ const user = useAuthUser()
 const theme = useTheme()
 const { toast } = useToast()
 const rules = useRulesStore()
+const recurring = useRecurringStore()
 
 // Opens at once; the rules count and phone-link state fill in as they arrive.
 const { data: tokens, refresh: refreshTokens, error: tokensError } = useAsyncData<ImportToken[]>(
@@ -28,7 +30,7 @@ const { data: tokens, refresh: refreshTokens, error: tokensError } = useAsyncDat
   () => useRequestFetch()('/api/import-tokens'),
   { lazy: true },
 )
-useScreenData(() => rules.fetchAll())
+useScreenData(() => Promise.all([rules.fetchAll(), recurring.fetchAll()]))
 const phoneOn = computed(() => (tokens.value ?? []).some((tk) => !tk.revokedAt))
 
 // Pull to refresh: refetch the rules count and the phone-link state. Never touches
@@ -147,6 +149,7 @@ async function signOut() {
     <h2>{{ t('you.vault') }}</h2>
     <section class="neu-3 card rows">
       <UiListRow :icon="Target" :label="t('goals.title')" to="/goals" />
+      <UiListRow :icon="Repeat" :label="t('recurring.title')" :value="t('recurring.count', recurring.items.length)" to="/you/recurring" />
       <UiListRow :icon="Sparkles" :label="t('you.rulesTitle')" :value="t('you.rulesCount', rules.items.length)" to="/you/rules" />
       <UiListRow :icon="Smartphone" :label="t('you.phoneTitle')" :value="phoneOn ? t('you.phoneOn') : undefined" to="/you/phone" />
       <UiListRow :icon="Download" :label="t('you.export')" :hint="t('you.exportHint')" @click="exportAll" />

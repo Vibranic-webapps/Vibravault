@@ -221,7 +221,8 @@
     "groupSpending": "Spending",
     "groupIncome": "Income",
     "groupTransfer": "Between your accounts",
-    "change": "Change {field}"
+    "change": "Change {field}",
+    "repeats": "Repeats…"
   },
   "tx": {
     "title": "Transactions",
@@ -540,6 +541,141 @@
       "CONTRIBUTION_NOT_FOUND": "That entry no longer exists.",
       "GOAL_WITHDRAWAL_EXCEEDS_SAVED": "You can’t take out more than the {saved} that’s saved.",
       "GOAL_REMOVAL_MAKES_NEGATIVE": "Removing this entry would take the total below zero (now {saved}). Remove the later withdrawal first."
+    }
+  },
+  "recurring": {
+    "title": "Recurring",
+    "intro": "Bills and income that come back on a schedule. We spot them in your bank rows and show what is coming up.",
+    "count": "none yet | 1 item | {n} items",
+    "add": "Add a recurring item",
+    "empty": "Add the bills and income that repeat (rent, phone, salary) and Vibravault tells you what is due and spots it when your bank pays it.",
+    "loadError": "Could not load your recurring items.",
+    "refreshError": "Could not refresh. Showing what we had.",
+    "comingUp": "Coming up",
+    "nothingDue": "Nothing due soon",
+    "nextUp": "Next: {name} on {date}",
+    "dueOn": "due {date}",
+    "approx": "~",
+    "kindIn": "Income",
+    "kindOut": "Bill",
+    "state": {
+      "overdueOut": "1 day late | {n} days late",
+      "overdueIn": "1 day overdue | {n} days overdue",
+      "today": "Due today",
+      "tomorrow": "Tomorrow",
+      "inDays": "In {n} days",
+      "paid": "Paid {date}",
+      "received": "Received {date}",
+      "skipped": "Skipped",
+      "paused": "Paused"
+    },
+    "cadence": {
+      "WEEKLY": "Every week",
+      "BIWEEKLY": "Every 2 weeks",
+      "MONTHLY": "Every month",
+      "QUARTERLY": "Every 3 months",
+      "YEARLY": "Every year"
+    },
+    "cadenceShort": {
+      "WEEKLY": "weekly",
+      "BIWEEKLY": "every 2 weeks",
+      "MONTHLY": "monthly",
+      "QUARTERLY": "quarterly",
+      "YEARLY": "yearly"
+    },
+    "group": {
+      "attention": "Needs attention",
+      "comingUp": "Coming up",
+      "income": "Income",
+      "paused": "Paused"
+    },
+    "detail": {
+      "amount": "Amount",
+      "expectedIncome": "Expected amount",
+      "repeats": "Repeats",
+      "due": "Due",
+      "paidOn": "Paid on",
+      "receivedOn": "Received on",
+      "category": "Category",
+      "match": "Bank text we look for",
+      "matched": "Matched to a bank row automatically.",
+      "byHand": "You marked this by hand."
+    },
+    "action": {
+      "markPaid": "Mark paid",
+      "received": "Received",
+      "skip": "Skip this time",
+      "undo": "Undo",
+      "pause": "Pause",
+      "resume": "Resume"
+    },
+    "confirm": {
+      "title": "Delete {name}?",
+      "body": "It stops showing up here and on Home. Your bank rows are not touched."
+    },
+    "toast": {
+      "added": "{name} added",
+      "saved": "Changes saved",
+      "paid": "Marked as paid",
+      "received": "Marked as received",
+      "skipped": "Skipped this time",
+      "undone": "Undone",
+      "paused": "Paused",
+      "resumed": "Resumed",
+      "deleted": "Deleted"
+    },
+    "form": {
+      "addTitle": "New recurring item",
+      "editTitle": "Edit recurring item",
+      "kind": "What is it?",
+      "name": "Name",
+      "namePh": "e.g. Netflix",
+      "amount": "Amount",
+      "min": "From",
+      "max": "To",
+      "varies": "The amount changes",
+      "variesHint": "Like energy or phone: enter the lowest and highest you expect.",
+      "match": "Bank text to look for",
+      "matchHint": "We link a bank row to this when its text contains this.",
+      "cadence": "How often",
+      "due": "First due date",
+      "dueEdit": "Next due date",
+      "dueHint": "The following dates are worked out from this one.",
+      "category": "Category",
+      "noCategory": "No category",
+      "paused": "Paused",
+      "pausedHint": "A paused item stops showing as due.",
+      "add": "Add it",
+      "errName": "Give it a name.",
+      "errNameLong": "Keep the name under {max} characters.",
+      "errMatch": "Use at least {min} characters, so we do not match too much.",
+      "errMatchLong": "Keep this under {max} characters.",
+      "errAmount": "Enter an amount above 0.",
+      "errRange": "The highest amount must not be lower than the lowest.",
+      "errDate": "Pick a date."
+    },
+    "error": {
+      "generic": "That did not work. Try again.",
+      "RECURRING_NAME_INVALID": "Give it a name.",
+      "RECURRING_NAME_MAX": "That name is too long.",
+      "RECURRING_MATCH_INVALID": "Enter the bank text to look for.",
+      "RECURRING_MATCH_MIN": "The bank text is too short.",
+      "RECURRING_MATCH_MAX": "The bank text is too long.",
+      "RECURRING_AMOUNT_INVALID": "Check the amount.",
+      "RECURRING_ANCHOR_INVALID": "Check the due date.",
+      "RECURRING_CADENCE_INVALID": "Pick how often it repeats.",
+      "RECURRING_DIRECTION_INVALID": "Pick bill or income.",
+      "RECURRING_CATEGORY_KIND": "That category does not fit a bill or income here.",
+      "RECURRING_CATEGORY_UNKNOWN": "That category no longer exists.",
+      "RECURRING_ACCOUNT_UNKNOWN": "That account no longer exists.",
+      "RECURRING_ACTIVE_INVALID": "Could not change the paused state.",
+      "RECURRING_LIMIT": "You have reached the limit of 200 recurring items.",
+      "RECURRING_MAX_ITEMS": "You have reached the limit of 200 recurring items.",
+      "RECURRING_NOT_FOUND": "This item no longer exists. Pull down to refresh.",
+      "RECURRING_DUE_INVALID": "That due date is not valid.",
+      "RECURRING_DUE_NOT_A_DUE_DATE": "That date is not one of its due dates.",
+      "RECURRING_KIND_INVALID": "That action is not valid.",
+      "RECURRING_REF_INVALID": "This item could not be found."
     }
   }
 }
