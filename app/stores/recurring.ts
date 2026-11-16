@@ -57,6 +57,26 @@ export interface RecurringFailure {
   status: number | null
 }
 
+/**
+ * A pattern the server spotted in the bank rows ("Apple Services, 0,99, every month")
+ * that is not tracked yet. Its fields line up with RecurringInput so "Add" is a plain create.
+ */
+export interface RecurringSuggestion {
+  /** Stable id of the pattern, used to hide it ("Not now"). */
+  key: string
+  name: string
+  match: string
+  direction: RecurringDirection
+  cadence: RecurringCadence
+  amountMinCents: number
+  amountMaxCents: number
+  anchorOn: string
+  categoryId: string | null
+  occurrences: number
+  /** Up to 3 booking dates (YYYY-MM-DD), oldest first. */
+  seenOn: string[]
+}
+
 export const useRecurringStore = defineStore('recurring', () => {
   const items = ref<RecurringItem[]>([])
   const today = ref<string | null>(null)
@@ -66,6 +86,10 @@ export const useRecurringStore = defineStore('recurring', () => {
   const error = ref<string | null>(null)
   /** The last failed write (create / update / settle ...), so a form can show it by field. */
   const failure = ref<RecurringFailure | null>(null)
+
+  /** Spotted patterns. A bonus: failing to load them is silent and never touches `error`. */
+  const suggestions = ref<RecurringSuggestion[]>([])
+  const suggestionsLoaded = ref(false)
 
   const byId = computed(() => new Map(items.value.map((i) => [i.id, i])))
 
@@ -179,5 +203,62 @@ export const useRecurringStore = defineStore('recurring', () => {
     }
   }
 
-  return { items, today, loading, loaded, error, failure, byId, fetchAll, create, update, remove, settle, unsettle }
+  /**
+   * Load the suggestions. Never throws and never sets `error`: when this fails the page
+   * simply shows none (or keeps the ones it already had).
+   */
+  async function fetchSuggestions(force = false) {
+    if (suggestionsLoaded.value && !force) return
+    try {
+      const res = await useRequestFetch()<{ today: string; suggestions: RecurringSuggestion[] }>('/api/recurring/suggestions')
+      suggestions.value = res.suggestions
+      suggestionsLoaded.value = true
+    } catch {
+      // Silent on purpose (see above).
+    }
+  }
+
+  /** "Add": a normal create with the suggestion's own values. Returns the new item, or null (see `failure`). */
+  async function addSuggestion(s: RecurringSuggestion): Promise<RecurringItem | null> {
+    const item = await create({
+      name: s.name,
+      match: s.match,
+      amountMinCents: s.amountMinCents,
+      amountMaxCents: s.amountMaxCents,
+      direction: s.direction,
+      cadence: s.cadence,
+      anchorOn: s.anchorOn,
+      categoryId: s.categoryId,
+    })
+    // It is tracked now, so it is no longer a suggestion.
+    if (item) suggestions.value = suggestions.value.filter((x) => x.key !== s.key)
+    return item
+  }
+
+  /**
+   * "Not now": hide it for 30 days. Removed at once (optimistic); when the server says no
+   * it comes back at the same place and this returns false.
+   */
+  async function dismissSuggestion(key: string): Promise<boolean> {
+    const index = suggestions.value.findIndex((x) => x.key === key)
+    if (index === -1) return true
+    const gone = suggestions.value[index]!
+    suggestions.value = suggestions.value.filter((x) => x.key !== key)
+    try {
+      await $fetch('/api/recurring/suggestions/dismiss', { method: 'POST', body: { key } })
+      return true
+    } catch {
+      const next = [...suggestions.value]
+      next.splice(Math.min(index, next.length), 0, gone)
+      suggestions.value = next
+      return false
+    }
+  }
+
+  return {
+    items, today, loading, loaded, error, failure, byId,
+    suggestions, suggestionsLoaded,
+    fetchAll, create, update, remove, settle, unsettle,
+    fetchSuggestions, addSuggestion, dismissSuggestion,
+  }
 })

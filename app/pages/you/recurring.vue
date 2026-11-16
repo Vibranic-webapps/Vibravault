@@ -13,10 +13,11 @@ const store = useRecurringStore()
 const categories = useCategoriesStore()
 
 // Opens at once on what the store already holds, then refreshes (see useScreenData).
-useScreenData(() => Promise.all([store.fetchAll(true), categories.fetchAll()]))
+// Suggestions load beside the list and never block it (their fetch cannot fail loudly).
+useScreenData(() => Promise.all([store.fetchAll(true), categories.fetchAll(), store.fetchSuggestions(true)]))
 
 onPullRefresh(async () => {
-  await store.fetchAll(true)
+  await Promise.all([store.fetchAll(true), store.fetchSuggestions(true)])
   if (store.error) throw new Error('refresh failed')
 })
 
@@ -48,6 +49,9 @@ function openItem(it: RecurringItem) {
   <div>
     <SubPageHeader :title="t('recurring.title')" back="/you" />
     <p class="intro">{{ t('recurring.intro') }}</p>
+
+    <!-- Spotted patterns: above everything, also when there are no items yet. Renders nothing when empty. -->
+    <RecurringSuggestions />
 
     <!-- First load: skeleton instead of a blank page. -->
     <div v-if="!store.loaded && store.loading" class="skels" aria-hidden="true">
